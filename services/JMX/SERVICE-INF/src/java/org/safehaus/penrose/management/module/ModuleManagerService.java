@@ -99,29 +99,23 @@ public class ModuleManagerService extends BaseService implements ModuleManagerSe
 
     public void createModule(ModuleConfig moduleConfig) throws Exception {
 
-        Partition partition = getPartition();
-        if (partition != null) {
-            ModuleManager moduleManager = partition.getModuleManager();
-            moduleManager.createModule(moduleConfig);
-        }
-
         String moduleName = moduleConfig.getName();
 
         PartitionConfig partitionConfig = getPartitionConfig();
         ModuleConfigManager moduleConfigManager = partitionConfig.getModuleConfigManager();
         moduleConfigManager.addModuleConfig(moduleConfig);
 
+        Partition partition = getPartition();
+        if (partition != null) {
+            ModuleManager moduleManager = partition.getModuleManager();
+            moduleManager.startModule(moduleName);
+        }
+
         ModuleService moduleService = getModuleService(moduleName);
         moduleService.register();
     }
 
     public void createModule(ModuleConfig moduleConfig, Collection<ModuleMapping> moduleMappings) throws Exception {
-
-        Partition partition = getPartition();
-        if (partition != null) {
-            ModuleManager moduleManager = partition.getModuleManager();
-            moduleManager.createModule(moduleConfig);
-        }
 
         String moduleName = moduleConfig.getName();
 
@@ -130,29 +124,35 @@ public class ModuleManagerService extends BaseService implements ModuleManagerSe
         moduleConfigManager.addModuleConfig(moduleConfig);
         moduleConfigManager.addModuleMappings(moduleMappings);
 
+        Partition partition = getPartition();
+        if (partition != null) {
+            ModuleManager moduleManager = partition.getModuleManager();
+            moduleManager.startModule(moduleName);
+        }
+
         ModuleService moduleService = getModuleService(moduleName);
         moduleService.register();
     }
 
-    public void updateModule(String name, ModuleConfig moduleConfig) throws Exception {
+    public void updateModule(String moduleName, ModuleConfig moduleConfig) throws Exception {
 
         Partition partition = getPartition();
 
         if (partition != null) {
             ModuleManager moduleManager = partition.getModuleManager();
-            moduleManager.removeModule(name);
+            moduleManager.stopModule(moduleName);
         }
 
-        ModuleService oldModuleService = getModuleService(name);
+        ModuleService oldModuleService = getModuleService(moduleName);
         oldModuleService.unregister();
 
         PartitionConfig partitionConfig = getPartitionConfig();
         ModuleConfigManager moduleConfigManager = partitionConfig.getModuleConfigManager();
-        moduleConfigManager.updateModuleConfig(name, moduleConfig);
+        moduleConfigManager.updateModuleConfig(moduleName, moduleConfig);
 
         if (partition != null) {
             ModuleManager moduleManager = partition.getModuleManager();
-            moduleManager.createModule(moduleConfig);
+            moduleManager.startModule(moduleName);
         }
 
         ModuleService newModuleService = getModuleService(moduleConfig.getName());
@@ -165,7 +165,7 @@ public class ModuleManagerService extends BaseService implements ModuleManagerSe
 
         if (partition != null) {
             ModuleManager moduleManager = partition.getModuleManager();
-            moduleManager.removeModule(name);
+            moduleManager.stopModule(name);
         }
 
         PartitionConfig partitionConfig = getPartitionConfig();

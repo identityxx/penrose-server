@@ -13,26 +13,31 @@ import gnu.getopt.Getopt;
 /**
  * @author Endi Sukma Dewata
  */
-public class NISFederationClient extends FederationRepositoryClient {
+public class NISRepositoryClient extends RepositoryClient implements NISRepositoryMBean {
 
-    public static Logger log = Logger.getLogger(NISFederationClient.class);
+    public static Logger log = Logger.getLogger(NISRepositoryClient.class);
 
-    public NISFederationClient(FederationClient federationClient, String repositoryName) throws Exception {
+    public NISRepositoryClient(FederationClient federationClient, String repositoryName) throws Exception {
         super(federationClient, repositoryName, "NIS");
     }
 
-    public SynchronizationResult synchronize(String name, Collection<String> parameters) throws Exception {
-        return (SynchronizationResult) getModuleClient().invoke(
+    public SynchronizationResult synchronize(String repositoryName, Collection<String> mapNames) throws Exception {
+        return (SynchronizationResult)moduleClient.invoke(
                 "synchronize",
-                new Object[] { name, parameters },
+                new Object[] { repositoryName, mapNames },
                 new String[] { String.class.getName(), Collection.class.getName() }
         );
     }
 
-    public static SynchronizationResult synchronize(PenroseClient client, String partition, String repositoryName, Collection<String> parameters) throws Exception {
-        FederationClient federationClient = new FederationClient(client, partition);
-        NISFederationClient nisFederationClient = new NISFederationClient(federationClient, repositoryName);
-        return nisFederationClient.synchronize(repositoryName, parameters);
+    public static SynchronizationResult synchronize(
+            PenroseClient client,
+            String federationDomain,
+            String repositoryName,
+            Collection<String> mapNames
+    ) throws Exception {
+        FederationClient federationClient = new FederationClient(client, federationDomain);
+        NISRepositoryClient nisFederationClient = new NISRepositoryClient(federationClient, repositoryName);
+        return nisFederationClient.synchronize(repositoryName, mapNames);
     }
 
     public static void execute(PenroseClient client, Collection<String> commands) throws Exception {
@@ -42,17 +47,17 @@ public class NISFederationClient extends FederationRepositoryClient {
 
         if ("synchronize".equals(command)) {
 
-            String partition = iterator.next();
-            String repository = iterator.next();
-            System.out.println("Synchronizing "+partition+" "+repository+"...");
+            String federationDomain = iterator.next();
+            String repositoryName = iterator.next();
+            System.out.println("Synchronizing "+federationDomain+" "+repositoryName+"...");
 
-            Collection<String> parameters = new ArrayList<String>();
+            Collection<String> mapNames = new ArrayList<String>();
             while (iterator.hasNext()) {
                 String parameter = iterator.next();
-                parameters.add(parameter);
+                mapNames.add(parameter);
             }
 
-            SynchronizationResult result = synchronize(client, partition, repository, parameters);
+            SynchronizationResult result = synchronize(client, federationDomain, repositoryName, mapNames);
             System.out.println(result);
 
         } else {
@@ -61,7 +66,7 @@ public class NISFederationClient extends FederationRepositoryClient {
     }
 
     public static void showUsage() {
-        System.out.println("Usage: org.safehaus.penrose.federation.NISFederationClient [OPTION]... <command> [arguments]...");
+        System.out.println("Usage: org.safehaus.penrose.federation.NISRepositoryClient [OPTION]... <command> [arguments]...");
         System.out.println();
         System.out.println("Options:");
         System.out.println("  -?, --help         display this help and exit");
@@ -92,7 +97,7 @@ public class NISFederationClient extends FederationRepositoryClient {
         LongOpt[] longopts = new LongOpt[1];
         longopts[0] = new LongOpt("help", LongOpt.NO_ARGUMENT, null, '?');
 
-        Getopt getopt = new Getopt("NISFederationClient", args, "-:?dvt:h:p:r:P:D:w:", longopts);
+        Getopt getopt = new Getopt("NISRepositoryClient", args, "-:?dvt:h:p:r:P:D:w:", longopts);
 
         Collection<String> commands = new ArrayList<String>();
         int c;

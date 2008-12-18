@@ -23,25 +23,25 @@ public class FederationClient implements FederationMBean {
 
     public static Logger log = Logger.getLogger(FederationClient.class);
 
-    String name;
+    String federationDomain;
 
     PenroseClient client;
     PartitionClient partitionClient;
     ModuleClient moduleClient;
 
-    public FederationClient(PenroseClient client, String name) throws Exception {
+    public FederationClient(PenroseClient client, String federationDomain) throws Exception {
         this.client = client;
-        this.name = name;
+        this.federationDomain = federationDomain;
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
-        partitionClient = partitionManagerClient.getPartitionClient(name);
+        partitionClient = partitionManagerClient.getPartitionClient(federationDomain);
 
         ModuleManagerClient moduleManagerClient = partitionClient.getModuleManagerClient();
         moduleClient = moduleManagerClient.getModuleClient(Federation.FEDERATION);
     }
 
-    public String getName() {
-        return name;
+    public String getFederationDomain() {
+        return federationDomain;
     }
 
     public Collection<String> getRepositoryTypes() throws Exception {

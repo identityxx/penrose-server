@@ -5,13 +5,13 @@ import org.safehaus.penrose.module.ModuleClient;
 /**
  * @author Endi Sukma Dewata
  */
-public class FederationRepositoryClient {
+public class RepositoryClient implements FederationRepositoryMBean {
 
     protected FederationClient federationClient;
     protected String repositoryName;
     protected ModuleClient moduleClient;
 
-    public FederationRepositoryClient(FederationClient federationClient, String repositoryName, String type) throws Exception {
+    public RepositoryClient(FederationClient federationClient, String repositoryName, String type) throws Exception {
         this.federationClient = federationClient;
         this.repositoryName = repositoryName;
         this.moduleClient = federationClient.getRepositoryModuleClient(type);

@@ -9,7 +9,7 @@ import java.util.Collection;
 /**
  * @author Endi Sukma Dewata
  */
-public class FederationRepositoryModule extends Module {
+public class FederationRepositoryModule extends Module implements FederationRepositoryMBean {
 
     FederationModule federationModule;
 

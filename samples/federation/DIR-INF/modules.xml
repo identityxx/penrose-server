@@ -22,11 +22,11 @@
   </module>
 
   <module name="LDAP">
-    <module-class>org.safehaus.penrose.federation.module.LDAPFederationModule</module-class>
+    <module-class>org.safehaus.penrose.federation.module.LDAPRepositoryModule</module-class>
   </module>
 
   <module name="NIS">
-    <module-class>org.safehaus.penrose.federation.module.NISFederationModule</module-class>
+    <module-class>org.safehaus.penrose.federation.module.NISRepositoryModule</module-class>
   </module>
 
   <module name="Users">

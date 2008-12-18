@@ -6,11 +6,11 @@ import org.slf4j.Logger;
 /**
  * @author Endi Sukma Dewata
  */
-public class JDBCFederationClient extends FederationRepositoryClient {
+public class JDBCRepositoryClient extends RepositoryClient {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    public JDBCFederationClient(FederationClient federationClient, String repositoryName) throws Exception {
+    public JDBCRepositoryClient(FederationClient federationClient, String repositoryName) throws Exception {
         super(federationClient, repositoryName, "JDBC");
     }
 }

@@ -33,24 +33,24 @@ public class ModuleManager {
 
     public void init() throws Exception {
         
-        Collection<String> names = new ArrayList<String>();
-        names.addAll(getModuleNames());
+        Collection<String> moduleNames = new ArrayList<String>();
+        moduleNames.addAll(getModuleNames());
 
-        for (String name : names) {
+        for (String moduleName : moduleNames) {
 
-            ModuleConfig moduleConfig = getModuleConfig(name);
+            ModuleConfig moduleConfig = getModuleConfig(moduleName);
             if (!moduleConfig.isEnabled()) continue;
 
-            createModule(moduleConfig);
+            startModule(moduleName);
         }
     }
 
     public void destroy() throws Exception {
 
-        Collection<String> names = new ArrayList<String>();
-        names.addAll(modules.keySet());
+        Collection<String> moduleNames = new ArrayList<String>();
+        moduleNames.addAll(modules.keySet());
 
-        for (String name : names) {
+        for (String name : moduleNames) {
             stopModule(name);
         }
     }
@@ -59,23 +59,15 @@ public class ModuleManager {
         return moduleConfigManager.getModuleNames();
     }
 
-    public ModuleConfig getModuleConfig(String name) {
-        return moduleConfigManager.getModuleConfig(name);
+    public ModuleConfig getModuleConfig(String moduleName) {
+        return moduleConfigManager.getModuleConfig(moduleName);
     }
 
-    public void startModule(String name) throws Exception {
-        if (debug) log.debug("Starting module "+name+".");
-        ModuleConfig moduleConfig = getModuleConfig(name);
-        createModule(moduleConfig);
-    }
+    public void startModule(String moduleName) throws Exception {
 
-    public void stopModule(String name) throws Exception {
-        if (debug) log.debug("Stopping module "+name+".");
-        Module module = removeModule(name);
-        module.destroy();
-    }
+        if (debug) log.debug("Starting module "+moduleName+".");
 
-    public Module createModule(ModuleConfig moduleConfig) throws Exception {
+        ModuleConfig moduleConfig = getModuleConfig(moduleName);
 
         String className = moduleConfig.getModuleClass();
 
@@ -88,32 +80,30 @@ public class ModuleManager {
 
         module.init(moduleConfig, moduleContext);
 
-        addModule(module);
-
-        return module;
-    }
-
-    public void addModule(Module module) {
         modules.put(module.getName(), module);
     }
 
-    public Module removeModule(String name) {
-        return modules.remove(name);
+    public void stopModule(String moduleName) throws Exception {
+
+        if (debug) log.debug("Stopping module "+moduleName+".");
+
+        Module module = modules.remove(moduleName);
+        module.destroy();
     }
 
     public Collection<Module> getModules() {
         return modules.values();
     }
 
-    public Module getModule(String name) {
-        Module module = modules.get(name);
+    public Module getModule(String moduleName) {
+        Module module = modules.get(moduleName);
         if (module != null) return module;
 
         if (partition.getName().equals("DEFAULT")) return null;
         Partition defaultPartition = partition.getPartitionContext().getPartition("DEFAULT");
 
         ModuleManager moduleManager = defaultPartition.getModuleManager();
-        return moduleManager.getModule(name);
+        return moduleManager.getModule(moduleName);
     }
 
     public Collection<Module> findModules(DN dn) throws Exception {

@@ -9,6 +9,7 @@ import org.safehaus.penrose.partition.PartitionContext;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.Collection;
+import java.util.ArrayList;
 
 /**
  * @author Endi Sukma Dewata
@@ -32,42 +33,42 @@ public class MappingManager {
 
     public void init() throws Exception {
 
-        for (MappingConfig mappingConfig : mappingConfigManager.getMappingConfigs()) {
+        Collection<String> mappingNames = new ArrayList<String>();
+        mappingNames.addAll(getMappingNames());
+
+        for (String moduleName : mappingNames) {
+
+            MappingConfig mappingConfig = getMappingConfig(moduleName);
             if (!mappingConfig.isEnabled()) continue;
 
-            createMapping(mappingConfig);
+            startMapping(moduleName);
         }
     }
 
     public void destroy() throws Exception {
-        for (Mapping mapping : mappings.values()) {
-            if (debug) log.debug("Stopping "+ mapping.getName()+" mapping.");
-            mapping.destroy();
+
+        Collection<String> mappingNames = new ArrayList<String>();
+        mappingNames.addAll(mappings.keySet());
+
+        for (String name : mappingNames) {
+            stopMapping(name);
         }
     }
 
-    public MappingConfig getMappingConfig(String name) {
-        return mappingConfigManager.getMappingConfig(name);
+    public Collection<String> getMappingNames() {
+        return mappingConfigManager.getMappingNames();
     }
 
-    public void startMapping(String name) throws Exception {
-        MappingConfig connectionConfig = mappingConfigManager.getMappingConfig(name);
-        createMapping(connectionConfig);
+    public MappingConfig getMappingConfig(String mappingName) {
+        return mappingConfigManager.getMappingConfig(mappingName);
     }
 
-    public void stopMapping(String name) throws Exception {
-        Mapping connection = mappings.remove(name);
-        connection.destroy();
-    }
+    public void startMapping(String mappingName) throws Exception {
 
-    public boolean isRunning(String name) {
-        return mappings.containsKey(name);
-    }
+        if (debug) log.debug("Starting mapping "+mappingName+".");
 
-    public Mapping createMapping(MappingConfig mappingConfig) throws Exception {
-
+        MappingConfig mappingConfig = getMappingConfig(mappingName);
         PartitionContext partitionContext = partition.getPartitionContext();
-
         ClassLoader cl = partitionContext.getClassLoader();
 
         MappingContext connectionContext = new MappingContext();
@@ -75,7 +76,7 @@ public class MappingManager {
         connectionContext.setClassLoader(cl);
 
         String mappingClass = mappingConfig.getMappingClass();
-        
+
         Mapping mapping;
         if (mappingClass == null) {
             mapping = new Mapping();
@@ -86,19 +87,19 @@ public class MappingManager {
 
         mapping.init(mappingConfig, connectionContext);
 
-        addMapping(mapping);
-
-        return mapping;
-    }
-
-    public void addMapping(Mapping mapping) {
         mappings.put(mapping.getName(), mapping);
     }
 
-    public void removeConnection(String name) throws Exception {
-        Mapping mapping = mappings.remove(name);
-        if (mapping != null) mapping.destroy();
-        mappingConfigManager.removeMappingConfig(name);
+    public void stopMapping(String mappingName) throws Exception {
+
+        if (debug) log.debug("Stopping mapping "+mappingName+".");
+
+        Mapping mapping = mappings.remove(mappingName);
+        mapping.destroy();
+    }
+
+    public boolean isRunning(String mappingName) {
+        return mappings.containsKey(mappingName);
     }
 
     public Mapping getMapping(String mappingName) {

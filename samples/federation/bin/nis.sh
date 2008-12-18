@@ -104,4 +104,4 @@ exec "$JAVACMD" $VD_SERVER_OPTS \
 -Djava.ext.dirs="$LOCALLIBPATH" \
 -Djava.library.path="$LOCALLIBPATH" \
 -Dorg.safehaus.penrose.client.home="$PENROSE_SERVER_HOME" \
-org.safehaus.penrose.federation.NISFederationClient "$@"
+org.safehaus.penrose.federation.NISRepositoryClient "$@"
