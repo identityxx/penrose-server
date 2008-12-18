@@ -29,18 +29,10 @@ public interface FederationMBean {
 
     public Collection<String> getPartitionNames() throws Exception;
     public Collection<FederationPartitionConfig> getPartitions() throws Exception;
-    public FederationPartitionConfig getPartition(String name) throws Exception;
+    public FederationPartitionConfig getPartition(String partitionName) throws Exception;
 
-    public void createPartition(String name) throws Exception;
-    
-    public void startPartitions() throws Exception;
-    public void startPartition(String name) throws Exception;
-
-    public void stopPartitions() throws Exception;
-    public void stopPartition(String name) throws Exception;
-
-    public void removePartitions() throws Exception;
-    public void removePartition(String name) throws Exception;
+    public void createPartition(String partitionName) throws Exception;
+    public void removePartition(String partitionName) throws Exception;
     
     public void synchronize(String name) throws Exception;
 }

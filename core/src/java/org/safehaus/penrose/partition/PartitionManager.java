@@ -59,9 +59,13 @@ public class PartitionManager {
         log.debug("Adding partition config "+partitionConfig.getName()+".");
         partitionConfigManager.addPartitionConfig(partitionConfig);
 
-        PartitionEvent event = new PartitionEvent(PartitionEvent.PARTITION_ADDED, partitionConfig);
-        for (PartitionListener listener : listeners) {
-            listener.partitionAdded(event);
+        if (!listeners.isEmpty()) {
+            //log.debug("Invoking "+listeners.size()+" listener(s).");
+
+            PartitionEvent event = new PartitionEvent(PartitionEvent.PARTITION_ADDED, partitionConfig);
+            for (PartitionListener listener : listeners) {
+                listener.partitionAdded(event);
+            }
         }
     }
 
@@ -204,9 +208,13 @@ public class PartitionManager {
 
         partition = createPartition(partitionConfig);
 
-        PartitionEvent event = new PartitionEvent(PartitionEvent.PARTITION_STARTED, partition);
-        for (PartitionListener listener : listeners) {
-            listener.partitionStarted(event);
+        if (!listeners.isEmpty()) {
+            //log.debug("Invoking "+listeners.size()+" listener(s).");
+
+            PartitionEvent event = new PartitionEvent(PartitionEvent.PARTITION_STARTED, partition);
+            for (PartitionListener listener : listeners) {
+                listener.partitionStarted(event);
+            }
         }
 
         log.debug("Partition "+name+" started.");
@@ -287,42 +295,53 @@ public class PartitionManager {
         }
     }
 
-    public void stopPartition(String name) throws Exception {
+    public void stopPartition(String partitionName) throws Exception {
 
         if (debug) {
             log.debug(TextUtil.repeat("-", 70));
-            log.debug("Stopping partition "+name+".");
+            log.debug("Stopping partition "+partitionName+".");
         }
 
-        Partition partition = partitions.get(name);
+        Partition partition = partitions.get(partitionName);
 
         if (partition == null) {
-            log.debug("Partition "+name+" not started.");
+            log.debug("Partition "+partitionName+" not started.");
             return;
         }
 
         partition.destroy();
 
-        partitions.remove(name);
+        partitions.remove(partitionName);
 
-        PartitionEvent event = new PartitionEvent(PartitionEvent.PARTITION_STOPPED, partition);
-        for (PartitionListener listener : listeners) {
-            listener.partitionStopped(event);
+        if (!listeners.isEmpty()) {
+            //log.debug("Invoking "+listeners.size()+" listener(s).");
+
+            PartitionEvent event = new PartitionEvent(PartitionEvent.PARTITION_STOPPED, partition);
+            for (PartitionListener listener : listeners) {
+                listener.partitionStopped(event);
+            }
         }
 
-        log.debug("Partition "+name+" stopped.");
+        log.debug("Partition "+partitionName+" stopped.");
     }
 
-    public void removePartition(String name) throws Exception {
+    public void removePartition(String partitionName) throws Exception {
 
-        PartitionConfig partitionConfig = partitionConfigManager.removePartitionConfig(name);
+        PartitionConfig partitionConfig = partitionConfigManager.getPartitionConfig(partitionName);
 
-        PartitionEvent event = new PartitionEvent(PartitionEvent.PARTITION_REMOVED, partitionConfig);
-        for (PartitionListener listener : listeners) {
-            listener.partitionRemoved(event);
+        if (!listeners.isEmpty()) {
+            //log.debug("Invoking "+listeners.size()+" listener(s).");
+
+            PartitionEvent event = new PartitionEvent(PartitionEvent.PARTITION_REMOVED, partitionConfig);
+
+            for (PartitionListener listener : listeners) {
+                listener.partitionRemoved(event);
+            }
         }
 
-        log.debug("Partition "+name+" removed.");
+        partitionConfigManager.removePartitionConfig(partitionName);
+
+        log.debug("Partition "+partitionName+" removed.");
     }
 
     public void clear() throws Exception {

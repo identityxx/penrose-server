@@ -165,49 +165,9 @@ public class FederationClient implements FederationMBean {
         );
     }
 
-    public void startPartitions() throws Exception {
-        moduleClient.invoke(
-                "startPartitions",
-                new Object[] { },
-                new String[] { }
-        );
-    }
-
     public void createPartition(String name) throws Exception {
         moduleClient.invoke(
                 "createPartition",
-                new Object[] { name },
-                new String[] { String.class.getName() }
-        );
-    }
-
-    public void startPartition(String name) throws Exception {
-        moduleClient.invoke(
-                "startPartition",
-                new Object[] { name },
-                new String[] { String.class.getName() }
-        );
-    }
-
-    public void stopPartitions() throws Exception {
-        moduleClient.invoke(
-                "removePartitions",
-                new Object[] { },
-                new String[] { }
-        );
-    }
-
-    public void removePartitions() throws Exception {
-        moduleClient.invoke(
-                "removePartitions",
-                new Object[] { },
-                new String[] { }
-        );
-    }
-
-    public void stopPartition(String name) throws Exception {
-        moduleClient.invoke(
-                "stopPartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
         );

@@ -163,7 +163,6 @@ public class FederationModule extends Module implements FederationMBean {
         }
 
         for (String partitionName : reversedList) {
-            stopPartition(partitionName);
             removePartition(partitionName);
         }
 
@@ -172,7 +171,6 @@ public class FederationModule extends Module implements FederationMBean {
 
         for (String partitionName : partitionNames) {
             createPartition(partitionName);
-            startPartition(partitionName);
         }
     }
 
@@ -258,41 +256,20 @@ public class FederationModule extends Module implements FederationMBean {
         filterChain.addExpandProperties(expandProperties);
 
         copy.execute();
-    }
 
-    public void startPartitions() throws Exception {
-        for (String name : getPartitionNames()) {
-            startPartition(name);
-        }
-    }
-
-    public void startPartition(String partitionName) throws Exception {
         PartitionContext partitionContext = partition.getPartitionContext();
         PartitionManager partitionManager = partitionContext.getPartitionManager();
         partitionManager.loadPartition(partitionName);
         partitionManager.startPartition(partitionName);
     }
 
-    public void stopPartitions() throws Exception {
-        for (String name : getPartitionNames()) {
-            stopPartition(name);
-        }
-    }
+    public void removePartition(String partitionName) throws Exception {
 
-    public void stopPartition(String partitionName) throws Exception {
         PartitionContext partitionContext = partition.getPartitionContext();
         PartitionManager partitionManager = partitionContext.getPartitionManager();
         partitionManager.stopPartition(partitionName);
         partitionManager.removePartition(partitionName);
-    }
 
-    public void removePartitions() throws Exception {
-        for (String name : getPartitionNames()) {
-            removePartition(name);
-        }
-    }
-
-    public void removePartition(String partitionName) throws Exception {
         File partitionDir = new File(partitionsDir, partitionName);
         FileUtil.delete(partitionDir);
     }

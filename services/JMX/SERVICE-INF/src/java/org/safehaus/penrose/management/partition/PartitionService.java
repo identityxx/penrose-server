@@ -149,9 +149,9 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
 
     public void register() throws Exception {
 
-        super.register();
+        //log.debug("Registering partition "+partitionName+".");
 
-        PartitionConfig partitionConfig = getPartitionConfig();
+        super.register();
 
         ConnectionManagerService connectionManagerService = getConnectionManagerService();
         connectionManagerService.register();
@@ -173,6 +173,8 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
     }
 
     public void unregister() throws Exception {
+
+        //log.debug("Unregistering partition "+partitionName+".");
 
         PartitionConfig partitionConfig = getPartitionConfig();
         if (partitionConfig == null) return;
