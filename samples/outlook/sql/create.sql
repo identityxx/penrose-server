@@ -28,7 +28,6 @@ create table users (
 
     notes varchar(255),
 
-    encPassword varchar(255),
     password varchar(10),
 
     primary key (username)

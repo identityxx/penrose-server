@@ -22,6 +22,25 @@ package org.safehaus.penrose.util;
  */
 public class ActiveDirectoryUtil {      
 
+    public static byte[] toUnicodePassword(Object password) throws Exception {
+        String newPassword;
+        if (password instanceof byte[]) {
+            newPassword = "\""+new String((byte[])password)+ "\"";
+        } else {
+            newPassword = "\""+password+ "\"";
+        }
+
+        return newPassword.getBytes("UTF-16LE");
+/*
+        byte unicodeBytes[] = newPassword.getBytes("Unicode");
+        byte bytes[]  = new byte[unicodeBytes.length-2];
+
+        System.arraycopy(unicodeBytes, 2, bytes, 0, unicodeBytes.length-2);
+
+        return bytes;
+*/
+    }
+
     public static String getGUID(byte[] guid) {
         try {
             StringBuilder sb = new StringBuilder();

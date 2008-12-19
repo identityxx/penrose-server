@@ -7,7 +7,7 @@
 
   <source name="users">
 
-    <connection-name>MySQL</connection-name>
+    <connection-name>Database</connection-name>
 
     <field name="username" primaryKey="true"/>
 
@@ -37,7 +37,6 @@
 
     <field name="notes"/>
 
-    <field name="encPassword"/>
     <field name="password"/>
 
     <parameter>
@@ -49,7 +48,7 @@
 
   <source name="relationships">
 
-    <connection-name>MySQL</connection-name>
+    <connection-name>Database</connection-name>
 
     <field name="manager" primaryKey="true"/>
     <field name="report" primaryKey="true"/>

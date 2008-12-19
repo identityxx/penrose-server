@@ -23,11 +23,14 @@ import javax.crypto.Cipher;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.vps.crypt.Crypt;
+import org.safehaus.penrose.password.Password;
 
 import java.security.MessageDigest;
 import java.math.BigInteger;
 
-import grid.security.MD5Crypt;
+import arlut.csd.crypto.MD5Crypt;
+import arlut.csd.crypto.Sha256Crypt;
+import arlut.csd.crypto.Sha512Crypt;
 
 
 /**
@@ -189,50 +192,45 @@ public class PasswordUtil {
         return result1;
     }
 
-    public static boolean comparePassword(String password, Object digest) throws Exception {
-        return comparePassword(password.getBytes(), digest);
-    }
-
-    public static boolean comparePassword(byte[] password, Object digest) throws Exception {
+    public static boolean validate(String password, Object digest) throws Exception {
 
         if (digest == null) return false;
 
-        String encryption     = getEncryptionMethod(digest);
-        String encoding       = getEncodingMethod(digest);
-        String storedPassword = getEncryptedPassword(digest);
+        String encryption = getEncryptionMethod(digest);
+        String hash   = getEncryptedPassword(digest);
 
-        return comparePassword(password, encryption, encoding, storedPassword);
+        return Password.validate(encryption, password, hash);
+        //return validate(password, encryption, encoding, hash);
     }
 
-    public static boolean comparePassword(byte[] credential, String encryption, String encoding, String storedPassword) throws Exception {
+    public static boolean validate(String encryption, byte[] credential, String encoding, String hash) throws Exception {
 
-        String encryptedCredential;
+        String newHash;
 
         if ("crypt".equalsIgnoreCase(encryption)) {
 
-            if (storedPassword.startsWith("$1$")) {
+            if (hash.startsWith("$1$")) {
 
-                // get the salt form the stored password
-                int i = storedPassword.indexOf("$", 3);
-                String salt = storedPassword.substring(3, i);
-                log.debug(" - salt     : ["+salt+"]");
+                newHash = MD5Crypt.crypt(new String(credential), hash);
 
-                // encrypt the new password with the same salt
-                byte[] bytes = encrypt(encryption, salt.getBytes(), credential);
+            } else if (hash.startsWith("$5$")) {
 
-                // the result is already in encoded form: $1$salt$hash
-                encryptedCredential = new String(bytes);
+                newHash = Sha256Crypt.Sha256_crypt(new String(credential), hash, 0);
+
+            } else if (hash.startsWith("$6$")) {
+
+                newHash = Sha512Crypt.Sha512_crypt(new String(credential), hash, 0);
 
             } else {
-                String salt = storedPassword.substring(0, 2);
+                String salt = hash.substring(0, 2);
                 log.debug(" - salt     : ["+salt+"]");
 
-                encryptedCredential = Crypt.crypt(salt, new String(credential));
+                newHash = Crypt.crypt(salt, new String(credential));
             }
 
         } else {
             byte[] bytes = encrypt(encryption, credential);
-            encryptedCredential = BinaryUtil.encode(encoding, bytes);
+            newHash = BinaryUtil.encode(encoding, bytes);
         }
 
         if (debug) {
@@ -240,34 +238,15 @@ public class PasswordUtil {
             if (encryption != null) log.debug(" - encryption: ["+encryption+"]");
             if (encoding != null)   log.debug(" - encoding  : ["+encoding+"]");
 
-            log.debug(" - supplied  : ["+encryptedCredential+"]");
-            log.debug(" - stored    : ["+storedPassword+"]");
+            log.debug(" - supplied  : ["+newHash+"]");
+            log.debug(" - stored    : ["+hash+"]");
         }
 
-        boolean result = encryptedCredential.equals(storedPassword);
+        boolean result = newHash.equals(hash);
 
         if (debug) log.debug(" - result    : "+result);
 
         return result;
-    }
-
-    public static byte[] toUnicodePassword(Object password) throws Exception {
-        String newPassword;
-        if (password instanceof byte[]) {
-            newPassword = "\""+new String((byte[])password)+ "\"";
-        } else {
-            newPassword = "\""+password+ "\"";
-        }
-
-        return newPassword.getBytes("UTF-16LE");
-/*
-        byte unicodeBytes[] = newPassword.getBytes("Unicode");
-        byte bytes[]  = new byte[unicodeBytes.length-2];
-
-        System.arraycopy(unicodeBytes, 2, bytes, 0, unicodeBytes.length-2);
-
-        return bytes;
-*/
     }
 
     public static String getEncryptionMethod(Object password) {

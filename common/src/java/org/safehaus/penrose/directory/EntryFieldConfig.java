@@ -45,6 +45,7 @@ public class EntryFieldConfig implements Serializable, Cloneable {
 
     private String name;
     private boolean primaryKey;
+    private String encryption;
 
     private Object constant;
     private String variable;
@@ -117,61 +118,6 @@ public class EntryFieldConfig implements Serializable, Cloneable {
         this.variable = variable;
     }
 
-    public int hashCode() {
-        return name == null ? 0 : name.hashCode();
-    }
-
-    boolean equals(Object o1, Object o2) {
-        if (o1 == null && o2 == null) return true;
-        if (o1 != null) return o1.equals(o2);
-        return o2.equals(o1);
-    }
-
-    public boolean equals(Object object) {
-        if (this == object) return true;
-        if (object == null) return false;
-        if (object.getClass() != this.getClass()) return false;
-
-        EntryFieldConfig fieldConfig = (EntryFieldConfig)object;
-        if (!equals(name, fieldConfig.name)) return false;
-        if (!equals(primaryKey, fieldConfig.primaryKey)) return false;
-
-        if (constant instanceof byte[] && fieldConfig.constant instanceof byte[]) {
-            if (!Arrays.equals((byte[])constant, (byte[])fieldConfig.constant)) return false;
-        } else {
-            if (!equals(constant, fieldConfig.constant)) return false;
-        }
-
-        if (!equals(variable, fieldConfig.variable)) return false;
-        if (!equals(expression, fieldConfig.expression)) return false;
-        if (!equals(operations, fieldConfig.operations)) return false;
-
-        return true;
-    }
-
-    public void copy(EntryFieldConfig fieldConfig) throws CloneNotSupportedException {
-        name = fieldConfig.name;
-        primaryKey = fieldConfig.primaryKey;
-
-        if (fieldConfig.constant instanceof byte[]) {
-            constant = ((byte[])fieldConfig.constant).clone();
-        } else {
-            constant = fieldConfig.constant;
-        }
-
-        variable = fieldConfig.variable;
-        expression = fieldConfig.expression == null ? null : (Expression)fieldConfig.expression.clone();
-
-        operations = new HashSet<String>();
-        operations.addAll(fieldConfig.operations);
-    }
-
-    public Object clone() throws CloneNotSupportedException {
-        EntryFieldConfig fieldConfig = (EntryFieldConfig)super.clone();
-        fieldConfig.copy(this);
-        return fieldConfig;
-    }
-
     public Collection<String> getOperations() {
         return operations;
     }
@@ -197,4 +143,70 @@ public class EntryFieldConfig implements Serializable, Cloneable {
     public void setPrimaryKey(boolean primaryKey) {
         this.primaryKey = primaryKey;
     }
+
+    public String getEncryption() {
+        return encryption;
+    }
+
+    public void setEncryption(String encryption) {
+        this.encryption = encryption;
+    }
+
+    public int hashCode() {
+        return name == null ? 0 : name.hashCode();
+    }
+
+    boolean equals(Object o1, Object o2) {
+        if (o1 == null && o2 == null) return true;
+        if (o1 != null) return o1.equals(o2);
+        return o2.equals(o1);
+    }
+
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null) return false;
+        if (object.getClass() != this.getClass()) return false;
+
+        EntryFieldConfig fieldConfig = (EntryFieldConfig)object;
+        if (!equals(name, fieldConfig.name)) return false;
+        if (!equals(primaryKey, fieldConfig.primaryKey)) return false;
+        if (!equals(encryption, fieldConfig.encryption)) return false;
+
+        if (constant instanceof byte[] && fieldConfig.constant instanceof byte[]) {
+            if (!Arrays.equals((byte[])constant, (byte[])fieldConfig.constant)) return false;
+        } else {
+            if (!equals(constant, fieldConfig.constant)) return false;
+        }
+
+        if (!equals(variable, fieldConfig.variable)) return false;
+        if (!equals(expression, fieldConfig.expression)) return false;
+        if (!equals(operations, fieldConfig.operations)) return false;
+
+        return true;
+    }
+
+    public void copy(EntryFieldConfig fieldConfig) throws CloneNotSupportedException {
+        name = fieldConfig.name;
+        primaryKey = fieldConfig.primaryKey;
+        encryption = fieldConfig.encryption;
+
+        if (fieldConfig.constant instanceof byte[]) {
+            constant = ((byte[])fieldConfig.constant).clone();
+        } else {
+            constant = fieldConfig.constant;
+        }
+
+        variable = fieldConfig.variable;
+        expression = fieldConfig.expression == null ? null : (Expression)fieldConfig.expression.clone();
+
+        operations = new HashSet<String>();
+        operations.addAll(fieldConfig.operations);
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        EntryFieldConfig fieldConfig = (EntryFieldConfig)super.clone();
+        fieldConfig.copy(this);
+        return fieldConfig;
+    }
+
 }

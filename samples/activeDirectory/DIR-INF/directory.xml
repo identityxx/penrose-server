@@ -64,7 +64,7 @@
         <expression foreach="userPassword" var="p">
 import org.safehaus.penrose.util.*;
 if (p == void || p == null) return null;
-return PasswordUtil.toUnicodePassword(p);
+return ActiveDirectoryUtil.toUnicodePassword(p);
         </expression>
       </field>
       <field name="userAccountControl" operations="add">

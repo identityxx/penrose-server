@@ -53,15 +53,7 @@ return u.firstName+" "+u.lastName;
       <variable>u.lastName</variable>
     </at>
     <at name="userPassword">
-      <expression>
-import org.safehaus.penrose.util.*;
-
-if (u == void || u == null) return null;
-if (u.encPassword == void || u.encPassword == null) return null;
-
-byte[] bytes = BinaryUtil.decode("BigInteger", u.encPassword);
-return "{SHA}"+BinaryUtil.encode("Base64", bytes);
-      </expression>
+      <variable>u.password</variable>
     </at>
     <source alias="u">
       <source-name>users</source-name>
@@ -72,6 +64,7 @@ return "{SHA}"+BinaryUtil.encode("Base64", bytes);
         <expression>
 if (cn == void || cn == null) return null;
 int i = cn.lastIndexOf(" ");
+if (i &lt; 0) return null;
 return cn.substring(0, i);
         </expression>
       </field>
@@ -80,29 +73,12 @@ return cn.substring(0, i);
 if (sn != void &amp;&amp; sn != null) return sn;
 if (cn == void || cn == null) return null;
 int i = cn.lastIndexOf(" ");
+if (i &lt; 0) return cn;
 return cn.substring(i+1);
         </expression>
       </field>
-      <field name="encPassword">
-        <expression>import org.safehaus.penrose.util.*;
-if (userPassword == void || userPassword == null) return null;
-
-String method = PasswordUtil.getEncryptionMethod(userPassword);
-byte[] bytes;
-
-if (method == null) {
-    bytes = PasswordUtil.encrypt("SHA", userPassword);
-
-} else if ("SHA".equals(method)) {
-    String password = PasswordUtil.getEncryptedPassword(userPassword);
-    bytes = BinaryUtil.decode("Base64", password);
-
-} else {
-    throw new Exception("Unsupported encryption: "+method);
-}
-
-return BinaryUtil.encode("BigInteger", bytes);
-        </expression>
+      <field name="password">
+        <variable>userPassword</variable>
       </field>
     </source>
   </entry>
@@ -120,28 +96,16 @@ return BinaryUtil.encode("BigInteger", bytes);
     <at name="cn" rdn="true">
       <variable>g.groupname</variable>
     </at>
-    <at name="uniqueMember">
-      <expression foreach="ug.username" var="username">
-return "uid="+username+",ou=Users,dc=JDBC,dc=Example,dc=com";
-      </expression>
+    <at name="description">
+      <variable>g.description</variable>
     </at>
     <source alias="g">
       <source-name>groups</source-name>
       <field name="groupname">
         <variable>cn</variable>
       </field>
-    </source>
-    <source alias="ug">
-      <source-name>usergroups</source-name>
-      <field name="groupname">
-        <variable>g.groupname</variable>
-      </field>
-      <field name="username">
-        <expression foreach="uniqueMember" var="um">
-int i=um.indexOf("=");
-int j=um.indexOf(",");
-return um.substring(i+1, j);
-        </expression>
+      <field name="description">
+        <variable>description</variable>
       </field>
     </source>
   </entry>

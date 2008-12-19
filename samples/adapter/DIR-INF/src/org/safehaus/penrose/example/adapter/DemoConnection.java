@@ -75,7 +75,7 @@ public class DemoConnection extends Connection {
     ) throws Exception {
 
         DN dn = request.getDn();
-        byte[] password = request.getPassword();
+        String password = new String(request.getPassword());
 
         System.out.println("Binding as "+dn+" with password "+password+".");
 
@@ -91,7 +91,7 @@ public class DemoConnection extends Connection {
             throw LDAP.createException(LDAP.NO_SUCH_ATTRIBUTE);
         }
 
-        if (!PasswordUtil.comparePassword(password, userPassword)) {
+        if (!PasswordUtil.validate(password, userPassword)) {
             throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
         }
     }

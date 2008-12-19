@@ -122,26 +122,8 @@ return null;
       <field name="homeDirectory">
         <variable>homeDirectory</variable>
       </field>
-      <field name="userPassword">
-        <expression>
-import org.safehaus.penrose.util.*;
-
-if (userPassword == void || userPassword == null) return;
-
-String method = PasswordUtil.getEncryptionMethod(userPassword);
-
-if (method == null) {
-    return PasswordUtil.encrypt("crypt", userPassword);
-
-} else if ("crypt".equals(method)) {
-    return PasswordUtil.getEncryptedPassword(userPassword);
-
-} else {
-    throw new Exception("Unsupported encryption: "+method);
-}
-
-return bytes;
-        </expression>
+      <field name="userPassword" encryption="crypt">
+        <variable>userPassword</variable>
       </field>
       <field name="loginShell">
         <variable>loginShell</variable>
@@ -158,26 +140,8 @@ return bytes;
       <field name="uid">
         <variable>u.uid</variable>
       </field>
-      <field name="userPassword">
-        <expression>
-import org.safehaus.penrose.util.*;
-
-if (userPassword == void || userPassword == null) return;
-
-String method = PasswordUtil.getEncryptionMethod(userPassword);
-
-if (method == null) {
-    return PasswordUtil.encrypt("crypt", userPassword);
-
-} else if ("crypt".equals(method)) {
-    return PasswordUtil.getEncryptedPassword(userPassword);
-
-} else {
-    throw new Exception("Unsupported encryption: "+method);
-}
-
-return bytes;
-        </expression>
+      <field name="userPassword" encryption="crypt">
+        <variable>userPassword</variable>
       </field>
       <field name="description">
         <variable>description</variable>

@@ -96,9 +96,9 @@ public class DirectoryWriter {
         }
 
         Collection<EntryAttributeConfig> attributes = entryConfig.getAttributeConfigs();
-        for (EntryAttributeConfig attribute : attributes) {
+        for (EntryAttributeConfig attributeConfig : attributes) {
 
-            Element child = createElement(attribute);
+            Element child = createElement(attributeConfig);
             if (child == null) continue;
 
             element.add(child);
@@ -140,6 +140,7 @@ public class DirectoryWriter {
         Element element = new DefaultElement("at");
         element.add(new DefaultAttribute("name", attributeConfig.getName()));
         if (attributeConfig.isRdn()) element.add(new DefaultAttribute("rdn", "true"));
+        if (attributeConfig.getEncryption() != null) element.add(new DefaultAttribute("encryption", attributeConfig.getEncryption()));
 
         if (attributeConfig.getConstant() != null) {
             Object value = attributeConfig.getConstant();
@@ -416,6 +417,7 @@ public class DirectoryWriter {
     public Element createElement(EntryFieldConfig fieldConfig) throws Exception {
         Element element = new DefaultElement("field");
         element.add(new DefaultAttribute("name", fieldConfig.getName()));
+        if (fieldConfig.getEncryption() != null) element.add(new DefaultAttribute("encryption", fieldConfig.getEncryption()));
 
         if (!fieldConfig.getOperations().isEmpty()) {
             StringBuilder sb = new StringBuilder();

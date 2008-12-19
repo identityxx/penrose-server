@@ -5,34 +5,87 @@
 
 <sources>
 
-  <source name="users">
-    <connection-name>MySQL</connection-name>
+  <source name="plain">
+    <connection-name>Database</connection-name>
     <field name="username" primaryKey="true"/>
     <field name="firstName"/>
     <field name="lastName"/>
-    <field name="encPassword"/>
+    <field name="password"/>
     <parameter>
       <param-name>table</param-name>
-      <param-value>users</param-value>
+      <param-value>plain</param-value>
     </parameter>
   </source>
 
-  <source name="groups">
-    <connection-name>MySQL</connection-name>
-    <field name="groupname" primaryKey="true"/>
-    <parameter>
-      <param-name>table</param-name>
-      <param-value>groups</param-value>
-    </parameter>
-  </source>
-
-  <source name="usergroups">
-    <connection-name>MySQL</connection-name>
-    <field name="groupname" primaryKey="true"/>
+  <source name="crypt">
+    <connection-name>Database</connection-name>
     <field name="username" primaryKey="true"/>
+    <field name="firstName"/>
+    <field name="lastName"/>
+    <field name="password"/>
     <parameter>
       <param-name>table</param-name>
-      <param-value>usergroups</param-value>
+      <param-value>crypt</param-value>
+    </parameter>
+  </source>
+
+  <source name="crypt_md5">
+    <connection-name>Database</connection-name>
+    <field name="username" primaryKey="true"/>
+    <field name="firstName"/>
+    <field name="lastName"/>
+    <field name="password"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>crypt_md5</param-value>
+    </parameter>
+  </source>
+
+  <source name="crypt_sha256">
+    <connection-name>Database</connection-name>
+    <field name="username" primaryKey="true"/>
+    <field name="firstName"/>
+    <field name="lastName"/>
+    <field name="password"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>crypt_sha256</param-value>
+    </parameter>
+  </source>
+
+  <source name="crypt_sha512">
+    <connection-name>Database</connection-name>
+    <field name="username" primaryKey="true"/>
+    <field name="firstName"/>
+    <field name="lastName"/>
+    <field name="password"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>crypt_sha512</param-value>
+    </parameter>
+  </source>
+
+  <source name="md5">
+    <connection-name>Database</connection-name>
+    <field name="username" primaryKey="true"/>
+    <field name="firstName"/>
+    <field name="lastName"/>
+    <field name="password"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>md5</param-value>
+    </parameter>
+  </source>
+
+  <source name="sha">
+    <connection-name>Database</connection-name>
+    <field name="username" primaryKey="true"/>
+    <field name="firstName"/>
+    <field name="lastName"/>
+    <field name="password"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>sha</param-value>
     </parameter>
   </source>
 

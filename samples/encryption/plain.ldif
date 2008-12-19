@@ -1,0 +1,63 @@
+Adding User
+-----------
+
+$ ldapadd -h localhost -p 10389 -x -D uid=admin,ou=system -w secret
+dn: uid=test,ou=Plain,dc=Encryption,dc=Example,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+cn: Test User
+sn: User
+uid: test
+userPassword: secret
+
+Searching User
+--------------
+
+$ ldapsearch -h localhost -p 10389 -x \
+    -D "uid=admin,ou=system" -w secret \
+    -b "ou=Plain,dc=Encryption,dc=Example,dc=com"
+
+dn: uid=test,ou=Plain,dc=Encryption,dc=Example,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+cn: Test User
+sn: User
+uid: test
+userPassword: secret
+
+Updating Password
+-----------------
+
+$ ldapmodify -h localhost -p 10389 -x -D uid=admin,ou=system -w secret
+dn: uid=test,ou=Plain,dc=Encryption,dc=Example,dc=com
+userPassword: secret
+
+Validating Password
+-------------------
+
+$ ldapsearch -h localhost -p 10389 -x \
+    -D "uid=test,ou=Plain,dc=Encryption,dc=Example,dc=com" -w secret \
+    -b "uid=test,ou=Plain,dc=Encryption,dc=Example,dc=com"
+
+dn: uid=test,ou=Plain,dc=Encryption,dc=Example,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+cn: Test User
+sn: User
+uid: test
+userPassword:: c2VjcmV0
+
+Decoding Password
+-----------------
+
+$ echo c2VjcmV0 | base64 -d
+secret
+
+Deleting User
+-------------
+
+$ ldapdelete -h localhost -p 10389 -x -D uid=admin,ou=system -w secret
+uid=test,ou=Plain,dc=Encryption,dc=Example,dc=com

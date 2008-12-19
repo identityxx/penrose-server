@@ -353,7 +353,7 @@ public class Session {
 
             Integer messageId = request.getMessageId();
             DN dn = request.getDn();
-            byte[] password = request.getPassword();
+            String password = new String(request.getPassword());
 
             if (warn) log.warn("Session "+ sessionName +" ("+messageId+"): Bind "+(dn.isEmpty() ? "anonymously" : "as "+request.getDn())+".");
 
@@ -363,7 +363,7 @@ public class Session {
                 log.debug(" - Session        : "+ sessionName);
                 log.debug(" - Message        : "+messageId);
                 log.debug(" - Bind DN        : "+dn);
-                log.debug(" - Bind Password  : "+(password == null ? "" : new String(password)));
+                log.debug(" - Bind Password  : "+password);
                 log.debug(TextUtil.repeat("-", 70));
 
                 log.debug("Controls: "+request.getControls());
@@ -377,7 +377,7 @@ public class Session {
             	eventManager.postEvent(beforeBindEvent);
         	}
             
-            if (dn.isEmpty() || password == null || password.length == 0) {
+            if (dn.isEmpty() || password.length() == 0) {
                 log.debug("Bound as anonymous user.");
                 bindDn = null;
                 rootUser = false;
@@ -388,7 +388,7 @@ public class Session {
             byte[] rootPassword = penroseConfig.getRootPassword();
 
             if (rootDn.matches(dn)) {
-                if (PasswordUtil.comparePassword(password, rootPassword)) {
+                if (PasswordUtil.validate(password, rootPassword)) {
                     log.debug("Bound as root user.");
                     bindDn = rootDn;
                     rootUser = true;

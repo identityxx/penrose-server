@@ -19,8 +19,8 @@ package org.safehaus.penrose.management;
 
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseConfig;
-import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.util.PasswordUtil;
+import org.safehaus.penrose.ldap.DN;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,7 +75,7 @@ public class PenroseAuthenticator implements JMXAuthenticator {
 
         try {
             if (!rootDn.matches(bindDn) ||
-                    !PasswordUtil.comparePassword(bindPassword, rootPassword)) {
+                    !PasswordUtil.validate(bindPassword, rootPassword)) {
                 throw new SecurityException("Authentication failed.");
             }
 

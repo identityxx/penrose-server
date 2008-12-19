@@ -1,16 +1,7 @@
-insert into users (username, firstName, lastName, encPassword, password) values ('jstockton', 'Jim', 'Stockton', '29609449ad6a267aac664f9c1d9c267b54aade19', 'j5t0ckt0n');
-insert into users (username, firstName, lastName, encPassword, password) values ('swhite', 'Scott', 'White', '1c60f10728e0f6878d60f7345225a8c680844d19', 'swh1t3');
-insert into users (username, firstName, lastName, encPassword, password) values ('pfarmer', 'Pete', 'Farmer', 'e7beca51ea8907ea427f538c73638058401ff795', 'pf4rm3r');
-insert into users (username, firstName, lastName, encPassword, password) values ('lwalker', 'Lee', 'Walker', 'ed7369e175739f26aa2f421a67e3d8a66d753bdd', 'lw4lk3r');
-insert into users (username, firstName, lastName, encPassword, password) values ('alange', 'Andy', 'Lange', '545308e67a464b01c7b56d12b21b46d41e88d99b', '4l4ng3');
-
-insert into groups (groupname) values ('manager');
-insert into groups (groupname) values ('administrator');
-insert into groups (groupname) values ('user');
-
-insert into usergroups values ('manager', 'jstockton');
-insert into usergroups values ('administrator', 'swhite');
-insert into usergroups values ('user', 'jstockton');
-insert into usergroups values ('user', 'swhite');
-insert into usergroups values ('user', 'alange');
-insert into usergroups values ('user', 'lwalker');
+insert into plain        values ('test', 'Test', 'User', 'secret');
+insert into crypt        values ('test', 'Test', 'User', 'wPxOpps4WpMOc');
+insert into crypt_md5    values ('test', 'Test', 'User', '$1$P8F0Mw.v$sHsTz3T0SE611JVRLGc9Z/');
+insert into crypt_sha256 values ('test', 'Test', 'User', '$5$PaqcuLAUsfMjEQ7L$sJtxfU.E3Ps.SVfKILCrQK8bRiSXpSutB68QK.ZbjJ3');
+insert into crypt_sha512 values ('test', 'Test', 'User', '$6$S7X8oV4fKB8Y1awF$47Pw7pYapEYJBrAzlPujWPnCnzSp8GBPQIrQNbWS8KwA2Xjo0Ji9UOdeRXgd5l0KgRYf6cPlLmbGuI8LCjOtw1');
+insert into md5          values ('test', 'Test', 'User', 'Xr4ilOzQ4PCOq3aQ0qbuaQ==');
+insert into sha          values ('test', 'Test', 'User', '5en6G6MezRroT3XKqkdPOmY/BfQ=');

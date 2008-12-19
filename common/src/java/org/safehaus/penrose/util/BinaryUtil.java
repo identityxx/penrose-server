@@ -34,6 +34,21 @@ public class BinaryUtil {
     public static String BASE64      = "Base64";
     public static String BIG_INTEGER = "BigInteger";
 
+    public static String toHex(byte[] bytes) {
+        return toHex(bytes, 0, bytes.length);
+    }
+
+    public static String toHex(byte[] bytes, int offset, int length) {
+        StringBuilder sb = new StringBuilder();
+        for (int i=0; i<length; i++) {
+            byte b = bytes[offset+i];
+            String s = Integer.toHexString(0xff & b);
+            if (s.length() == 1) sb.append("0");
+            sb.append(s);
+        }
+        return sb.toString();
+    }
+
     public static String encode(byte[] bytes) throws Exception {
         return encode(null, bytes);
     }
@@ -47,19 +62,12 @@ public class BinaryUtil {
         if (bytes == null) return null;
 
         if (offset + length > bytes.length) length = bytes.length - offset;
-
+/*
         if (debug) {
             log.debug("Encoding "+length+" byte(s) with "+encoding+":");
-            StringBuilder sb = new StringBuilder();
-            for (int i=0; i<length; i++) {
-                byte b = bytes[offset+i];
-                String s = Integer.toHexString(0xff & b);
-                if (s.length() == 1) s = "0"+s;
-                sb.append(s);
-            }
-            log.debug(" - before: ["+sb+"]");
+            log.debug("Before: ["+toHex(bytes, offset, length)+"]");
         }
-
+*/
         String string;
 
         if (BASE64.equals(encoding)) {
@@ -79,9 +87,9 @@ public class BinaryUtil {
         } else {
             string = new String(bytes, offset, length);
         }
-
-        if (debug) log.debug(" - after : ["+string+"]");
-
+/*
+        if (debug) log.debug("After : ["+string+"]");
+*/
         return string;
     }
 
@@ -91,11 +99,12 @@ public class BinaryUtil {
 
     public static byte[] decode(String encoding, String string) throws Exception {
         if (string == null) return null;
-
+/*
         if (debug) {
             log.debug("Encoding "+string.length()+" char(s) with "+encoding+":");
-            log.debug(" - before: ["+string+"]");
+            log.debug("Before: ["+string+"]");
         }
+*/
         byte[] bytes;
 
         if (BASE64.equals(encoding)) {
@@ -120,7 +129,7 @@ public class BinaryUtil {
         } else {
             bytes = string.getBytes();
         }
-
+/*
         if (debug) {
             StringBuilder sb = new StringBuilder();
             for (byte b : bytes) {
@@ -128,9 +137,9 @@ public class BinaryUtil {
                 if (s.length() == 1) s = "0"+s;
                 sb.append(s);
             }
-            log.debug(" - after : ["+sb+"]");
+            log.debug("After : ["+sb+"]");
         }
-
+*/
         return bytes;
     }
 }

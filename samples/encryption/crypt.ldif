@@ -1,0 +1,99 @@
+Adding User
+-----------
+
+$ ldapadd -h localhost -p 10389 -x -D uid=admin,ou=system -w secret
+dn: uid=test,ou=Crypt,dc=Encryption,dc=Example,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+cn: Test User
+sn: User
+uid: test
+userPassword: secret
+
+$ ldapadd -h localhost -p 10389 -x -D uid=admin,ou=system -w secret
+dn: uid=test,ou=Crypt,dc=Encryption,dc=Example,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+cn: Test User
+sn: User
+uid: test
+userPassword: {crypt}nHK1BpEA0HkVI
+
+Searching User
+--------------
+
+$ ldapsearch -h localhost -p 10389 -x \
+    -D "uid=admin,ou=system" -w secret \
+    -b "ou=Crypt,dc=Encryption,dc=Example,dc=com"
+
+dn: uid=test,ou=Crypt,dc=Encryption,dc=Example,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+cn: Test User
+sn: User
+uid: test
+userPassword:: e2NyeXB0fW5ISzFCcEVBMEhrVkk=
+
+Updating Password
+-----------------
+
+$ ldapmodify -h localhost -p 10389 -x -D uid=admin,ou=system -w secret
+dn: uid=test,ou=Crypt,dc=Encryption,dc=Example,dc=com
+userPassword: secret
+
+$ ldapmodify -h localhost -p 10389 -x -D uid=admin,ou=system -w secret
+dn: uid=test,ou=Crypt,dc=Encryption,dc=Example,dc=com
+userPassword: {crypt}nHK1BpEA0HkVI
+
+Validating Password
+-------------------
+
+$ ldapsearch -h localhost -p 10389 -x \
+    -D "uid=test,ou=Crypt,dc=Encryption,dc=Example,dc=com" -w secret \
+    -b "uid=test,ou=Crypt,dc=Encryption,dc=Example,dc=com"
+
+dn: uid=test,ou=Crypt,dc=Encryption,dc=Example,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+cn: Test User
+sn: User
+uid: test
+userPassword:: e2NyeXB0fW5ISzFCcEVBMEhrVkk=
+
+Decoding Password
+-----------------
+
+$ echo e2NyeXB0fW5ISzFCcEVBMEhrVkk= | base64 -d
+{crypt}nHK1BpEA0HkVI
+
+Encrypting Password
+-------------------
+
+Take the first 2 characters from the password hash.
+
+$ password.sh crypt secret nH
+nHK1BpEA0HkVI
+
+Deleting Password
+-----------------
+
+$ ldapmodify -h localhost -p 10389 -x -D uid=admin,ou=system -w secret
+dn: uid=test,ou=Crypt,dc=Encryption,dc=Example,dc=com
+changetype: modify
+delete: userPassword
+
+$ ldapmodify -h localhost -p 10389 -x -D uid=admin,ou=system -w secret
+dn: uid=test,ou=Crypt,dc=Encryption,dc=Example,dc=com
+changetype: modify
+delete: userPassword
+userPassword: {crypt}nHK1BpEA0HkVI
+
+Deleting User
+-------------
+
+$ ldapdelete -h localhost -p 10389 -x -D uid=admin,ou=system -w secret
+uid=test,ou=Crypt,dc=Encryption,dc=Example,dc=com

@@ -33,12 +33,12 @@ public class EntryAttributeConfig implements Serializable, Cloneable {
     public final static String EXPRESSION = "EXPRESSION";
 
 	private String name;
+    private boolean rdn;
+    private String encryption;
 
     private Object constant;
     private String variable;
     private Expression expression;
-
-    private boolean rdn;
 
     public EntryAttributeConfig() {
     }
@@ -126,12 +126,21 @@ public class EntryAttributeConfig implements Serializable, Cloneable {
         this.variable = variable;
     }
 
+    public String getEncryption() {
+        return encryption;
+    }
+
+    public void setEncryption(String encryption) {
+        this.encryption = encryption;
+    }
+
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +
+                (rdn ? 0 : 1) +
+                (encryption == null ? 0 : encryption.hashCode()) +
                 (constant == null ? 0 : constant.hashCode()) +
                 (variable == null ? 0 : variable.hashCode()) +
-                (expression == null ? 0 : expression.hashCode()) +
-                (rdn ? 0 : 1);
+                (expression == null ? 0 : expression.hashCode());
     }
 
     boolean equals(Object o1, Object o2) {
@@ -147,6 +156,8 @@ public class EntryAttributeConfig implements Serializable, Cloneable {
 
         EntryAttributeConfig attributeConfig = (EntryAttributeConfig)object;
         if (!equals(name, attributeConfig.name)) return false;
+        if (rdn != attributeConfig.rdn) return false;
+        if (!equals(encryption, attributeConfig.encryption)) return false;
 
         if (constant instanceof byte[] && attributeConfig.constant instanceof byte[]) {
             if (!Arrays.equals((byte[])constant, (byte[])attributeConfig.constant)) return false;
@@ -156,13 +167,14 @@ public class EntryAttributeConfig implements Serializable, Cloneable {
 
         if (!equals(variable, attributeConfig.variable)) return false;
         if (!equals(expression, attributeConfig.expression)) return false;
-        if (rdn != attributeConfig.rdn) return false;
 
         return true;
     }
 
     public Object copy(EntryAttributeConfig attributeConfig) throws CloneNotSupportedException {
         name = attributeConfig.name;
+        rdn = attributeConfig.rdn;
+        encryption = attributeConfig.encryption;
 
         if (attributeConfig.constant instanceof byte[]) {
             constant = ((byte[])attributeConfig.constant).clone();
@@ -172,7 +184,6 @@ public class EntryAttributeConfig implements Serializable, Cloneable {
 
         variable = attributeConfig.variable;
         expression = attributeConfig.expression == null ? null : (Expression)attributeConfig.expression.clone();
-        rdn = attributeConfig.rdn;
 
         return attributeConfig;
     }

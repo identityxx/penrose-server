@@ -34,6 +34,7 @@
 <!ATTLIST at name CDATA #REQUIRED>
 <!ATTLIST at rdn (true|first|false) "false">
 <!ATTLIST at operational (true|false) "false">
+<!ATTLIST at encryption CDATA #REQUIRED>
 
 <!ELEMENT source (partition-name?,source-name?,mapping-name?,field*,parameter*)>
 <!ATTLIST source alias CDATA #IMPLIED>
@@ -59,6 +60,7 @@
 <!ELEMENT field (binary|constant|variable|expression)>
 <!ATTLIST field name CDATA #REQUIRED>
 <!ATTLIST field primaryKey (true|first|false) "false">
+<!ATTLIST field encryption CDATA #REQUIRED>
 
 <!ELEMENT binary (#PCDATA)>
 <!ELEMENT constant (#PCDATA)>

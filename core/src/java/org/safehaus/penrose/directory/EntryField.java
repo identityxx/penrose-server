@@ -121,6 +121,10 @@ public class EntryField implements Cloneable {
         return fieldConfig == null ? field.getExpression() : fieldConfig.getExpression();
     }
 
+    public String getEncryption() {
+        return fieldConfig.getEncryption();
+    }
+    
     public String toString() {
         return sourceName+"."+name;
     }

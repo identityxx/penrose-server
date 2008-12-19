@@ -1,19 +1,55 @@
-create table users (
+create table plain (
     username varchar(50),
     firstName varchar(50),
     lastName varchar(50),
-    encPassword varchar(255),
-    password varchar(10),
+    password varchar(255),
     primary key (username)
 );
 
-create table groups (
-    groupname varchar(50),
-    primary key (groupname)
+create table crypt (
+    username varchar(50),
+    firstName varchar(50),
+    lastName varchar(50),
+    password varchar(255),
+    primary key (username)
 );
 
-create table usergroups (
-    groupname varchar(50),
+create table crypt_md5 (
     username varchar(50),
-    primary key (groupname, username)
+    firstName varchar(50),
+    lastName varchar(50),
+    password varchar(255),
+    primary key (username)
+);
+
+create table crypt_sha256 (
+    username varchar(50),
+    firstName varchar(50),
+    lastName varchar(50),
+    password varchar(255),
+    primary key (username)
+);
+
+create table crypt_sha512 (
+    username varchar(50),
+    firstName varchar(50),
+    lastName varchar(50),
+    password varchar(255),
+    primary key (username)
+);
+
+create table md5 (
+    username varchar(50),
+    firstName varchar(50),
+    lastName varchar(50),
+    password varchar(255),
+    primary key (username)
+);
+
+create table sha (
+    username varchar(50),
+    firstName varchar(50),
+    lastName varchar(50),
+    password varchar(255),
+    primary key (username)
 );

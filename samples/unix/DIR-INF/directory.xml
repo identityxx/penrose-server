@@ -51,15 +51,8 @@
     <at name="homeDirectory">
       <variable>u.homeDirectory</variable>
     </at>
-    <at name="userPassword">
-      <expression>
-import org.safehaus.penrose.util.*;
-
-if (u == void || u == null) return;
-if (u.userPassword == void || u.userPassword == null) return;
-
-return "{crypt}"+u.userPassword;
-      </expression>
+    <at name="userPassword" encryption="crypt">
+      <variable>u.userPassword</variable>
     </at>
     <at name="loginShell">
       <variable>u.loginShell</variable>
@@ -84,26 +77,8 @@ return "{crypt}"+u.userPassword;
       <field name="homeDirectory">
         <variable>homeDirectory</variable>
       </field>
-      <field name="userPassword">
-        <expression>
-import org.safehaus.penrose.util.*;
-
-if (userPassword == void || userPassword == null) return;
-
-String method = PasswordUtil.getEncryptionMethod(userPassword);
-
-if (method == null) {
-    return PasswordUtil.encrypt("crypt", userPassword);
-
-} else if ("crypt".equals(method)) {
-    return PasswordUtil.getEncryptedPassword(userPassword);
-
-} else {
-    throw new Exception("Unsupported encryption: "+method);
-}
-
-return bytes;
-        </expression>
+      <field name="userPassword" encryption="crypt">
+        <variable>userPassword</variable>
       </field>
       <field name="loginShell">
         <variable>loginShell</variable>

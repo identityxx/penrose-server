@@ -629,7 +629,7 @@ public class Entry implements Cloneable {
             log.debug(TextUtil.displaySeparator(80));
         }
 
-        byte[] password = request.getPassword();
+        String password = new String(request.getPassword());
 
         SearchResult searchResult = find(dn);
 
@@ -644,7 +644,7 @@ public class Entry implements Cloneable {
         Collection<Object> userPasswords = attribute.getValues();
         for (Object userPassword : userPasswords) {
             if (debug) log.debug("userPassword: " + userPassword);
-            if (PasswordUtil.comparePassword(password, userPassword)) return;
+            if (PasswordUtil.validate(password, userPassword)) return;
         }
 
         throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
@@ -1130,6 +1130,11 @@ public class Entry implements Cloneable {
             Object value = interpreter.eval(attributeConfig);
             //if (debug) log.debug("Attribute "+name+": "+value);
             if (value == null || value.toString().trim().equals("")) continue;
+
+            String encryption = attributeConfig.getEncryption();
+            if (encryption != null) {
+                value = "{"+encryption+"}"+value;
+            }
 
             if (value instanceof Collection) {
                 attributes.addValues(name, (Collection<Object>) value);

@@ -29,6 +29,7 @@ import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.pipeline.SOPipeline;
 import org.safehaus.penrose.mapping.Mapping;
 import org.safehaus.penrose.mapping.MappingRule;
+import org.safehaus.penrose.password.Password;
 
 import java.util.*;
 
@@ -113,10 +114,26 @@ public class DynamicEntry extends Entry implements Cloneable {
             interpreter.set(attributeName, attributeValue);
         }
 
-        EntrySource source = getSource();
+        for (EntrySource source : getSources()) {
+            add(session, request, response, sourceValues, interpreter, source);
+        }
+    }
+
+    public void add(
+            Session session,
+            AddRequest request,
+            AddResponse response,
+            SourceAttributes sourceValues,
+            Interpreter interpreter,
+            EntrySource source
+    ) throws Exception {
+
+        if (debug) log.debug("Adding source "+source.getAlias()+".");
+
         Attributes sourceAttributes = sourceValues.get(source.getAlias());
 
-        if (debug) log.debug("Computing target attributes:");
+        if (debug) log.debug("Target attributes:");
+
         Attributes newAttributes = new Attributes();
         RDNBuilder rb = new RDNBuilder();
         for (EntryField field : source.getFields()) {
@@ -127,11 +144,11 @@ public class DynamicEntry extends Entry implements Cloneable {
             Attribute attribute = sourceAttributes == null ? null : sourceAttributes.get(field.getName());
             Object value = attribute == null ? null : attribute.getValue();
 
-            if (value == null) {
-                value = interpreter.eval(field);
-            }
-
+            if (value == null) value = interpreter.eval(field);
             if (value == null) continue;
+
+            String encryption = field.getEncryption();
+            if (encryption != null) value = encrypt(encryption, value);
 
             String fieldName = field.getOriginalName();
             boolean primaryKey = field.getField().isPrimaryKey();
@@ -142,11 +159,13 @@ public class DynamicEntry extends Entry implements Cloneable {
             if (primaryKey) rb.set(fieldName, value);
         }
 
-        DN targetDn = new DN(rb.toRdn());
+        Object targetDn = sourceAttributes == null ? null : sourceAttributes.getValue("dn");
+
+        if (targetDn == null) targetDn = rb.toRdn().toString();
         log.debug("Target DN: "+targetDn);
 
         AddRequest newRequest = new AddRequest(request);
-        newRequest.setDn(targetDn);
+        newRequest.setDn(targetDn.toString());
         newRequest.setAttributes(newAttributes);
 
         source.add(session, newRequest, response);
@@ -310,10 +329,7 @@ public class DynamicEntry extends Entry implements Cloneable {
                 Attribute attribute = sourceAttributes == null ? null : sourceAttributes.get(field.getName());
                 Object value = attribute == null ? null : attribute.getValue();
 
-                if (value == null) {
-                    value = interpreter.eval(field);
-                }
-
+                if (value == null) value = interpreter.eval(field);
                 if (value == null) continue;
 
                 String fieldName = field.getOriginalName();
@@ -338,7 +354,10 @@ public class DynamicEntry extends Entry implements Cloneable {
             Collection<String> operations = field.getOperations();
             if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.COMPARE)) continue;
 
-            Object value = interpreter.eval(field);
+            Attribute attribute = sourceAttributes == null ? null : sourceAttributes.get(field.getName());
+            Object value = attribute == null ? null : attribute.getValue();
+
+            if (value == null) value = interpreter.eval(field);
             if (value == null) continue;
 
             if (value instanceof Collection) {
@@ -409,7 +428,32 @@ public class DynamicEntry extends Entry implements Cloneable {
             sourceValues.print();
         }
 
-        EntrySource source = getSource();
+        Interpreter interpreter = partition.newInterpreter();
+        interpreter.set(sourceValues);
+
+        RDN rdn = request.getDn().getRdn();
+        for (String attributeName : rdn.getNames()) {
+            Object attributeValue = rdn.get(attributeName);
+
+            interpreter.set(attributeName, attributeValue);
+        }
+
+        for (EntrySource source : getSources()) {
+            delete(session, request, response, sourceValues, interpreter, source);
+        }
+    }
+
+    public void delete(
+            Session session,
+            DeleteRequest request,
+            DeleteResponse response,
+            SourceAttributes sourceValues,
+            Interpreter interpreter,
+            EntrySource source
+    ) throws Exception {
+
+        if (debug) log.debug("Deleting source "+source.getAlias()+".");
+
         Attributes sourceAttributes = sourceValues.get(source.getAlias());
 
         Object targetDn = sourceAttributes == null ? null : sourceAttributes.getValue("dn");
@@ -418,19 +462,8 @@ public class DynamicEntry extends Entry implements Cloneable {
 
             if (debug) log.debug("Computing target DN:");
 
-            Interpreter interpreter = partition.newInterpreter();
-            interpreter.set(sourceValues);
-
-            RDN rdn = request.getDn().getRdn();
-            for (String attributeName : rdn.getNames()) {
-                Object attributeValue = rdn.get(attributeName);
-
-                interpreter.set(attributeName, attributeValue);
-            }
-
             RDNBuilder rb = new RDNBuilder();
 
-            if (debug) log.debug("Target values:");
             for (EntryField field : source.getPrimaryKeyFields()) {
 
                 Collection<String> operations = field.getOperations();
@@ -439,10 +472,7 @@ public class DynamicEntry extends Entry implements Cloneable {
                 Attribute attribute = sourceAttributes == null ? null : sourceAttributes.get(field.getName());
                 Object value = attribute == null ? null : attribute.getValue();
 
-                if (value == null) {
-                    value = interpreter.eval(field);
-                }
-
+                if (value == null) value = interpreter.eval(field);
                 if (value == null) continue;
 
                 String fieldName = field.getOriginalName();
@@ -501,8 +531,6 @@ public class DynamicEntry extends Entry implements Cloneable {
             sourceValues.print();
         }
 
-        EntrySource source = getSource();
-
         Interpreter interpreter = partition.newInterpreter();
         interpreter.set(sourceValues);
 
@@ -513,9 +541,25 @@ public class DynamicEntry extends Entry implements Cloneable {
             interpreter.set(attributeName, attributeValue);
         }
 
-        Attributes attributes = sourceValues.get(source.getAlias());
+        for (EntrySource source : getSources()) {
+            modify(session, request, response, sourceValues, interpreter, source);
+        }
+    }
 
-        Object targetDn = attributes == null ? null : attributes.getValue("dn");
+    public void modify(
+            Session session,
+            ModifyRequest request,
+            ModifyResponse response,
+            SourceAttributes sourceValues,
+            Interpreter interpreter,
+            EntrySource source
+    ) throws Exception {
+
+        if (debug) log.debug("Modifying source "+source.getAlias()+".");
+
+        Attributes sourceAttributes = sourceValues.get(source.getAlias());
+
+        Object targetDn = sourceAttributes == null ? null : sourceAttributes.getValue("dn");
 
         if (targetDn == null) {
 
@@ -527,13 +571,10 @@ public class DynamicEntry extends Entry implements Cloneable {
                 Collection<String> operations = field.getOperations();
                 if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.MODIFY)) continue;
 
-                Attribute attribute = attributes == null ? null : attributes.get(field.getName());
+                Attribute attribute = sourceAttributes == null ? null : sourceAttributes.get(field.getName());
                 Object value = attribute == null ? null : attribute.getValue();
 
-                if (value == null) {
-                    value = interpreter.eval(field);
-                }
-
+                if (value == null) value = interpreter.eval(field);
                 if (value == null) continue;
 
                 String fieldName = field.getOriginalName();
@@ -553,10 +594,10 @@ public class DynamicEntry extends Entry implements Cloneable {
         for (Modification modification : modifications) {
 
             int type = modification.getType();
-            Attribute attribute = modification.getAttribute();
+            Attribute modificationAttribute = modification.getAttribute();
 
-            String attributeName = attribute.getName();
-            Collection attributeValues = attribute.getValues();
+            String attributeName = modificationAttribute.getName();
+            Collection attributeValues = modificationAttribute.getValues();
 
             if (debug) {
                 switch (type) {
@@ -579,20 +620,26 @@ public class DynamicEntry extends Entry implements Cloneable {
             switch (type) {
                 case Modification.ADD:
                 case Modification.REPLACE:
-                    for (EntryField fieldRef : source.getFields()) {
+                    for (EntryField field : source.getFields()) {
 
-                        Collection<String> operations = fieldRef.getOperations();
+                        Collection<String> operations = field.getOperations();
                         if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.MODIFY)) continue;
 
-                        String fieldName = fieldRef.getName();
-                        if (fieldRef.isPrimaryKey()) continue;
+                        String fieldName = field.getName();
+                        if (field.isPrimaryKey()) continue;
 
-                        Object value = interpreter.eval(fieldRef);
+                        Attribute attribute = sourceAttributes == null ? null : sourceAttributes.get(field.getName());
+                        Object value = attribute == null ? null : attribute.getValue();
+
+                        if (value == null) value = interpreter.eval(field);
                         if (value == null) continue;
+
+                        String encryption = field.getEncryption();
+                        if (encryption != null) value = encrypt(encryption, value);
 
                         if (debug) log.debug(" => Replacing field " + fieldName + ": " + value);
 
-                        Attribute newAttribute = new Attribute(fieldRef.getOriginalName());
+                        Attribute newAttribute = new Attribute(field.getOriginalName());
                         if (value instanceof Collection) {
                             Collection list = (Collection)value;
                             for (Object v : list) {
@@ -606,36 +653,51 @@ public class DynamicEntry extends Entry implements Cloneable {
                     break;
 
                 case Modification.DELETE:
-                    for (EntryField fieldRef : source.getFields()) {
+                    for (EntryField field : source.getFields()) {
 
-                        Collection<String> operations = fieldRef.getOperations();
+                        Collection<String> operations = field.getOperations();
                         if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.MODIFY)) continue;
 
-                        String fieldName = fieldRef.getName();
+                        String fieldName = field.getName();
+                        if (field.isPrimaryKey()) continue;
 
-                        String variable = fieldRef.getVariable();
-                        if (variable == null) {
-                            Object value = interpreter.eval(fieldRef);
-                            if (value == null) continue;
+                        Attribute attribute = sourceAttributes == null ? null : sourceAttributes.get(field.getName());
+                        Object value = attribute == null ? null : attribute.getValue();
 
-                            if (debug) log.debug(" ==> Deleting field " + fieldName + ": "+value);
+                        if (value == null) value = interpreter.eval(field);
+                        if (value == null) continue;
 
-                            Attribute newAttribute = new Attribute(fieldRef.getOriginalName());
+                        String encryption = field.getEncryption();
+                        if (encryption != null) value = encrypt(encryption, value);
+
+                        if (debug) log.debug(" ==> Deleting field " + fieldName + ": "+value);
+
+                        Attribute newAttribute = new Attribute(field.getOriginalName());
+                        if (value instanceof Collection) {
+                            Collection list = (Collection)value;
+                            for (Object v : list) {
+                                newAttribute.addValue(v);
+                            }
+                        } else {
                             newAttribute.addValue(value);
-                            newModifications.add(new Modification(type, newAttribute));
+                        }
+                        newModifications.add(new Modification(type, newAttribute));
+/*
+                        String variable = field.getVariable();
+                        if (variable == null) {
 
                         } else {
                             if (!variable.equals(attributeName)) continue;
 
                             if (debug) log.debug(" ==> Deleting field " + fieldName + ": "+attributeValues);
 
-                            Attribute newAttribute = new Attribute(fieldRef.getOriginalName());
+                            Attribute newAttribute = new Attribute(field.getOriginalName());
                             for (Object value : attributeValues) {
                                 newAttribute.addValue(value);
                             }
                             newModifications.add(new Modification(type, newAttribute));
                         }
-
+*/
                     }
                     break;
             }
@@ -698,7 +760,22 @@ public class DynamicEntry extends Entry implements Cloneable {
             interpreter.set(attributeName, attributeValue);
         }
 
-        EntrySource source = getSource();
+        for (EntrySource source : getSources()) {
+            modrdn(session, request, response, sourceValues, interpreter, source);
+        }
+    }
+
+    public void modrdn(
+            Session session,
+            ModRdnRequest request,
+            ModRdnResponse response,
+            SourceAttributes sourceValues,
+            Interpreter interpreter,
+            EntrySource source
+    ) throws Exception {
+
+        if (debug) log.debug("Renaming source "+source.getAlias()+".");
+
         Attributes sourceAttributes = sourceValues.get(source.getAlias());
 
         Object targetDn = sourceAttributes == null ? null : sourceAttributes.getValue("dn");
@@ -716,10 +793,7 @@ public class DynamicEntry extends Entry implements Cloneable {
                 Attribute attribute = sourceAttributes == null ? null : sourceAttributes.get(field.getName());
                 Object value = attribute == null ? null : attribute.getValue();
 
-                if (value == null) {
-                    value = interpreter.eval(field);
-                }
-
+                if (value == null) value = interpreter.eval(field);
                 if (value == null) continue;
 
                 String fieldName = field.getOriginalName();
@@ -744,7 +818,10 @@ public class DynamicEntry extends Entry implements Cloneable {
         RDNBuilder rb = new RDNBuilder();
         for (EntryField field : source.getPrimaryKeyFields()) {
  
-            Object value = interpreter.eval(field);
+            Attribute attribute = sourceAttributes == null ? null : sourceAttributes.get(field.getName());
+            Object value = attribute == null ? null : attribute.getValue();
+
+            if (value == null) value = interpreter.eval(field);
             if (value == null) continue;
 
             rb.set(field.getOriginalName(), value);
@@ -1752,5 +1829,49 @@ public class DynamicEntry extends Entry implements Cloneable {
         } else {
             lattributes.addValue(lfieldName, value);
         }
+    }
+
+    public Object encrypt(String encryption, Object value) throws Exception {
+
+        if (value instanceof Collection) {
+
+            Collection list = (Collection)value;
+            Collection<Object> newList = new HashSet<Object>();
+
+            for (Object v : list) {
+
+                if (debug) log.debug("Value: "+v+" ("+v.getClass()+")");
+
+                String password = (String)v;
+                if (password.startsWith("{")) {
+
+                    int i = password.indexOf("}");
+                    v = password.substring(i+1);
+
+                } else {
+                    v = new Password(encryption, password).encrypt();
+                }
+
+                newList.add(v);
+            }
+
+            value = newList;
+
+        } else {
+
+            if (debug) log.debug("Value: "+value+" ("+value.getClass()+")");
+
+            String password = (String)value;
+            if (password.startsWith("{")) {
+
+                int i = password.indexOf("}");
+                value = password.substring(i+1);
+
+            } else {
+                value = new Password(encryption, password).encrypt();
+            }
+        }
+
+        return value;
     }
 }
