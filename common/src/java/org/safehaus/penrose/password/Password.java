@@ -105,34 +105,34 @@ public class Password {
         return sb.toString();
     }
 
-    public static boolean validate(String method, String password, String hash) throws Exception {
+    public static boolean validate(String encryption, String password, String hash) throws Exception {
 
-        if (CRYPT.equalsIgnoreCase(method)) {
+        if (CRYPT.equalsIgnoreCase(encryption)) {
 
             if (hash.startsWith("$1$")) {
-                method = CRYPT_MD5;
+                encryption = CRYPT_MD5;
 
             } else if (hash.startsWith("$5$")) {
-                method = CRYPT_SHA256;
+                encryption = CRYPT_SHA256;
 
             } else if (hash.startsWith("$6$")) {
-                method = CRYPT_SHA512;
+                encryption = CRYPT_SHA512;
             }
         }
 
-        String newHash = new Password(method, password, hash, 0).encrypt();
+        String newHash = new Password(encryption, password, hash, 0).encrypt();
 
         if (debug) {
             log.debug("Validating passwords:");
-            if (method != null) log.debug(" - encryption: ["+method+"]");
-
+            log.debug(" - encryption: ["+encryption+"]");
+            log.debug(" - password  : ["+password+"]");
             log.debug(" - supplied  : ["+newHash+"]");
             log.debug(" - stored    : ["+hash+"]");
         }
 
         boolean result = newHash.equals(hash);
 
-        if (debug) log.debug(" - result    : "+result);
+        if (debug) log.debug("Result    : "+result);
 
         return result;
     }
