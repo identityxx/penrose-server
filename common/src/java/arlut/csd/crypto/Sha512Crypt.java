@@ -150,6 +150,11 @@ public final class Sha512Crypt
 	    rounds = Math.max(ROUNDS_MIN, Math.min(srounds, ROUNDS_MAX));
 	  }
 
+    if (saltStr.indexOf('$') != -1)
+      {
+        saltStr = saltStr.substring(0, saltStr.indexOf('$'));
+      }
+
 	if (saltStr.length() > SALT_LEN_MAX)
 	  {
 	    saltStr = saltStr.substring(0, SALT_LEN_MAX);
