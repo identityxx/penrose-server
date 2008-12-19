@@ -15,12 +15,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.util;
+package org.safehaus.penrose.ad;
+
+import org.safehaus.penrose.util.BinaryUtil;
 
 /**
  * @author Endi S. Dewata
  */
-public class ActiveDirectoryUtil {      
+public class ActiveDirectory {
 
     public static byte[] toUnicodePassword(Object password) throws Exception {
         String newPassword;

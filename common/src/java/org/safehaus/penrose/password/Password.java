@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.vps.crypt.Crypt;
 import org.safehaus.penrose.util.BinaryUtil;
+import org.safehaus.penrose.samba.SambaUtil;
 import gnu.getopt.LongOpt;
 import gnu.getopt.Getopt;
 
@@ -34,6 +35,9 @@ public class Password {
     public final static String CRYPT_MD5    = "crypt-md5";
     public final static String CRYPT_SHA256 = "crypt-sha256";
     public final static String CRYPT_SHA512 = "crypt-sha512";
+
+    public final static String NT           = "nt";
+    public final static String LM           = "lm";
 
     public static String SALT_CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./";
 
@@ -95,6 +99,14 @@ public class Password {
             salt = salt == null ? createSalt(16) : salt;
 
             result = Sha512Crypt.Sha512_crypt(password, salt, rounds);
+
+        } else if (NT.equalsIgnoreCase(encryption)) {
+
+            result = SambaUtil.encryptNTPassword(password);
+
+        } else if (LM.equalsIgnoreCase(encryption)) {
+
+            result = SambaUtil.encryptLMPassword(password);
 
         } else {
 
@@ -163,7 +175,7 @@ public class Password {
         System.out.println("  crypt-sha512 <password> [salt [rounds]]");
         System.out.println("  md5          <password>");
         System.out.println("  sha          <password>");
-        System.out.println("  <encryption>     <password>");
+        System.out.println("  <encryption> <password>");
     }
 
     public static void main(String args[]) throws Exception {

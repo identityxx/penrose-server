@@ -3,7 +3,7 @@ package org.safehaus.penrose.example.adapter;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.util.PasswordUtil;
+import org.safehaus.penrose.ldap.LDAPPassword;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterEvaluator;
 import org.safehaus.penrose.naming.PenroseContext;
@@ -69,12 +69,12 @@ public class DemoSource extends Source {
             throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
         }
 
-        Object userPassword = attributes.getValue("userPassword");
+        String userPassword = (String)attributes.getValue("userPassword");
         if (userPassword == null) {
             throw LDAP.createException(LDAP.NO_SUCH_ATTRIBUTE);
         }
 
-        if (!PasswordUtil.validate(password, userPassword)) {
+        if (!LDAPPassword.validate(password, userPassword)) {
             throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
         }
     }

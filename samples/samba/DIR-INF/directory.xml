@@ -135,16 +135,8 @@ return u.home_drive+u.home_path;
     <at name="sambaBadPasswordTime">
       <variable>u.bad_password_time</variable>
     </at>
-    <at name="userPassword">
-      <expression>
-import org.safehaus.penrose.util.*;
-
-if (u == void || u == null) return null;
-if (u.encPassword == void || u.encPassword == null) return null;
-
-byte[] bytes = BinaryUtil.decode("BigInteger", u.encPassword);
-return "{SHA}"+BinaryUtil.encode("Base64", bytes);
-      </expression>
+    <at name="userPassword" encryption="sha">
+      <variable>u.password</variable>
     </at>
     <source alias="u">
       <source-name>users</source-name>
@@ -234,72 +226,14 @@ return cn.substring(i+1);
       <field name="bad_password_time">
         <variable>sambaBadPasswordTime</variable>
       </field>
-      <field name="encPassword">
-        <expression>import org.safehaus.penrose.util.*;
-if (userPassword == void || userPassword == null) return null;
-
-String method = PasswordUtil.getEncryptionMethod(userPassword);
-byte[] bytes;
-
-if (method == null) {
-    bytes = PasswordUtil.encrypt("SHA", userPassword);
-
-} else if ("SHA".equals(method)) {
-    String password = PasswordUtil.getEncryptedPassword(userPassword);
-    bytes = BinaryUtil.decode("Base64", password);
-
-} else {
-    throw new Exception("Unsupported encryption: "+method);
-}
-
-return BinaryUtil.encode("BigInteger", bytes);
-        </expression>
+      <field name="password" encryption="sha">
+        <variable>userPassword</variable>
       </field>
-      <field name="lm_password">
-        <expression>
-import org.safehaus.penrose.util.*;
-
-if (userPassword == void || userPassword == null) return sambaLMPassword;
-
-String method = PasswordUtil.getEncryptionMethod(userPassword);
-byte[] bytes;
-
-if (method == null) {
-    byte[] bytes = PasswordUtil.encryptLMPassword(userPassword);
-    if (bytes == null) return null;
-
-    return BinaryUtil.encode("BigInteger", bytes).toUpperCase();
-
-} else if ("SHA".equals(method)) {
-    return sambaLMPassword;
-
-} else {
-    throw new Exception("Unsupported encryption: "+method);
-}
-        </expression>
+      <field name="lm_password" encryption="lm">
+        <variable>userPassword</variable>
       </field>
-      <field name="nt_password">
-        <expression>
-import org.safehaus.penrose.util.*;
-
-if (userPassword == void || userPassword == null) return sambaNTPassword;
-
-String method = PasswordUtil.getEncryptionMethod(userPassword);
-byte[] bytes;
-
-if (method == null) {
-    byte[] bytes = PasswordUtil.encryptNTPassword(userPassword);
-    if (bytes == null) return null;
-
-    return BinaryUtil.encode("BigInteger", bytes).toUpperCase();
-
-} else if ("SHA".equals(method)) {
-    return sambaNTPassword;
-
-} else {
-    throw new Exception("Unsupported encryption: "+method);
-}
-        </expression>
+      <field name="nt_password" encryption="nt">
+        <variable>userPassword</variable>
       </field>
     </source>
   </entry>

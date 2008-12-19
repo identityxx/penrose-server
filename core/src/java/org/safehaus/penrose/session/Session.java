@@ -28,7 +28,7 @@ import org.safehaus.penrose.log.Access;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.util.PasswordUtil;
+import org.safehaus.penrose.ldap.LDAPPassword;
 import org.safehaus.penrose.util.TextUtil;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.operation.Operation;
@@ -385,10 +385,10 @@ public class Session {
             }
 
             DN rootDn = penroseConfig.getRootDn();
-            byte[] rootPassword = penroseConfig.getRootPassword();
+            String rootPassword = new String(penroseConfig.getRootPassword());
 
             if (rootDn.matches(dn)) {
-                if (PasswordUtil.validate(password, rootPassword)) {
+                if (LDAPPassword.validate(password, rootPassword)) {
                     log.debug("Bound as root user.");
                     bindDn = rootDn;
                     rootUser = true;

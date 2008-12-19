@@ -35,7 +35,7 @@ import org.safehaus.penrose.operation.SearchOperation;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.source.FieldConfig;
-import org.safehaus.penrose.util.PasswordUtil;
+import org.safehaus.penrose.ldap.LDAPPassword;
 import org.safehaus.penrose.util.TextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -644,7 +644,7 @@ public class Entry implements Cloneable {
         Collection<Object> userPasswords = attribute.getValues();
         for (Object userPassword : userPasswords) {
             if (debug) log.debug("userPassword: " + userPassword);
-            if (PasswordUtil.validate(password, userPassword)) return;
+            if (LDAPPassword.validate(password, (String)userPassword)) return;
         }
 
         throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
