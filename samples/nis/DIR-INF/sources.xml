@@ -25,6 +25,28 @@
     </parameter>
   </source>
 
+  <source name="shadows">
+    <connection-name>NIS</connection-name>
+    <field name="uid" primaryKey="true"/>
+    <field name="userPassword"/>
+    <field name="shadowLastChange"/>
+    <field name="shadowMin"/>
+    <field name="shadowMax"/>
+    <field name="shadowWarning"/>
+    <field name="shadowInactive"/>
+    <field name="shadowExpire"/>
+    <field name="shadowFlag"/>
+    <field name="description"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>shadowAccount</param-value>
+    </parameter>
+    <parameter>
+      <param-name>base</param-name>
+      <param-value>passwd.adjunct.byname</param-value>
+    </parameter>
+  </source>
+
   <source name="groups">
     <connection-name>NIS</connection-name>
     <field name="cn" primaryKey="true"/>

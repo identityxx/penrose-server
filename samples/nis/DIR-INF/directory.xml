@@ -92,6 +92,82 @@
     </source>
   </entry>
 
+  <entry dn="ou=Shadows,dc=NIS,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Shadows</constant>
+    </at>
+  </entry>
+
+  <entry dn="uid=...,ou=Shadows,dc=NIS,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
+    <oc>account</oc>
+    <oc>shadowAccount</oc>
+    <at name="uid" rdn="true">
+      <variable>s.uid</variable>
+    </at>
+    <at name="userPassword" encryption="crypt">
+      <variable>s.userPassword</variable>
+    </at>
+    <at name="shadowLastChange">
+      <variable>s.shadowLastChange</variable>
+    </at>
+    <at name="shadowMin">
+      <variable>s.shadowMin</variable>
+    </at>
+    <at name="shadowMax">
+      <variable>s.shadowMax</variable>
+    </at>
+    <at name="shadowWarning">
+      <variable>s.shadowWarning</variable>
+    </at>
+    <at name="shadowInactive">
+      <variable>s.shadowInactive</variable>
+    </at>
+    <at name="shadowExpire">
+      <variable>s.shadowExpire</variable>
+    </at>
+    <at name="shadowFlag">
+      <variable>s.shadowFlag</variable>
+    </at>
+    <at name="description">
+      <variable>s.description</variable>
+    </at>
+    <source alias="s">
+      <source-name>shadows</source-name>
+      <field name="uid">
+        <variable>uid</variable>
+      </field>
+      <field name="userPassword" encryption="crypt">
+        <variable>userPassword</variable>
+      </field>
+      <field name="shadowLastChange">
+        <variable>shadowLastChange</variable>
+      </field>
+      <field name="shadowMin">
+        <variable>shadowMin</variable>
+      </field>
+      <field name="shadowMax">
+        <variable>shadowMax</variable>
+      </field>
+      <field name="shadowWarning">
+        <variable>shadowWarning</variable>
+      </field>
+      <field name="shadowInactive">
+        <variable>shadowInactive</variable>
+      </field>
+      <field name="shadowExpire">
+        <variable>shadowExpire</variable>
+      </field>
+      <field name="shadowFlag">
+        <variable>shadowFlag</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+  </entry>
+
   <entry dn="ou=Groups,dc=NIS,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
