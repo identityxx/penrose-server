@@ -55,45 +55,58 @@ public class Password {
     }
 
     public String encrypt() throws Exception {
-        return encrypt(password);
-    }
 
-    public String encrypt(String password) throws Exception {
+        if (debug) {
+            log.debug("Encrypting password:");
+            log.debug(" - encryption: ["+encryption+"]");
+            log.debug(" - password  : ["+password+"]");
+            log.debug(" - salt      : ["+salt+"]");
+            log.debug(" - rounds    : ["+rounds+"]");
+        }
 
-        if (password == null) return null;
-        if (encryption == null) return password;
+        String result;
 
-        if (CRYPT.equalsIgnoreCase(encryption)) {
+        if (password == null) {
+            result = null;
+
+        } else  if (encryption == null) {
+            result = password;
+
+        } else if (CRYPT.equalsIgnoreCase(encryption)) {
 
             salt = salt == null ? createSalt(2) : salt;
 
-            return Crypt.crypt(salt, password);
+            result = Crypt.crypt(salt, password);
 
         } else if (CRYPT_MD5.equalsIgnoreCase(encryption)) {
 
             salt = salt == null ? createSalt(8) : salt;
 
-            return MD5Crypt.crypt(password, salt);
+            result = MD5Crypt.crypt(password, salt);
 
         } else if (CRYPT_SHA256.equalsIgnoreCase(encryption)) {
 
             salt = salt == null ? createSalt(16) : salt;
 
-            return Sha256Crypt.Sha256_crypt(password, salt, rounds);
+            result = Sha256Crypt.Sha256_crypt(password, salt, rounds);
 
         } else if (CRYPT_SHA512.equalsIgnoreCase(encryption)) {
 
             salt = salt == null ? createSalt(16) : salt;
 
-            return Sha512Crypt.Sha512_crypt(password, salt, rounds);
+            result = Sha512Crypt.Sha512_crypt(password, salt, rounds);
 
         } else {
 
             MessageDigest md = MessageDigest.getInstance(encryption);
             md.update(password.getBytes());
 
-            return BinaryUtil.encode(BinaryUtil.BASE64, md.digest());
+            result = BinaryUtil.encode(BinaryUtil.BASE64, md.digest());
         }
+
+        if (debug) log.debug("Result: "+result);
+
+        return result;
     }
 
     public String createSalt(int length) {
@@ -124,15 +137,13 @@ public class Password {
 
         if (debug) {
             log.debug("Validating passwords:");
-            log.debug(" - encryption: ["+encryption+"]");
-            log.debug(" - password  : ["+password+"]");
             log.debug(" - supplied  : ["+newHash+"]");
             log.debug(" - stored    : ["+hash+"]");
         }
 
         boolean result = newHash.equals(hash);
 
-        if (debug) log.debug("Result    : "+result);
+        if (debug) log.debug("Result: "+result);
 
         return result;
     }
