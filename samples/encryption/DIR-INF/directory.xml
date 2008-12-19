@@ -193,4 +193,59 @@ return cn.substring(i+1);
     </source>
   </entry>
 
+  <entry dn="ou=Crypt-SHA512,dc=Encryption,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Crypt-SHA512</constant>
+    </at>
+  </entry>
+
+  <entry dn="uid=...,ou=Crypt-SHA512,dc=Encryption,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
+    <oc>person</oc>
+    <oc>organizationalPerson</oc>
+    <oc>inetOrgPerson</oc>
+    <at name="uid" rdn="true">
+      <variable>u.username</variable>
+    </at>
+    <at name="cn">
+      <expression>
+if (u == void || u == null) return null;
+return u.firstName+" "+u.lastName;
+      </expression>
+    </at>
+    <at name="sn">
+      <variable>u.lastName</variable>
+    </at>
+    <at name="userPassword" encryption="crypt">
+      <variable>u.password</variable>
+    </at>
+    <source alias="u">
+      <source-name>crypt_sha512</source-name>
+      <field name="username">
+        <variable>uid</variable>
+      </field>
+      <field name="firstName">
+        <expression>
+if (cn == void || cn == null) return null;
+int i = cn.lastIndexOf(" ");
+if (i &lt; 0) return null;
+return cn.substring(0, i);
+        </expression>
+      </field>
+      <field name="lastName">
+        <expression>
+if (sn != void &amp;&amp; sn != null) return sn;
+if (cn == void || cn == null) return null;
+int i = cn.lastIndexOf(" ");
+if (i &lt; 0) return cn;
+return cn.substring(i+1);
+        </expression>
+      </field>
+      <field name="password" encryption="crypt-sha512">
+        <variable>userPassword</variable>
+      </field>
+    </source>
+  </entry>
+
 </directory>

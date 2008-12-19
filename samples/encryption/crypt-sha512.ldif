@@ -1,0 +1,99 @@
+Adding User
+-----------
+
+$ ldapadd -h localhost -p 10389 -x -D uid=admin,ou=system -w secret
+dn: uid=test,ou=Crypt-SHA512,dc=Encryption,dc=Example,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+cn: Test User
+sn: User
+uid: test
+userPassword: secret
+
+$ ldapadd -h localhost -p 10389 -x -D uid=admin,ou=system -w secret
+dn: uid=test,ou=Crypt-SHA512,dc=Encryption,dc=Example,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+cn: Test User
+sn: User
+uid: test
+userPassword: {crypt}$6$S7X8oV4fKB8Y1awF$47Pw7pYapEYJBrAzlPujWPnCnzSp8GBPQIrQNbWS8KwA2Xjo0Ji9UOdeRXgd5l0KgRYf6cPlLmbGuI8LCjOtw1
+
+Searching User
+--------------
+
+$ ldapsearch -h localhost -p 10389 -x \
+    -D "uid=admin,ou=system" -w secret \
+    -b "ou=Crypt-SHA512,dc=Encryption,dc=Example,dc=com"
+
+dn: uid=test,ou=Crypt-SHA512,dc=Encryption,dc=Example,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+cn: Test User
+sn: User
+uid: test
+userPassword:: e2NyeXB0fSQ2JFM3WDhvVjRmS0I4WTFhd0YkNDdQdzdwWWFwRVlKQnJBemxQdWpXUG5DbnpTcDhHQlBRSXJRTmJXUzhLd0EyWGpvMEppOVVPZGVSWGdkNWwwS2dSWWY2Y1BsTG1iR3VJOExDak90dzE=
+
+Updating Password
+-----------------
+
+$ ldapmodify -h localhost -p 10389 -x -D uid=admin,ou=system -w secret
+dn: uid=test,ou=Crypt-SHA512,dc=Encryption,dc=Example,dc=com
+userPassword: secret
+
+$ ldapmodify -h localhost -p 10389 -x -D uid=admin,ou=system -w secret
+dn: uid=test,ou=Crypt-SHA512,dc=Encryption,dc=Example,dc=com
+userPassword: {crypt}$6$S7X8oV4fKB8Y1awF$47Pw7pYapEYJBrAzlPujWPnCnzSp8GBPQIrQNbWS8KwA2Xjo0Ji9UOdeRXgd5l0KgRYf6cPlLmbGuI8LCjOtw1
+
+Validating Password
+-------------------
+
+$ ldapsearch -h localhost -p 10389 -x \
+    -D "uid=test,ou=Crypt-SHA512,dc=Encryption,dc=Example,dc=com" -w secret \
+    -b "uid=test,ou=Crypt-SHA512,dc=Encryption,dc=Example,dc=com"
+
+dn: uid=test,ou=Crypt-SHA512,dc=Encryption,dc=Example,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+cn: Test User
+sn: User
+uid: test
+userPassword:: e2NyeXB0fSQ2JFM3WDhvVjRmS0I4WTFhd0YkNDdQdzdwWWFwRVlKQnJBemxQdWpXUG5DbnpTcDhHQlBRSXJRTmJXUzhLd0EyWGpvMEppOVVPZGVSWGdkNWwwS2dSWWY2Y1BsTG1iR3VJOExDak90dzE=
+
+Decoding Password
+-----------------
+
+$ echo e2NyeXB0fSQ2JFM3WDhvVjRmS0I4WTFhd0YkNDdQdzdwWWFwRVlKQnJBemxQdWpXUG5DbnpTcDhHQlBRSXJRTmJXUzhLd0EyWGpvMEppOVVPZGVSWGdkNWwwS2dSWWY2Y1BsTG1iR3VJOExDak90dzE= | base64 -d
+{crypt}$6$S7X8oV4fKB8Y1awF$47Pw7pYapEYJBrAzlPujWPnCnzSp8GBPQIrQNbWS8KwA2Xjo0Ji9UOdeRXgd5l0KgRYf6cPlLmbGuI8LCjOtw1
+
+Encrypting Password
+-------------------
+
+Take the 16 characters between the second and third $ sign from the password hash.
+
+$ password.sh crypt-sha512 secret S7X8oV4fKB8Y1awF
+$6$S7X8oV4fKB8Y1awF$47Pw7pYapEYJBrAzlPujWPnCnzSp8GBPQIrQNbWS8KwA2Xjo0Ji9UOdeRXgd5l0KgRYf6cPlLmbGuI8LCjOtw1
+
+Deleting Password
+-----------------
+
+$ ldapmodify -h localhost -p 10389 -x -D uid=admin,ou=system -w secret
+dn: uid=test,ou=Crypt-SHA512,dc=Encryption,dc=Example,dc=com
+changetype: modify
+delete: userPassword
+
+$ ldapmodify -h localhost -p 10389 -x -D uid=admin,ou=system -w secret
+dn: uid=test,ou=Crypt-SHA512,dc=Encryption,dc=Example,dc=com
+changetype: modify
+delete: userPassword
+userPassword: {crypt}$6$S7X8oV4fKB8Y1awF$47Pw7pYapEYJBrAzlPujWPnCnzSp8GBPQIrQNbWS8KwA2Xjo0Ji9UOdeRXgd5l0KgRYf6cPlLmbGuI8LCjOtw1
+
+Deleting User
+-------------
+
+$ ldapdelete -h localhost -p 10389 -x -D uid=admin,ou=system -w secret
+uid=test,ou=Crypt-SHA512,dc=Encryption,dc=Example,dc=com
