@@ -107,32 +107,23 @@ public class Password {
 
     public static boolean validate(String method, String password, String hash) throws Exception {
 
-        String newHash;
-
         if (CRYPT.equalsIgnoreCase(method)) {
 
             if (hash.startsWith("$1$")) {
-
-                newHash = MD5Crypt.crypt(password, hash);
+                method = CRYPT_MD5;
 
             } else if (hash.startsWith("$5$")) {
-
-                newHash = Sha256Crypt.Sha256_crypt(password, hash, 0);
+                method = CRYPT_SHA256;
 
             } else if (hash.startsWith("$6$")) {
-
-                newHash = Sha512Crypt.Sha512_crypt(password, hash, 0);
-
-            } else {
-                newHash = Crypt.crypt(hash, password);
+                method = CRYPT_SHA512;
             }
-
-        } else {
-            newHash = new Password(method, password, hash, 0).encrypt();
         }
 
+        String newHash = new Password(method, password, hash, 0).encrypt();
+
         if (debug) {
-            log.debug("Comparing passwords:");
+            log.debug("Validating passwords:");
             if (method != null) log.debug(" - encryption: ["+method+"]");
 
             log.debug(" - supplied  : ["+newHash+"]");
