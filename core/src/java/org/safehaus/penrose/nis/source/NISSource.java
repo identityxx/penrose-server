@@ -94,24 +94,51 @@ public class NISSource extends Source {
 
         final FilterEvaluator filterEvaluator = penroseContext.getFilterEvaluator();
 
-        SearchResponse sr = new SearchResponse() {
+        SearchResponse newResponse = new SearchResponse() {
             public void add(SearchResult result) throws Exception {
                 Attributes attributes = result.getAttributes();
                 if (!filterEvaluator.eval(attributes, filter)) return;
                 response.add(result);
             }
-            public void close() throws Exception {
-                response.close();
-            }
         };
 
-        sr.setSizeLimit(request.getSizeLimit());
+        newResponse.setSizeLimit(request.getSizeLimit());
 
-        if (baseDn != null && (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB)) {
-            client.lookup(base, baseDn.getRdn(), type, sr);
+        try {
+            if (baseDn != null && baseDn.isEmpty()) {
 
-        } else {
-            client.list(base, type, sr);
+                if (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB) {
+
+                    if (debug) log.debug("Searching root entry.");
+
+                    SearchResult result = new SearchResult();
+                    response.add(result);
+                }
+
+                if (scope == SearchRequest.SCOPE_ONE || scope == SearchRequest.SCOPE_SUB) {
+
+                    if (debug) log.debug("Searching top entries.");
+
+                    client.list(base, type, newResponse);
+                }
+
+            } else if (baseDn != null && (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB)) {
+
+                RDN rdn = baseDn.getRdn();
+
+                if (debug) log.debug("Searching entry: "+rdn);
+
+                client.lookup(base, rdn, type, newResponse);
+
+            } else if (baseDn == null) {
+
+                if (debug) log.debug("Searching all entries.");
+
+                client.list(base, type, newResponse);
+            }
+
+        } finally {
+            response.close();
         }
 
         log.debug("Search operation completed.");

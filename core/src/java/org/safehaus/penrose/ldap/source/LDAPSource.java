@@ -559,7 +559,7 @@ public class LDAPSource extends Source {
                 if (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB) {
 
                     SearchResult root = new SearchResult();
-
+/*
                     if (debug) log.debug("Naming contexts:");
                     Attribute namingContexts = new Attribute("namingContexts");
 
@@ -569,7 +569,7 @@ public class LDAPSource extends Source {
                     namingContexts.addValue(dn);
 
                     root.setAttribute(namingContexts);
-
+*/
                     response.add(root);
                 }
 
@@ -687,34 +687,7 @@ public class LDAPSource extends Source {
 
                     if (debug) log.debug("Searching root entry.");
 
-                    SearchRequest newRequest = new SearchRequest();
-                    newRequest.setDn(sourceBaseDn);
-                    newRequest.setScope(sourceScope);
-
-                    newRequest.setFilter(filter);
-                    newRequest.setSizeLimit(sizeLimit);
-                    newRequest.setTimeLimit(timeLimit);
-                    newRequest.setAttributes(attributes);
-                    newRequest.setControls(controls);
-
-                    SearchResponse newResponse = new SearchResponse();
-
-                    client.search(newRequest, newResponse);
-
                     SearchResult result = new SearchResult();
-
-                    if (debug) log.debug("Naming contexts:");
-                    Attribute namingContexts = new Attribute("namingContexts");
-
-                    while (newResponse.hasNext()) {
-                        SearchResult entry = newResponse.next();
-                        String dn = entry.getDn().getRdn().toString();
-                        if (debug) log.debug(" - "+dn);
-                        namingContexts.addValue(dn);
-                    }
-
-                    result.setAttribute(namingContexts);
-
                     response.add(result);
                 }
 
@@ -769,7 +742,7 @@ public class LDAPSource extends Source {
 
                 DN dn = db.toDn();
 
-                if (debug) log.debug("Searching a single entry.");
+                if (debug) log.debug("Searching entry: "+dn);
 
                 SearchRequest newRequest = new SearchRequest();
                 newRequest.setDn(dn);

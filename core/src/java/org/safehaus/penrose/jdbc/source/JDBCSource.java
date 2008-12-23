@@ -642,6 +642,9 @@ public class JDBCSource extends Source {
             log.debug(TextUtil.displaySeparator(80));
         }
 
+        DN baseDn = request.getDn();
+        int scope = request.getScope();
+
         response.setSizeLimit(request.getSizeLimit());
 
         SelectStatement statement = new SelectStatement();
@@ -653,11 +656,13 @@ public class JDBCSource extends Source {
         DN dn = request.getDn();
         if (dn != null) {
             RDN rdn = dn.getRdn();
-            for (String name : rdn.getNames()) {
-                Object value = rdn.get(name);
+            if (rdn != null) {
+                for (String name : rdn.getNames()) {
+                    Object value = rdn.get(name);
 
-                SimpleFilter sf = new SimpleFilter(name, "=", value);
-                filter = FilterTool.appendAndFilter(filter, sf);
+                    SimpleFilter sf = new SimpleFilter(name, "=", value);
+                    filter = FilterTool.appendAndFilter(filter, sf);
+                }
             }
         }
 
@@ -691,10 +696,6 @@ public class JDBCSource extends Source {
 
                 totalCount++;
             }
-            public void close() throws Exception {
-                response.close();
-                super.close();
-            }
         };
 
         String sizeLimit = getParameter(SIZE_LIMIT);
@@ -704,17 +705,47 @@ public class JDBCSource extends Source {
 
         JDBCClient client = connection.getClient(session);
 
+        JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
+        statementBuilder.setQuote(client.getQuote());
+
+        String sql = statementBuilder.generate(statement);
+        Collection<Object> parameters = statementBuilder.getParameters();
+
         try {
-            JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
-            statementBuilder.setQuote(client.getQuote());
 
-            String sql = statementBuilder.generate(statement);
-            Collection<Object> parameters = statementBuilder.getParameters();
+            if (baseDn != null && baseDn.isEmpty()) {
 
-            client.executeQuery(sql, parameters, queryResponse);
+                if (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB) {
+
+                    if (debug) log.debug("Searching root entry.");
+
+                    SearchResult result = new SearchResult();
+                    response.add(result);
+                }
+
+                if (scope == SearchRequest.SCOPE_ONE || scope == SearchRequest.SCOPE_SUB) {
+
+                    if (debug) log.debug("Searching top entries.");
+
+                    client.executeQuery(sql, parameters, queryResponse);
+                }
+
+            } else if (baseDn != null && (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB)) {
+
+                if (debug) log.debug("Searching entry: "+filter);
+
+                client.executeQuery(sql, parameters, queryResponse);
+
+            } else if (baseDn == null) {
+
+                if (debug) log.debug("Searching all entries.");
+
+                client.executeQuery(sql, parameters, queryResponse);
+            }
 
         } finally {
             connection.closeClient(session);
+            response.close();
         }
 
         log.debug("Search operation completed.");
