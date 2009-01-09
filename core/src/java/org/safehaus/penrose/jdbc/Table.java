@@ -17,10 +17,12 @@
  */
 package org.safehaus.penrose.jdbc;
 
+import java.io.Serializable;
+
 /**
  * @author Endi S. Dewata
  */
-public class Table implements Comparable, Cloneable {
+public class Table implements Serializable, Comparable, Cloneable {
 
 	private String name;
     private String type;

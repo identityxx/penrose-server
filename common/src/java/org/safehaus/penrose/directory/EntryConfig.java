@@ -163,16 +163,6 @@ public class EntryConfig implements Serializable, Cloneable {
         this.attached = attached;
     }
 
-    public Collection<EntryAttributeConfig> getAttributeConfigs() {
-        return attributeConfigs;
-    }
-
-    public void removeAttributeConfigs() {
-        attributeConfigs.clear();
-        attributeConfigsByName.clear();
-        rdnAttributeConfigs.clear();
-    }
-
     public Collection<EntrySourceConfig> getSourceConfigs() {
         return sourceConfigs;
     }
@@ -196,6 +186,11 @@ public class EntryConfig implements Serializable, Cloneable {
         objectClasses.addAll(list);
     }
 
+    public void setObjectClasses(Collection<String> list) {
+        objectClasses.clear();
+        objectClasses.addAll(list);
+    }
+
     public void removeObjectClass(String oc) {
         objectClasses.remove(oc);
     }
@@ -209,6 +204,11 @@ public class EntryConfig implements Serializable, Cloneable {
     }
 
     public void addSourceConfigs(Collection<EntrySourceConfig> entrySourceConfigs) {
+        sourceConfigs.addAll(entrySourceConfigs);
+    }
+
+    public void setSourceConfigs(Collection<EntrySourceConfig> entrySourceConfigs) {
+        sourceConfigs.clear();
         sourceConfigs.addAll(entrySourceConfigs);
     }
 
@@ -248,10 +248,31 @@ public class EntryConfig implements Serializable, Cloneable {
         return sourceConfig;
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Attribute Configs
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public Collection<EntryAttributeConfig> getAttributeConfigs() {
+        return attributeConfigs;
+    }
+
     public void addAttributeConfigs(Collection<EntryAttributeConfig> entryAttributeConfigs) {
         for (EntryAttributeConfig attributeConfig : entryAttributeConfigs) {
             addAttributeConfig(attributeConfig);
         }
+    }
+
+    public void setAttributeConfigs(Collection<EntryAttributeConfig> entryAttributeConfigs) {
+        removeAttributeConfigs();
+        for (EntryAttributeConfig attributeConfig : entryAttributeConfigs) {
+            addAttributeConfig(attributeConfig);
+        }
+    }
+
+    public void removeAttributeConfigs() {
+        attributeConfigs.clear();
+        attributeConfigsByName.clear();
+        rdnAttributeConfigs.clear();
     }
 
     public void addAttributesFromRdn() {
@@ -353,6 +374,10 @@ public class EntryConfig implements Serializable, Cloneable {
         this.mappingName = mappingName;
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Access Control List
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     public void addACI(ACI aci) {
         acl.add(aci);
     }
@@ -369,6 +394,10 @@ public class EntryConfig implements Serializable, Cloneable {
         acl.clear();
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Parameters
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     public String getParameter(String name) {
         return parameters.get(name);
     }
@@ -383,6 +412,15 @@ public class EntryConfig implements Serializable, Cloneable {
 
     public Collection<String> getParameterNames() {
         return parameters.keySet();
+    }
+
+    public Map<String,String> getParameters() {
+        return parameters;
+    }
+
+    public void setParameters(Map<String,String> parameters) {
+        this.parameters.clear();
+        this.parameters.putAll(parameters);
     }
 
     public int hashCode() {

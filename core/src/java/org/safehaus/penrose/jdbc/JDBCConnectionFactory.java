@@ -18,7 +18,7 @@ public class JDBCConnectionFactory implements ConnectionFactory {
     public Properties properties = new Properties();
 
     public String url;
-    public int queryTimeout;
+    public Integer queryTimeout;
     public String quote;
 
     public JDBCConnectionFactory(
@@ -64,7 +64,9 @@ public class JDBCConnectionFactory implements ConnectionFactory {
         url = (String)properties.remove(JDBCConnection.URL);
 
         String s = parameters.remove(JDBCConnection.QUERY_TIMEOUT);
-        queryTimeout = s == null ? 0 : Integer.parseInt(s);
+        if (s != null) {
+            queryTimeout = Integer.parseInt(s);
+        }
 
         quote = (String)properties.remove(JDBCConnection.QUOTE);
     }
@@ -96,7 +98,7 @@ public class JDBCConnectionFactory implements ConnectionFactory {
         return url;
     }
 
-    public int getQueryTimeout() {
+    public Integer getQueryTimeout() {
         return queryTimeout;
     }
 

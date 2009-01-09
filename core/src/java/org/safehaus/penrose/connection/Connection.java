@@ -62,6 +62,9 @@ public class Connection {
     public void init() throws Exception {
     }
 
+    public void validate() throws Exception {
+    }
+
     public void destroy() throws Exception {
     }
 

@@ -10,17 +10,30 @@ import java.util.*;
  */
 public class NISConnection extends Connection {
 
-    public NISClient client;
-
     public NISConnection() throws Exception {
     }
 
     public void init() throws Exception {
+    }
+
+    public void validate() throws Exception {
+        try {
+            NISClient client = createClient();
+            client.connect();
+            client.close();
+        } catch (Exception e) {
+            throw new Exception(e.getMessage());
+        }
+    }
+
+    public NISClient createClient() throws Exception {
 
         Map<String,String> parameters = getParameters();
 
         String method = parameters.get(NIS.METHOD);
         if (method == null) method = NIS.DEFAULT_METHOD;
+
+        NISClient client;
 
         if (NIS.LOCAL.equals(method)) {
             client = new NISLocalClient();
@@ -33,5 +46,7 @@ public class NISConnection extends Connection {
         }
 
         client.init(parameters);
+
+        return client;
     }
 }

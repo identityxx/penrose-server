@@ -7,6 +7,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.management.BaseService;
 import org.safehaus.penrose.management.PenroseJMXService;
 import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.util.TextUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -90,6 +91,8 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
 
     public String createEntry(EntryConfig entryConfig) throws Exception {
 
+        log.debug(TextUtil.repeat("-", 80));
+
         DirectoryConfig directoryConfig = getDirectoryConfig();
         directoryConfig.addEntryConfig(entryConfig);
 
@@ -108,25 +111,27 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
         return entryConfig.getId();
     }
 
-    public void updateEntry(String id, EntryConfig entryConfig) throws Exception {
+    public void updateEntry(EntryConfig entryConfig) throws Exception {
+
+        log.debug(TextUtil.repeat("-", 80));
 
         Directory directory = getDirectory();
         Collection<Entry> children = null;
 
         if (directory != null) {
             try {
-                Entry oldEntry = directory.removeEntry(id);
+                Entry oldEntry = directory.removeEntry(entryConfig.getId());
                 children = oldEntry.getChildren();
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
         }
 
-        EntryService oldEntryService = getEntryService(id);
+        EntryService oldEntryService = getEntryService(entryConfig.getId());
         oldEntryService.unregister();
 
         DirectoryConfig directoryConfig = getDirectoryConfig();
-        directoryConfig.updateEntryConfig(id, entryConfig);
+        directoryConfig.updateEntryConfig(entryConfig);
 
         if (directory != null) {
             try {
@@ -142,6 +147,8 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
     }
 
     public void removeEntry(String id) throws Exception {
+
+        log.debug(TextUtil.repeat("-", 80));
 
         Directory directory = getDirectory();
         if (directory != null) {

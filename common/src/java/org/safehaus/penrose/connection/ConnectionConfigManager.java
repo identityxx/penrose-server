@@ -40,15 +40,17 @@ public class ConnectionConfigManager implements Serializable, Cloneable {
         return connectionConfigs.values();
     }
 
-    public void updateConnectionConfig(String name, ConnectionConfig connectionConfig) throws Exception {
+    public void renameConnectionConfig(String name, String newName) throws Exception {
+        ConnectionConfig connectionConfig = connectionConfigs.remove(name);
+        connectionConfig.setName(newName);
+        connectionConfigs.put(newName, connectionConfig);
+    }
 
-        ConnectionConfig oldConnectionConfig = connectionConfigs.get(name);
-        oldConnectionConfig.copy(connectionConfig);
-
-        if (!name.equals(connectionConfig.getName())) {
-            connectionConfigs.remove(name);
-            connectionConfigs.put(connectionConfig.getName(), connectionConfig);
-        }
+    public void updateConnectionConfig(ConnectionConfig connectionConfig) throws Exception {
+        String connectionName = connectionConfig.getName();
+        ConnectionConfig origConnectionConfig = connectionConfigs.get(connectionName);
+        if (origConnectionConfig == null) throw new Exception("Connection "+connectionName+" not found.");
+        origConnectionConfig.copy(connectionConfig);
     }
 
     public ConnectionConfig removeConnectionConfig(String connectionName) {

@@ -167,15 +167,21 @@ public class FederationModule extends Module implements FederationMBean {
         }
 
         federationConfig.updateRepository(repository);
-        store();
 
         for (String partitionName : partitionNames) {
             createPartition(partitionName);
         }
     }
 
-    public void removeRepository(String name) throws Exception {
-        federationConfig.removeRepository(name);
+    public void removeRepository(String repositoryName) throws Exception {
+        Collection<String> partitionNames = federationConfig.getPartitionNames(repositoryName);
+
+        for (String partitionName : partitionNames) {
+            removePartition(partitionName);
+            federationConfig.removePartition(partitionName);
+        }
+
+        federationConfig.removeRepository(repositoryName);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

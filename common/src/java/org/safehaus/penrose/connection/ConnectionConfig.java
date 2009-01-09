@@ -37,9 +37,9 @@ public class ConnectionConfig implements Serializable, Cloneable {
 	public ConnectionConfig() {
 	}
 
-	public ConnectionConfig(String name, String type) {
+	public ConnectionConfig(String name, String adapterName) {
 		this.name = name;
-		this.adapterName = type;
+		this.adapterName = adapterName;
 	}
 
 	public String getName() {

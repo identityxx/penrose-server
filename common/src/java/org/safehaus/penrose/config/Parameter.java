@@ -33,7 +33,7 @@ public class Parameter implements Cloneable {
     public final static int TYPE_TEMP     = 5;
 
     private String name;
-    private String description;
+    private String displayName;
     private String defaultValue;
     private int type = TYPE_NORMAL;
 
@@ -42,26 +42,26 @@ public class Parameter implements Cloneable {
     public Parameter() {
     }
 
-    public Parameter(String name, String description) {
+    public Parameter(String name, String displayName) {
         this.name = name;
-        this.description = description;
+        this.displayName = displayName;
     }
 
-    public Parameter(String name, String description, String defaultValue) {
+    public Parameter(String name, String displayName, String defaultValue) {
         this.name = name;
-        this.description = description;
+        this.displayName = displayName;
         this.defaultValue = defaultValue;
     }
 
-    public Parameter(String name, String description, int type) {
+    public Parameter(String name, String displayName, int type) {
         this.name = name;
-        this.description = description;
+        this.displayName = displayName;
         this.type = type;
     }
 
-    public Parameter(String name, String description, String defaultValue, int type) {
+    public Parameter(String name, String displayName, String defaultValue, int type) {
         this.name = name;
-        this.description = description;
+        this.displayName = displayName;
         this.defaultValue = defaultValue;
         this.type = type;
     }
@@ -74,12 +74,12 @@ public class Parameter implements Cloneable {
         this.name = name;
     }
 
-    public String getDescription() {
-        return description;
+    public String getDisplayName() {
+        return displayName;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
     }
 
     public String getDefaultValue() {
@@ -161,7 +161,7 @@ public class Parameter implements Cloneable {
 
         Parameter p = (Parameter)object;
         if (!compare(name, p.name)) return false;
-        if (!compare(description, p.description)) return false;
+        if (!compare(displayName, p.displayName)) return false;
         if (!compare(defaultValue, p.defaultValue)) return false;
         if (type != p.type) return false;
 
@@ -173,7 +173,7 @@ public class Parameter implements Cloneable {
     }
 
     public String toString() {
-        return "Parameter "+name+"/"+ description +" ("+type+"): "+defaultValue;
+        return "Parameter "+name+"/"+ displayName +" ("+type+"): "+defaultValue;
     }
 
     public Collection<String> getOptions() {

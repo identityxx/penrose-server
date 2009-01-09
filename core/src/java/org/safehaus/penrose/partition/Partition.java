@@ -687,6 +687,7 @@ public class Partition implements Cloneable {
                 if (e.getResultCode() == LDAP.INVALID_CREDENTIALS) found = true;
 
             } catch (Exception e) {
+                log.error(e.getMessage(), e);
                 exception = e;
             }
         }

@@ -46,7 +46,7 @@ public class ServiceConfigurator {
     }
 
     public void configure(Parameter parameter) throws Exception {
-        String description = parameter.getDescription();
+        String description = parameter.getDisplayName();
         String value = parameter.getDefaultValue();
 
         out.print(description+" ["+value+"]: ");

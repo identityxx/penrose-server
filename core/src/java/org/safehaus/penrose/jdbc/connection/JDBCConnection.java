@@ -8,6 +8,8 @@ import org.safehaus.penrose.jdbc.source.JDBCSource;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionListener;
 import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.source.FieldConfig;
+import org.safehaus.penrose.util.TextUtil;
 
 import java.sql.Driver;
 import java.sql.DriverManager;
@@ -154,6 +156,16 @@ public class JDBCConnection extends Connection {
     // Client
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    public void validate() throws Exception {
+        try {
+            JDBCClient client = createClient();
+            client.connect();
+            client.close();
+        } catch (Exception e) {
+            throw new Exception(e.getMessage());
+        }
+    }
+
     public JDBCClient createClient() throws Exception {
 
         if (debug) log.debug("Creating new JDBC client.");
@@ -230,39 +242,78 @@ public class JDBCConnection extends Connection {
         //client.close();
     }
 
-    public Collection<String> getCatalogs(Session session) throws Exception {
-        JDBCClient client = getClient(session);
+    public Collection<String> getCatalogs() throws Exception {
+
+        if (debug) {
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Get Catalog", 80));
+            log.debug(TextUtil.displaySeparator(80));
+        }
+
+        JDBCClient client = createClient();
 
         try {
             return client.getCatalogs();
 
         } finally {
-            closeClient(session);
+            client.close();
         }
     }
     
-    public Collection<String> getSchemas(Session session) throws Exception {
-        JDBCClient client = getClient(session);
+    public Collection<String> getSchemas() throws Exception {
+
+        if (debug) {
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Get Schemas", 80));
+            log.debug(TextUtil.displaySeparator(80));
+        }
+
+        JDBCClient client = createClient();
 
         try {
             return client.getSchemas();
 
         } finally {
-            closeClient(session);
+            client.close();
         }
     }
     
-    public Collection<Table> getTables(Session session, String catalog, String schema) throws Exception {
-        JDBCClient client = getClient(session);
+    public Collection<Table> getTables(String catalog, String schema) throws Exception {
+
+        if (debug) {
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Get Tables for "+catalog+"."+schema, 80));
+            log.debug(TextUtil.displaySeparator(80));
+        }
+
+        JDBCClient client = createClient();
 
         try {
             return client.getTables(catalog, schema);
 
         } finally {
-            closeClient(session);
+            client.close();
         }
     }
     
+    public Collection<FieldConfig> getColumns(String catalog, String schema, String table) throws Exception {
+
+        if (debug) {
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Get Columns for "+catalog+"."+schema+"."+table, 80));
+            log.debug(TextUtil.displaySeparator(80));
+        }
+
+        JDBCClient client = createClient();
+
+        try {
+            return client.getColumns(catalog, schema, table);
+
+        } finally {
+            client.close();
+        }
+    }
+
     public String getTableName(SourceConfig sourceConfig) throws Exception {
 
         String catalog = sourceConfig.getParameter(JDBCSource.CATALOG);

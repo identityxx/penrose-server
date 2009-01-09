@@ -39,7 +39,7 @@ public class JDBCClient {
     public JDBCConnectionFactory connectionFactory;
     public Connection connection;
 
-    public int queryTimeout;
+    public Integer queryTimeout;
     public String quote;
 
     public JDBCClient(Map<String,String> parameters) throws Exception {
@@ -138,7 +138,9 @@ public class JDBCClient {
             if (rs != null) try { rs.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
         }
 
-        return columns.values();
+        Collection<FieldConfig> results = new ArrayList<FieldConfig>();
+        results.addAll(columns.values());
+        return results;
     }
 
     public Collection<String> getCatalogs() throws Exception {
@@ -203,7 +205,7 @@ public class JDBCClient {
 
         log.debug("Getting table names for "+catalog+" "+schema);
 
-        Collection<Table> tables = new TreeSet<Table>();
+        Collection<Table> tables = new ArrayList<Table>();
 
         Connection connection = getConnection();
         ResultSet rs = null;
@@ -291,7 +293,7 @@ public class JDBCClient {
 
         try {
             ps = connection.prepareStatement(sql);
-            ps.setQueryTimeout(queryTimeout);
+            if (queryTimeout != null) ps.setQueryTimeout(queryTimeout);
 
             if (parameters != null && !parameters.isEmpty()) {
                 int counter = 1;
@@ -361,7 +363,7 @@ public class JDBCClient {
 
         try {
             ps = connection.prepareStatement(sql);
-            ps.setQueryTimeout(queryTimeout);
+            if (queryTimeout != null) ps.setQueryTimeout(queryTimeout);
 
             if (parameters != null && !parameters.isEmpty()) {
                 int counter = 1;

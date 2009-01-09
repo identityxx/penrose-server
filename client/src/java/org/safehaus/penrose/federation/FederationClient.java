@@ -26,47 +26,42 @@ public class FederationClient implements FederationMBean {
     String federationDomain;
 
     PenroseClient client;
-    PartitionClient partitionClient;
-    ModuleClient moduleClient;
 
     public FederationClient(PenroseClient client, String federationDomain) throws Exception {
         this.client = client;
         this.federationDomain = federationDomain;
-
-        PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
-        partitionClient = partitionManagerClient.getPartitionClient(federationDomain);
-
-        ModuleManagerClient moduleManagerClient = partitionClient.getModuleManagerClient();
-        moduleClient = moduleManagerClient.getModuleClient(Federation.FEDERATION);
     }
 
     public String getFederationDomain() {
         return federationDomain;
     }
 
+    public PartitionClient getPartitionClient() throws Exception {
+        PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
+        return partitionManagerClient.getPartitionClient(federationDomain);
+    }
+
+    public ModuleClient getModuleClient() throws Exception {
+
+        ModuleManagerClient moduleManagerClient = getPartitionClient().getModuleManagerClient();
+        return moduleManagerClient.getModuleClient(Federation.FEDERATION);
+    }
+
     public Collection<String> getRepositoryTypes() throws Exception {
-        return (Collection<String>)moduleClient.getAttribute("RepositoryTypes");
+        return (Collection<String>)getModuleClient().getAttribute("RepositoryTypes");
     }
 
     public PenroseClient getClient() {
         return client;
     }
     
-    public PartitionClient getPartitionClient() {
-        return partitionClient;
-    }
-
-    public ModuleClient getModuleClient() {
-        return moduleClient;
-    }
-
     public ModuleClient getRepositoryModuleClient(String type) throws Exception {
-        ModuleManagerClient moduleManagerClient = partitionClient.getModuleManagerClient();
+        ModuleManagerClient moduleManagerClient = getPartitionClient().getModuleManagerClient();
         return moduleManagerClient.getModuleClient(type);
     }
 
     public void addRepository(FederationRepositoryConfig repository) throws Exception {
-        moduleClient.invoke(
+        getModuleClient().invoke(
                 "addRepository",
                 new Object[] { repository },
                 new String[] { FederationRepositoryConfig.class.getName() }
@@ -74,7 +69,7 @@ public class FederationClient implements FederationMBean {
     }
 
     public void updateRepository(FederationRepositoryConfig repository) throws Exception {
-        moduleClient.invoke(
+        getModuleClient().invoke(
                 "updateRepository",
                 new Object[] { repository },
                 new String[] { FederationRepositoryConfig.class.getName() }
@@ -82,7 +77,7 @@ public class FederationClient implements FederationMBean {
     }
 
     public void removeRepository(String repositoryName) throws Exception {
-        moduleClient.invoke(
+        getModuleClient().invoke(
                 "removeRepository",
                 new Object[] { repositoryName },
                 new String[] { String.class.getName() }
@@ -90,31 +85,31 @@ public class FederationClient implements FederationMBean {
     }
 
     public FederationConfig getFederationConfig() throws Exception {
-        return (FederationConfig)moduleClient.getAttribute("FederationConfig");
+        return (FederationConfig)getModuleClient().getAttribute("FederationConfig");
     }
 
     public void setFederationConfig(FederationConfig federationConfig) throws Exception {
-        moduleClient.setAttribute("FederationConfig", federationConfig);
+        getModuleClient().setAttribute("FederationConfig", federationConfig);
     }
 
     public void load() throws Exception {
-        moduleClient.invoke("load");
+        getModuleClient().invoke("load");
     }
 
     public void store() throws Exception {
-        moduleClient.invoke("store");
+        getModuleClient().invoke("store");
     }
 
     public void clear() throws Exception {
-        moduleClient.invoke("clear");
+        getModuleClient().invoke("clear");
     }
 
     public Collection<String> getRepositoryNames() throws Exception {
-        return (Collection<String>)moduleClient.getAttribute("RepositoryNames");
+        return (Collection<String>)getModuleClient().getAttribute("RepositoryNames");
     }
 
     public Collection<String> getRepositoryNames(String type) throws Exception {
-        return (Collection<String>)moduleClient.invoke(
+        return (Collection<String>)getModuleClient().invoke(
                 "getRepositoryNames",
                 new Object[] { type },
                 new String[] { String.class.getName() }
@@ -122,11 +117,11 @@ public class FederationClient implements FederationMBean {
     }
 
     public Collection<FederationRepositoryConfig> getRepositories() throws Exception {
-        return (Collection<FederationRepositoryConfig>)moduleClient.getAttribute("Repositories");
+        return (Collection<FederationRepositoryConfig>)getModuleClient().getAttribute("Repositories");
     }
 
     public Collection<FederationRepositoryConfig> getRepositories(String type) throws Exception {
-        return (Collection<FederationRepositoryConfig>)moduleClient.invoke(
+        return (Collection<FederationRepositoryConfig>)getModuleClient().invoke(
                 "getRepositories",
                 new Object[] { type },
                 new String[] { String.class.getName() }
@@ -134,7 +129,7 @@ public class FederationClient implements FederationMBean {
     }
 
     public FederationRepositoryConfig getRepository(String name) throws Exception {
-        return (FederationRepositoryConfig)moduleClient.invoke(
+        return (FederationRepositoryConfig)getModuleClient().invoke(
                 "getRepository",
                 new Object[] { name },
                 new String[] { String.class.getName() }
@@ -142,7 +137,7 @@ public class FederationClient implements FederationMBean {
     }
 
     public Collection<String> getPartitionNames() throws Exception {
-        return (Collection)moduleClient.invoke(
+        return (Collection)getModuleClient().invoke(
                 "getPartitionNames",
                 new Object[] { },
                 new String[] { }
@@ -150,7 +145,7 @@ public class FederationClient implements FederationMBean {
     }
 
     public Collection<FederationPartitionConfig> getPartitions() throws Exception {
-        return (Collection)moduleClient.invoke(
+        return (Collection)getModuleClient().invoke(
                 "getPartitions",
                 new Object[] { },
                 new String[] { }
@@ -158,7 +153,7 @@ public class FederationClient implements FederationMBean {
     }
 
     public FederationPartitionConfig getPartition(String name) throws Exception {
-        return (FederationPartitionConfig)moduleClient.invoke(
+        return (FederationPartitionConfig)getModuleClient().invoke(
                 "getPartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
@@ -166,7 +161,7 @@ public class FederationClient implements FederationMBean {
     }
 
     public void createPartition(String name) throws Exception {
-        moduleClient.invoke(
+        getModuleClient().invoke(
                 "createPartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
@@ -174,7 +169,7 @@ public class FederationClient implements FederationMBean {
     }
 
     public void removePartition(String name) throws Exception {
-        moduleClient.invoke(
+        getModuleClient().invoke(
                 "removePartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
@@ -182,7 +177,7 @@ public class FederationClient implements FederationMBean {
     }
 
     public void synchronize(String name) throws Exception {
-        moduleClient.invoke(
+        getModuleClient().invoke(
                 "synchronize",
                 new Object[] { name },
                 new String[] { String.class.getName() }

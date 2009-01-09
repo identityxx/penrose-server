@@ -27,6 +27,10 @@ public class NISJNDIClient extends NISClient {
         this.parameters = new Hashtable<String,String>();
         this.parameters.putAll(parameters);
 
+        connect();
+    }
+
+    public void connect() throws Exception {
         context = new InitialContext(this.parameters);
     }
 

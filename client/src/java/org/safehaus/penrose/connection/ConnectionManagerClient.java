@@ -62,6 +62,14 @@ public class ConnectionManagerClient extends BaseClient implements ConnectionMan
         return (Collection<String>)getAttribute("ConnectionNames");
     }
 
+    public void validateConnection(ConnectionConfig connectionConfig) throws Exception {
+        invoke(
+                "validateConnection",
+                new Object[] { connectionConfig },
+                new String[] { ConnectionConfig.class.getName() }
+        );
+    }
+
     public void createConnection(ConnectionConfig connectionConfig) throws Exception {
         invoke(
                 "createConnection",
@@ -70,11 +78,19 @@ public class ConnectionManagerClient extends BaseClient implements ConnectionMan
         );
     }
 
-    public void updateConnection(String name, ConnectionConfig connectionConfig) throws Exception {
+    public void renameConnection(String name, String newName) throws Exception {
+        invoke(
+                "renameConnection",
+                new Object[] { name, newName },
+                new String[] { String.class.getName(), String.class.getName() }
+        );
+    }
+
+    public void updateConnection(ConnectionConfig connectionConfig) throws Exception {
         invoke(
                 "updateConnection",
-                new Object[] { name, connectionConfig },
-                new String[] { String.class.getName(), ConnectionConfig.class.getName() }
+                new Object[] { connectionConfig },
+                new String[] { ConnectionConfig.class.getName() }
         );
     }
 

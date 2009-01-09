@@ -8,6 +8,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.source.SourceConfigManager;
 import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.util.TextUtil;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -110,9 +111,34 @@ public class ConnectionManagerService extends BaseService implements ConnectionM
         return list;
     }
 
+    public void validateConnection(ConnectionConfig connectionConfig) throws Exception {
+
+        String connectionName = connectionConfig.getName();
+
+        if (debug) {
+            log.debug(TextUtil.repeat("-", 70));
+            log.debug("Validating connection "+connectionName+".");
+        }
+
+        Partition partition = getPartition();
+        if (partition == null) {
+            throw new Exception("Partition is stopped.");
+        }
+
+        ConnectionManager connectionManager = partition.getConnectionManager();
+        Connection connection = connectionManager.createConnection(connectionConfig);
+        connection.validate();
+        connection.destroy();
+    }
+
     public void createConnection(ConnectionConfig connectionConfig) throws Exception {
 
         String connectionName = connectionConfig.getName();
+
+        if (debug) {
+            log.debug(TextUtil.repeat("-", 70));
+            log.debug("Creating connection "+connectionName+".");
+        }
 
         PartitionConfig partitionConfig = getPartitionConfig();
         ConnectionConfigManager connectionConfigManager = partitionConfig.getConnectionConfigManager();
@@ -128,7 +154,12 @@ public class ConnectionManagerService extends BaseService implements ConnectionM
         connectionService.register();
     }
 
-    public void updateConnection(String connectionName, ConnectionConfig connectionConfig) throws Exception {
+    public void renameConnection(String connectionName, String newName) throws Exception {
+
+        if (debug) {
+            log.debug(TextUtil.repeat("-", 70));
+            log.debug("Renaming connection "+connectionName+" to "+newName+".");
+        }
 
         PartitionConfig partitionConfig = getPartitionConfig();
         SourceConfigManager sourceConfigManager = partitionConfig.getSourceConfigManager();
@@ -138,24 +169,58 @@ public class ConnectionManagerService extends BaseService implements ConnectionM
             throw new Exception("Connection "+connectionName+" is in use.");
         }
 
+        boolean running = false;
+
         Partition partition = getPartition();
         if (partition != null) {
             ConnectionManager connectionManager = partition.getConnectionManager();
-            boolean running = connectionManager.isRunning(connectionName);
+            running = connectionManager.isRunning(connectionName);
             if (running) connectionManager.stopConnection(connectionName);
         }
 
         ConnectionConfigManager connectionConfigManager = partitionConfig.getConnectionConfigManager();
-        connectionConfigManager.updateConnectionConfig(connectionName, connectionConfig);
+        connectionConfigManager.renameConnectionConfig(connectionName, newName);
 
         if (partition != null) {
             ConnectionManager connectionManager = partition.getConnectionManager();
-            boolean running = connectionManager.isRunning(connectionName);
+            if (running) connectionManager.startConnection(newName);
+        }
+    }
+
+    public void updateConnection(ConnectionConfig connectionConfig) throws Exception {
+
+        String connectionName = connectionConfig.getName();
+
+        if (debug) {
+            log.debug(TextUtil.repeat("-", 70));
+            log.debug("Updating connection "+connectionName+".");
+        }
+
+        boolean running = false;
+
+        Partition partition = getPartition();
+        if (partition != null) {
+            ConnectionManager connectionManager = partition.getConnectionManager();
+            running = connectionManager.isRunning(connectionName);
+            if (running) connectionManager.stopConnection(connectionName);
+        }
+
+        PartitionConfig partitionConfig = getPartitionConfig();
+        ConnectionConfigManager connectionConfigManager = partitionConfig.getConnectionConfigManager();
+        connectionConfigManager.updateConnectionConfig(connectionConfig);
+
+        if (partition != null) {
+            ConnectionManager connectionManager = partition.getConnectionManager();
             if (running) connectionManager.startConnection(connectionConfig.getName());
         }
     }
 
     public void removeConnection(String connectionName) throws Exception {
+
+        if (debug) {
+            log.debug(TextUtil.repeat("-", 70));
+            log.debug("Removing connection "+connectionName+".");
+        }
 
         PartitionConfig partitionConfig = getPartitionConfig();
         SourceConfigManager sourceConfigManager = partitionConfig.getSourceConfigManager();

@@ -18,16 +18,16 @@ public class NISAutomountsSource extends Source {
     public final static String BASE = "base";
 
     NISConnection connection;
-    NISClient client;
 
     public void init() throws Exception {
         connection = (NISConnection)getConnection();
-        client = connection.client;
     }
 
     public NISMap getAutomountMap(Session session, String automountMapName) throws Exception {
 
         SearchResponse response = new SearchResponse();
+
+        NISClient client = connection.createClient();
 
         try {
             client.list(automountMapName, "automount", response);
@@ -47,6 +47,9 @@ public class NISAutomountsSource extends Source {
                 if (debug) log.debug("Failed accessing "+automountMapName+": "+ex.getMessage());
                 return null;
             }
+
+        } finally {
+            client.close();
         }
 
         NISMap map = new NISMap();

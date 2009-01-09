@@ -25,7 +25,7 @@ public class LDAPConnectionFactory {
 
     public String referral = "follow";
     public int pageSize;
-    public int timeout;
+    public Integer timeout;
 
     LDAPSocketFactory socketFactory;
 
@@ -55,7 +55,7 @@ public class LDAPConnectionFactory {
         }
 
         socketFactory = new LDAPSocketFactory(urls);
-        socketFactory.setTimeout(timeout);
+        if (timeout != null) socketFactory.setTimeout(timeout);
     }
 
     public void parseParameters(Map<String,String> parameters) throws Exception {

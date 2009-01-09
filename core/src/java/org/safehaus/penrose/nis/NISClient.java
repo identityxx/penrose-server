@@ -42,6 +42,9 @@ public abstract class NISClient {
         this.parameters.putAll(parameters);
     }
 
+    public void connect() throws Exception {
+    }
+
     public void close() throws Exception {
     }
 

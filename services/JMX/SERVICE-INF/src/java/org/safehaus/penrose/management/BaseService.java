@@ -229,7 +229,7 @@ public abstract class BaseService implements DynamicMBean {
                 return method.invoke(this, paramValues);
 
             } catch (NoSuchMethodException e) {
-                if (debug) log.debug("No such method in "+clazz.getName()+".");
+                // if (debug) log.debug("No such method in "+clazz.getName()+".");
                 // ignore
             }
 
@@ -237,6 +237,7 @@ public abstract class BaseService implements DynamicMBean {
             Class objectClass = object.getClass();
 
             try {
+                if (info) log.info("Invoking method in class "+objectClass.getSimpleName());
                 Method method = objectClass.getMethod(operation, paramClass);
                 return method.invoke(object, paramValues);
 

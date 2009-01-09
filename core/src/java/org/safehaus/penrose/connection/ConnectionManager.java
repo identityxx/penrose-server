@@ -6,8 +6,6 @@ import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.PartitionContext;
-import org.safehaus.penrose.source.SourceConfig;
-import org.safehaus.penrose.source.SourceConfigManager;
 
 import java.util.Map;
 import java.util.LinkedHashMap;
@@ -69,7 +67,8 @@ public class ConnectionManager {
     public void startConnection(String name) throws Exception {
         if (debug) log.debug("Starting connection "+name+".");
         ConnectionConfig connectionConfig = getConnectionConfig(name);
-        createConnection(connectionConfig);
+        Connection connection = createConnection(connectionConfig);
+        addConnection(connection);
     }
 
     public void stopConnection(String name) throws Exception {
@@ -100,11 +99,7 @@ public class ConnectionManager {
         connectionContext.setAdapter(adapter);
         connectionContext.setClassLoader(cl);
 
-        Connection connection = adapter.createConnection(connectionConfig, connectionContext);
-
-        addConnection(connection);
-
-        return connection;
+        return adapter.createConnection(connectionConfig, connectionContext);
     }
 
     public void addConnection(Connection connection) {
@@ -130,17 +125,9 @@ public class ConnectionManager {
         return connectionManager.getConnection(name);
     }
 
-    public void updateConnectionConfig(String name, ConnectionConfig connectionConfig) throws Exception {
+    public void updateConnectionConfig(ConnectionConfig connectionConfig) throws Exception {
 
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-        connectionConfigManager.updateConnectionConfig(name, connectionConfig);
-
-        // fix references
-        SourceConfigManager sourceConfigManager = partitionConfig.getSourceConfigManager();
-        for (SourceConfig sourceConfig : sourceConfigManager.getSourceConfigs()) {
-            if (!sourceConfig.getConnectionName().equals(name)) continue;
-            sourceConfig.setConnectionName(connectionConfig.getName());
-        }
+        connectionConfigManager.updateConnectionConfig(connectionConfig);
     }
 
     public ConnectionConfig removeConnectionConfig(String name) {

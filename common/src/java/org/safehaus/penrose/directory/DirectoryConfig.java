@@ -1,6 +1,7 @@
 package org.safehaus.penrose.directory;
 
 import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.ldap.RDN;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -125,16 +126,26 @@ public class DirectoryConfig implements Serializable, Cloneable {
         return entryConfigsById.get(parentId);
     }
 
-    public void updateEntryConfig(String id, EntryConfig entryConfig) throws Exception {
+    public void updateEntryConfig(EntryConfig entryConfig) throws Exception {
 
+        String id = entryConfig.getId();
         EntryConfig oldEntryConfig = entryConfigsById.get(id);
 
-        if (!oldEntryConfig.getDn().equals(entryConfig.getDn())) {
-            renameEntryConfig(oldEntryConfig, entryConfig.getDn());
+        DN oldParentDn = oldEntryConfig.getParentDn();
+        DN parentDn = entryConfig.getParentDn();
+
+        if (!oldParentDn.equals(parentDn)) {
+            throw new Exception("Modify DN operation is not supported.");
+        }
+
+        RDN oldRdn = oldEntryConfig.getRdn();
+        RDN rdn = entryConfig.getRdn();
+
+        if (!oldRdn.equals(rdn)) {
+            renameEntryConfig(oldEntryConfig, rdn);
         }
 
         oldEntryConfig.copy(entryConfig);
-        oldEntryConfig.setId(id);
     }
 
     public void removeEntryConfig(String id) throws Exception {
@@ -144,20 +155,22 @@ public class DirectoryConfig implements Serializable, Cloneable {
     }
 
     public void removeEntryConfig(EntryConfig entryConfig) throws Exception {
-        entryConfigsById.remove(entryConfig.getId());
+        String id = entryConfig.getId();
+        entryConfigsById.remove(id);
 
         EntryConfig parent = getParent(entryConfig);
         if (parent == null) {
-            rootIds.remove(entryConfig.getId());
+            if (debug) log.debug("Removing root entry "+id+".");
+            rootIds.remove(id);
 
         } else {
-            removeChild(parent.getId(), entryConfig.getId());
+            removeChild(parent.getId(), id);
         }
 
         Collection<String> c = entryConfigsByDn.get(entryConfig.getDn().getNormalizedDn());
         if (c == null) return;
 
-        c.remove(entryConfig.getId());
+        c.remove(id);
         if (c.isEmpty()) {
             entryConfigsByDn.remove(entryConfig.getDn().getNormalizedDn());
         }
@@ -306,6 +319,36 @@ public class DirectoryConfig implements Serializable, Cloneable {
 
     }
 
+    public void renameEntryConfig(EntryConfig entryConfig, RDN newRdn) throws Exception {
+
+        EntryConfig oldParent = getParent(entryConfig);
+        DN oldDn = entryConfig.getDn();
+
+        if (debug) log.debug("Renaming "+oldDn+" to "+newRdn+".");
+
+        Collection<String> c = entryConfigsByDn.get(oldDn.getNormalizedDn());
+        if (c == null) {
+        	if (debug) log.debug("Entry "+oldDn+" not found.");
+            return;
+        }
+
+        c.remove(entryConfig.getId());
+        if (c.isEmpty()) {
+        	if (debug) log.debug("Last "+oldDn+".");
+            entryConfigsByDn.remove(oldDn.getNormalizedDn());
+        }
+
+        DN newDn = newRdn.append(oldParent.getDn());
+        entryConfig.setDn(newDn);
+        Collection<String> newList = entryConfigsByDn.get(newDn.getNormalizedDn());
+        if (newList == null) {
+        	if (debug) log.debug("First "+newDn+".");
+            newList = new ArrayList<String>();
+            entryConfigsByDn.put(newDn.getNormalizedDn(), newList);
+        }
+        newList.add(entryConfig.getId());
+    }
+
     public Collection<String> getChildIds(String parentId) {
         Collection<String> children = childrenById.get(parentId);
         if (children == null) return EMPTY_IDS;
@@ -313,6 +356,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
     }
 
     public void addChild(String parentId, String childId) {
+        if (debug) log.debug("Adding child "+childId+" to parent "+parentId+".");
         Collection<String> children = childrenById.get(parentId);
         if (children == null) {
             children = new ArrayList<String>();
@@ -324,6 +368,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
     }
 
     public void removeChild(String parentId, String childId) throws Exception {
+        if (debug) log.debug("Removing child "+childId+" from parent "+parentId+".");
         parentById.remove(childId);
 
         Collection<String> children = childrenById.get(parentId);

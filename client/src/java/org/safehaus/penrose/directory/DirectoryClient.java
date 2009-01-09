@@ -87,11 +87,11 @@ public class DirectoryClient extends BaseClient implements DirectoryServiceMBean
         );
     }
 
-    public void updateEntry(String id, EntryConfig entryConfig) throws Exception {
+    public void updateEntry(EntryConfig entryConfig) throws Exception {
         invoke(
                 "updateEntry",
-                new Object[] { id, entryConfig },
-                new String[] { String.class.getName(), EntryConfig.class.getName() }
+                new Object[] { entryConfig },
+                new String[] { EntryConfig.class.getName() }
         );
     }
 

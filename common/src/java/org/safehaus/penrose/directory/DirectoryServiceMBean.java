@@ -19,6 +19,6 @@ public interface DirectoryServiceMBean {
     public Collection<String> getEntryIds() throws Exception;
 
     public String createEntry(EntryConfig entryConfig) throws Exception;
-    public void updateEntry(String id, EntryConfig entryConfig) throws Exception;
+    public void updateEntry(EntryConfig entryConfig) throws Exception;
     public void removeEntry(String id) throws Exception;
 }

@@ -18,7 +18,7 @@ public class LDAPConnection extends Connection {
     public final static String PASSWORD  = "password";
     public final static String REFERRAL  = "referral";
     public final static String PAGE_SIZE = "pageSize";
-    public final static String TIMEOUT   = "timeout";
+    public final static String TIMEOUT   = "timeout"; // millisecond
 
     public final static String INITIAL_SIZE                         = "initialSize";
     public final static String MAX_ACTIVE                           = "maxActive";
@@ -121,6 +121,16 @@ public class LDAPConnection extends Connection {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Client
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void validate() throws Exception {
+        try {
+            LDAPClient client = createClient();
+            client.connect();
+            client.close();
+        } catch (Exception e) {
+            throw new Exception(e.getMessage());
+        }
+    }
 
     public LDAPClient createClient() throws Exception {
 

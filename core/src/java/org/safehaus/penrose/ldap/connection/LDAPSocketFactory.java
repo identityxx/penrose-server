@@ -15,7 +15,7 @@ import java.util.Collection;
 public class LDAPSocketFactory implements org.ietf.ldap.LDAPSocketFactory {
 
     protected Collection<LDAPUrl> urls;
-    protected int timeout;
+    protected Integer timeout;
 
     protected SocketFactory factory;
 
@@ -45,7 +45,7 @@ public class LDAPSocketFactory implements org.ietf.ldap.LDAPSocketFactory {
             socket = createRegularSocket(host, port);
         }
 
-        socket.setSoTimeout(timeout);
+        if (timeout != null) socket.setSoTimeout(timeout);
 
         return socket;
     }
@@ -58,11 +58,11 @@ public class LDAPSocketFactory implements org.ietf.ldap.LDAPSocketFactory {
         return factory.createSocket(host, port);
     }
 
-    public int getTimeout() {
+    public Integer getTimeout() {
         return timeout;
     }
 
-    public void setTimeout(int timeout) {
+    public void setTimeout(Integer timeout) {
         this.timeout = timeout;
     }
 }

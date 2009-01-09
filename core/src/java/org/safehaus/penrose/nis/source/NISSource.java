@@ -27,14 +27,12 @@ public class NISSource extends Source {
     public final static String PAM            = "pam";
 
     public NISConnection connection;
-    public NISClient client;
 
     public String base;
     public String type;
 
     public void init() throws Exception {
         connection = (NISConnection)getConnection();
-        client = connection.client;
 
         base = getParameter(BASE);
         type = getParameter(OBJECT_CLASSES);
@@ -63,7 +61,9 @@ public class NISSource extends Source {
         String username = (String)rdn.get(name);
         byte[] password = request.getPassword();
 
+        NISClient client = connection.createClient();
         client.bind(serviceName, username, password);
+        client.close();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -104,6 +104,8 @@ public class NISSource extends Source {
 
         newResponse.setSizeLimit(request.getSizeLimit());
 
+        NISClient client = connection.createClient();
+
         try {
             if (baseDn != null && baseDn.isEmpty()) {
 
@@ -139,6 +141,7 @@ public class NISSource extends Source {
 
         } finally {
             response.close();
+            client.close();
         }
 
         log.debug("Search operation completed.");
@@ -256,6 +259,8 @@ public class NISSource extends Source {
             }
         };
 
+        NISClient client = connection.createClient();
+
         try {
             client.list(base, "automount", newResponse);
 
@@ -271,6 +276,9 @@ public class NISSource extends Source {
                 if (debug) log.debug("Automount map "+automountMapName+" is not stored in NIS.");
                 throw e;
             }
+
+        } finally {
+            client.close();
         }
     }
 
@@ -528,6 +536,8 @@ public class NISSource extends Source {
 
         if (rdn == null) {
 
+            NISClient client = connection.createClient();
+
             try {
                 client.list(base, "automount", newResponse);
 
@@ -543,9 +553,14 @@ public class NISSource extends Source {
                     if (debug) log.debug("Automount map "+automountMapName+" is not stored in NIS.");
                     throw e;
                 }
+
+            } finally {
+                client.close();
             }
 
         } else {
+
+            NISClient client = connection.createClient();
 
             try {
                 client.lookup(base, rdn, "automount", newResponse);
@@ -562,6 +577,9 @@ public class NISSource extends Source {
                     if (debug) log.debug("Automount map "+automountMapName+" is not stored in NIS.");
                     throw e;
                 }
+
+            } finally {
+                client.close();
             }
         }
     }
