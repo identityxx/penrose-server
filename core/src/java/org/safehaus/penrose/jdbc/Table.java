@@ -30,11 +30,12 @@ public class Table implements Serializable, Comparable, Cloneable {
     private String catalog;
     private String schema;
 
-	public Table() {
-	}
-
     public Table(String name) {
-        this.name = name;
+        this(name, null, null, null);
+    }
+
+    public Table(String name, String catalog, String schema) {
+        this(name, null, catalog, schema);
     }
 
     public Table(String name, String type, String catalog, String schema) {

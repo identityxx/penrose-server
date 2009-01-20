@@ -9,7 +9,7 @@
     <connection-name>Source</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>dc=my-domain,dc=com</param-value>
+      <param-value>dc=Users,dc=my-domain,dc=com</param-value>
     </parameter>
   </source>
 
@@ -17,7 +17,7 @@
     <connection-name>Target</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>dc=my-domain,dc=Example,dc=com</param-value>
+      <param-value>dc=Users,dc=Example,dc=com</param-value>
     </parameter>
   </source>
 

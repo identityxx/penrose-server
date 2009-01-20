@@ -7,7 +7,7 @@ import org.safehaus.penrose.partition.PartitionContext;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.util.FileUtil;
-import org.safehaus.penrose.ldap.module.SnapshotSyncModule;
+import org.safehaus.penrose.synchronization.module.SynchronizationModule;
 import org.apache.tools.ant.taskdefs.Copy;
 import org.apache.tools.ant.types.FileSet;
 import org.apache.tools.ant.types.FilterChain;
@@ -290,7 +290,7 @@ public class FederationModule extends Module implements FederationMBean {
         if (partition == null) return;
 
         ModuleManager moduleManager = partition.getModuleManager();
-        SnapshotSyncModule module = (SnapshotSyncModule)moduleManager.getModule(Federation.SYNCHRONIZATION);
+        SynchronizationModule module = (SynchronizationModule)moduleManager.getModule(Federation.SYNCHRONIZATION);
         if (module == null) return;
 
         module.synchronize();

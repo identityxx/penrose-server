@@ -1,8 +1,8 @@
 package org.safehaus.penrose.nis.module;
 
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.ldap.module.SnapshotSyncModule;
-import org.safehaus.penrose.federation.SynchronizationResult;
+import org.safehaus.penrose.synchronization.module.SynchronizationModule;
+import org.safehaus.penrose.synchronization.SynchronizationResult;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.source.Source;
 
@@ -11,7 +11,7 @@ import java.util.*;
 /**
  * @author Endi Sukma Dewata
  */
-public class NISSynchronizationModule extends SnapshotSyncModule {
+public class NISSynchronizationModule extends SynchronizationModule {
 
     public static Map<String,String> nisMapRDNs = new LinkedHashMap<String,String>();
 

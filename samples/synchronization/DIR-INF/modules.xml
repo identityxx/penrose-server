@@ -6,7 +6,7 @@
 <modules>
 
   <module name="Synchronization">
-    <module-class>org.safehaus.penrose.ldap.module.SnapshotSyncModule</module-class>
+    <module-class>org.safehaus.penrose.synchronization.module.SynchronizationModule</module-class>
     <parameter>
       <param-name>source</param-name>
       <param-value>source</param-value>

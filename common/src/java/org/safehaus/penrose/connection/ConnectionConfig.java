@@ -30,7 +30,8 @@ public class ConnectionConfig implements Serializable, Cloneable {
 	public String name;
     public String description;
 
-	public String adapterName;
+    public String adapterName;
+    public String connectionClass;
 
 	public Map<String,String> parameters = new LinkedHashMap<String,String>();
 
@@ -50,6 +51,14 @@ public class ConnectionConfig implements Serializable, Cloneable {
 		this.name = name;
 	}
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
 	public String getAdapterName() {
 		return adapterName;
 	}
@@ -57,6 +66,26 @@ public class ConnectionConfig implements Serializable, Cloneable {
 	public void setAdapterName(String adapterName) {
 		this.adapterName = adapterName;
 	}
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public String getConnectionClass() {
+        return connectionClass;
+    }
+
+    public void setConnectionClass(String connectionClass) {
+        this.connectionClass = connectionClass;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Parameters
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public Map<String,String> getParameters() {
         return parameters;
@@ -84,14 +113,6 @@ public class ConnectionConfig implements Serializable, Cloneable {
         return parameters.remove(name);
     }
 
-	public String getDescription() {
-		return description;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
     public int hashCode() {
         return name == null ? 0 : name.hashCode();
     }
@@ -114,6 +135,7 @@ public class ConnectionConfig implements Serializable, Cloneable {
         if (!equals(description, connectionConfig.description)) return false;
 
         if (!equals(adapterName, connectionConfig.adapterName)) return false;
+        if (!equals(connectionClass, connectionConfig.connectionClass)) return false;
 
         if (!equals(parameters, connectionConfig.parameters)) return false;
 
@@ -127,6 +149,7 @@ public class ConnectionConfig implements Serializable, Cloneable {
         description = connectionConfig.description;
 
         adapterName = connectionConfig.adapterName;
+        connectionClass = connectionConfig.connectionClass;
 
         parameters = new LinkedHashMap<String,String>();
         parameters.putAll(connectionConfig.parameters);
@@ -136,13 +159,5 @@ public class ConnectionConfig implements Serializable, Cloneable {
         ConnectionConfig connectionConfig = (ConnectionConfig)super.clone();
         connectionConfig.copy(this);
         return connectionConfig;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
     }
 }

@@ -226,7 +226,7 @@ public class Entry implements Cloneable {
     }
 
     public String getId() {
-        return entryConfig.getId();
+        return entryConfig.getName();
     }
 
     public String getParentId() {
@@ -386,7 +386,7 @@ public class Entry implements Cloneable {
                 psn = sourceMapping.getName();
             }
 
-            entry = directory.getEntry(entry.getParentId());
+            entry = directory.getEntry(entry.getParentName());
             //entry = directory.getParent(entry);
 
         } while (entry != null);
@@ -1055,7 +1055,7 @@ public class Entry implements Cloneable {
         Attributes attributes = computeAttributes(interpreter);
 
         SearchResult result = new SearchResult(dn, attributes);
-        result.setEntryId(entryConfig.getId());
+        result.setEntryId(entryConfig.getName());
         result.setSourceAttributes(sourceAttributes);
 
         return result;

@@ -1,5 +1,7 @@
 package org.safehaus.penrose.federation;
 
+import org.safehaus.penrose.synchronization.SynchronizationResult;
+
 import java.util.Collection;
 
 /**

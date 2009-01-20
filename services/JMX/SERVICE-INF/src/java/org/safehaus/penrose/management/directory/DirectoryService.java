@@ -105,10 +105,10 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
             }
         }
 
-        EntryService entryService = getEntryService(entryConfig.getId());
+        EntryService entryService = getEntryService(entryConfig.getName());
         entryService.register();
 
-        return entryConfig.getId();
+        return entryConfig.getName();
     }
 
     public void updateEntry(EntryConfig entryConfig) throws Exception {
@@ -120,14 +120,14 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
 
         if (directory != null) {
             try {
-                Entry oldEntry = directory.removeEntry(entryConfig.getId());
+                Entry oldEntry = directory.removeEntry(entryConfig.getName());
                 children = oldEntry.getChildren();
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
         }
 
-        EntryService oldEntryService = getEntryService(entryConfig.getId());
+        EntryService oldEntryService = getEntryService(entryConfig.getName());
         oldEntryService.unregister();
 
         DirectoryConfig directoryConfig = getDirectoryConfig();
@@ -142,7 +142,7 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
             }
         }
 
-        EntryService newEntryService = getEntryService(entryConfig.getId());
+        EntryService newEntryService = getEntryService(entryConfig.getName());
         newEntryService.register();
     }
 

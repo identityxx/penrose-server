@@ -2,8 +2,11 @@
 
 <!ELEMENT sources (source*)>
 
-<!ELEMENT source (source-class?, description?, partition-name?, connection-name, field*, parameter*)>
+<!ELEMENT source (source-class?, description?, partition-name?, connection-name?, field*, parameter*)>
 <!ATTLIST source name CDATA #REQUIRED>
+
+<!ELEMENT source-class (#PCDATA)>
+<!ELEMENT description (#PCDATA)>
 <!ELEMENT partition-name (#PCDATA)>
 <!ELEMENT connection-name (#PCDATA)>
 
@@ -28,9 +31,6 @@
 <!ELEMENT expression (#PCDATA)>
 <!ATTLIST expression foreach CDATA #IMPLIED>
 <!ATTLIST expression var CDATA #IMPLIED>
-
-<!ELEMENT source-class (#PCDATA)>
-<!ELEMENT description (#PCDATA)>
 
 <!ELEMENT parameter (param-name, param-value)>
 <!ELEMENT param-name (#PCDATA)>

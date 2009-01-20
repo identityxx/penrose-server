@@ -1,13 +1,14 @@
-package org.safehaus.penrose.ldap.module;
+package org.safehaus.penrose.synchronization.module;
 
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.synchronization.SynchronizationMBean;
 import org.safehaus.penrose.ldap.source.LDAPSource;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.SourceManager;
-import org.safehaus.penrose.federation.SynchronizationResult;
+import org.safehaus.penrose.synchronization.SynchronizationResult;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -17,7 +18,7 @@ import java.util.*;
 /**
  * @author Endi Sukma Dewata
  */
-public class SnapshotSyncModule extends Module implements SyncModuleMBean {
+public class SynchronizationModule extends Module implements SynchronizationMBean {
 
     protected String sourcePartitionName;
     protected String sourceName;
@@ -679,6 +680,7 @@ public class SnapshotSyncModule extends Module implements SyncModuleMBean {
             public void add(SearchResult result) throws Exception {
 
                 DN dn = result.getDn();
+                if (dn.equals(targetDn)) return;
 
                 totalCount++;
 
@@ -719,6 +721,7 @@ public class SnapshotSyncModule extends Module implements SyncModuleMBean {
             public void add(SearchResult result2) throws Exception {
 
                 DN dn2 = result2.getDn();
+                if (dn2.equals(sourceDn)) return;
 
                 totalCount++;
 

@@ -137,7 +137,7 @@ public class DirectoryClient extends BaseClient implements DirectoryServiceMBean
         EntryClient entryClient = directoryClient.getEntryClient(entryId);
         EntryConfig entryConfig = entryClient.getEntryConfig();
 
-        System.out.println("ID          : "+entryConfig.getId());
+        System.out.println("ID          : "+entryConfig.getName());
         System.out.println("DN          : "+entryConfig.getDn());
 
         String entryClass = entryConfig.getEntryClass();

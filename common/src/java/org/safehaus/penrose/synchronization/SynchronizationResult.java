@@ -1,4 +1,4 @@
-package org.safehaus.penrose.federation;
+package org.safehaus.penrose.synchronization;
 
 import java.io.Serializable;
 import java.io.StringWriter;

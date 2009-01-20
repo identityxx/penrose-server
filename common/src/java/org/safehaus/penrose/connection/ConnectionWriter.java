@@ -60,16 +60,28 @@ public class ConnectionWriter {
 
         Element element = new DefaultElement("connection");
         element.add(new DefaultAttribute("name", connectionConfig.getName()));
+        if (!connectionConfig.isEnabled()) element.addAttribute("enabled", "false");
 
-        if (connectionConfig.getDescription() != null) {
-            Element descriptionElement = new DefaultElement("description");
-            descriptionElement.add(new DefaultText(connectionConfig.getDescription()));
+        String connectionClass = connectionConfig.getConnectionClass();
+        if (connectionClass != null) {
+            Element descriptionElement = new DefaultElement("connection-class");
+            descriptionElement.add(new DefaultText(connectionClass));
             element.add(descriptionElement);
         }
 
-        Element adapterName = new DefaultElement("adapter-name");
-        adapterName.add(new DefaultText(connectionConfig.getAdapterName()));
-        element.add(adapterName);
+        String description = connectionConfig.getDescription();
+        if (description != null) {
+            Element descriptionElement = new DefaultElement("description");
+            descriptionElement.add(new DefaultText(description));
+            element.add(descriptionElement);
+        }
+
+        String adapterName = connectionConfig.getAdapterName();
+        if (adapterName != null) {
+            Element adapterElement = new DefaultElement("adapter-name");
+            adapterElement.add(new DefaultText(adapterName));
+            element.add(adapterElement);
+        }
 
         for (String name : connectionConfig.getParameterNames()) {
             String value = connectionConfig.getParameter(name);

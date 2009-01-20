@@ -35,8 +35,8 @@ public class EntryConfig implements Serializable, Cloneable {
     public boolean enabled = true;
     public boolean attached = true;
 
-    public String id;
-    public String parentId;
+    public String name;
+    public String parentName;
 
     public DN dn;
 
@@ -378,6 +378,11 @@ public class EntryConfig implements Serializable, Cloneable {
     // Access Control List
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    public void setACL(Collection<ACI> acl) {
+        this.acl.clear();
+        this.acl.addAll(acl);
+    }
+
     public void addACI(ACI aci) {
         acl.add(aci);
     }
@@ -419,12 +424,13 @@ public class EntryConfig implements Serializable, Cloneable {
     }
 
     public void setParameters(Map<String,String> parameters) {
+        if (parameters == this.parameters) return;
         this.parameters.clear();
         this.parameters.putAll(parameters);
     }
 
     public int hashCode() {
-        return id == null ? 0 : id.hashCode();
+        return name == null ? 0 : name.hashCode();
     }
 
     boolean equals(Object o1, Object o2) {
@@ -442,8 +448,8 @@ public class EntryConfig implements Serializable, Cloneable {
         if (enabled != entryConfig.enabled) return false;
         if (attached != entryConfig.attached) return false;
 
-        if (!equals(id, entryConfig.id)) return false;
-        if (!equals(parentId, entryConfig.parentId)) return false;
+        if (!equals(name, entryConfig.name)) return false;
+        if (!equals(parentName, entryConfig.parentName)) return false;
 
         if (!equals(dn, entryConfig.dn)) return false;
 
@@ -478,8 +484,8 @@ public class EntryConfig implements Serializable, Cloneable {
         enabled = entryConfig.enabled;
         attached = entryConfig.attached;
 
-        id = entryConfig.id;
-        parentId = entryConfig.parentId;
+        name = entryConfig.name;
+        parentName = entryConfig.parentName;
 
         dn = entryConfig.dn;
 
@@ -536,20 +542,20 @@ public class EntryConfig implements Serializable, Cloneable {
         return entryConfig;
     }
 
-    public String getId() {
-        return id;
+    public String getName() {
+        return name;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public String getParentId() {
-        return parentId;
+    public String getParentName() {
+        return parentName;
     }
 
-    public void setParentId(String parentId) {
-        this.parentId = parentId;
+    public void setParentName(String parentName) {
+        this.parentName = parentName;
     }
 
     public String getPrimarySourceName() {

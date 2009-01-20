@@ -154,37 +154,43 @@ public class ConnectionManagerService extends BaseService implements ConnectionM
         connectionService.register();
     }
 
-    public void renameConnection(String connectionName, String newName) throws Exception {
+    public void renameConnection(String name, String newName) throws Exception {
 
         if (debug) {
             log.debug(TextUtil.repeat("-", 70));
-            log.debug("Renaming connection "+connectionName+" to "+newName+".");
+            log.debug("Renaming connection "+name+" to "+newName+".");
         }
 
         PartitionConfig partitionConfig = getPartitionConfig();
         SourceConfigManager sourceConfigManager = partitionConfig.getSourceConfigManager();
 
-        Collection<SourceConfig> sourceConfigs = sourceConfigManager.getSourceConfigsByConnectionName(connectionName);
+        Collection<SourceConfig> sourceConfigs = sourceConfigManager.getSourceConfigsByConnectionName(name);
         if (sourceConfigs != null && !sourceConfigs.isEmpty()) {
-            throw new Exception("Connection "+connectionName+" is in use.");
+            throw new Exception("Connection "+name+" is in use.");
         }
-
-        boolean running = false;
 
         Partition partition = getPartition();
+        boolean running = false;
+
         if (partition != null) {
             ConnectionManager connectionManager = partition.getConnectionManager();
-            running = connectionManager.isRunning(connectionName);
-            if (running) connectionManager.stopConnection(connectionName);
+            running = connectionManager.isRunning(name);
+            if (running) connectionManager.stopConnection(name);
         }
 
+        ConnectionService connectionService = getConnectionService(name);
+        connectionService.unregister();
+
         ConnectionConfigManager connectionConfigManager = partitionConfig.getConnectionConfigManager();
-        connectionConfigManager.renameConnectionConfig(connectionName, newName);
+        connectionConfigManager.renameConnectionConfig(name, newName);
 
         if (partition != null) {
             ConnectionManager connectionManager = partition.getConnectionManager();
             if (running) connectionManager.startConnection(newName);
         }
+
+        ConnectionService newConnectionService = getConnectionService(newName);
+        newConnectionService.register();
     }
 
     public void updateConnection(ConnectionConfig connectionConfig) throws Exception {
@@ -196,9 +202,9 @@ public class ConnectionManagerService extends BaseService implements ConnectionM
             log.debug("Updating connection "+connectionName+".");
         }
 
+        Partition partition = getPartition();
         boolean running = false;
 
-        Partition partition = getPartition();
         if (partition != null) {
             ConnectionManager connectionManager = partition.getConnectionManager();
             running = connectionManager.isRunning(connectionName);
@@ -211,7 +217,7 @@ public class ConnectionManagerService extends BaseService implements ConnectionM
 
         if (partition != null) {
             ConnectionManager connectionManager = partition.getConnectionManager();
-            if (running) connectionManager.startConnection(connectionConfig.getName());
+            if (running) connectionManager.startConnection(connectionName);
         }
     }
 

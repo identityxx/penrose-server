@@ -4,6 +4,8 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionListener;
 import org.safehaus.penrose.connection.Connection;
+import org.safehaus.penrose.schema.SchemaUtil;
+import org.safehaus.penrose.schema.Schema;
 import org.apache.commons.pool.impl.GenericObjectPool;
 
 import java.util.*;
@@ -123,12 +125,28 @@ public class LDAPConnection extends Connection {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void validate() throws Exception {
+        LDAPClient client = createClient();
         try {
-            LDAPClient client = createClient();
             client.connect();
-            client.close();
         } catch (Exception e) {
             throw new Exception(e.getMessage());
+        } finally {
+            client.close();
+        }
+    }
+
+    public Schema getSchema() throws Exception {
+        LDAPClient client = createClient();
+        try {
+            client.connect();
+
+            SchemaUtil schemaUtil = new SchemaUtil();
+            return schemaUtil.getSchema(client);
+
+        } catch (Exception e) {
+            throw new Exception(e.getMessage());
+        } finally {
+            client.close();
         }
     }
 

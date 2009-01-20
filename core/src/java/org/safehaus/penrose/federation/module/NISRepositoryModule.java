@@ -1,7 +1,7 @@
 package org.safehaus.penrose.federation.module;
 
 import org.safehaus.penrose.federation.Federation;
-import org.safehaus.penrose.federation.SynchronizationResult;
+import org.safehaus.penrose.synchronization.SynchronizationResult;
 import org.safehaus.penrose.federation.FederationRepositoryConfig;
 import org.safehaus.penrose.federation.NISRepositoryMBean;
 import org.safehaus.penrose.partition.Partition;

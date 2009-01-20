@@ -61,16 +61,19 @@ public class SourceWriter {
 
         Element element = new DefaultElement("source");
         element.addAttribute("name", sourceConfig.getName());
+        if (!sourceConfig.isEnabled()) element.addAttribute("enabled", "false");
 
-        if (sourceConfig.getSourceClass() != null) {
+        String sourceClass = sourceConfig.getSourceClass();
+        if (sourceClass != null) {
             Element sourceClassElement = new DefaultElement("source-class");
-            sourceClassElement.add(new DefaultText(sourceConfig.getSourceClass()));
+            sourceClassElement.add(new DefaultText(sourceClass));
             element.add(sourceClassElement);
         }
 
-        if (sourceConfig.getDescription() != null) {
+        String description = sourceConfig.getDescription();
+        if (description != null) {
             Element descriptionElement = new DefaultElement("description");
-            descriptionElement.add(new DefaultText(sourceConfig.getDescription()));
+            descriptionElement.add(new DefaultText(description));
             element.add(descriptionElement);
         }
 
@@ -81,9 +84,12 @@ public class SourceWriter {
             element.add(sourceName);
         }
 
-        Element connectionNameElement = new DefaultElement("connection-name");
-        connectionNameElement.add(new DefaultText(sourceConfig.getConnectionName()));
-        element.add(connectionNameElement);
+        String connectionName = sourceConfig.getConnectionName();
+        if (connectionName != null) {
+            Element connectionElement = new DefaultElement("connection-name");
+            connectionElement.add(new DefaultText(connectionName));
+            element.add(connectionElement);
+        }
 
         for (FieldConfig fieldConfig : sourceConfig.getFieldConfigs()) {
             Element fieldElement = createElement(fieldConfig);

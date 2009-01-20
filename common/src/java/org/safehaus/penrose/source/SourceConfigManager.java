@@ -49,31 +49,35 @@ public class SourceConfigManager implements Serializable, Cloneable {
         return sourceConfigs.keySet();
     }
 
-    public void updateSourceConfig(String sourceName, SourceConfig sourceConfig) throws Exception {
+    public void renameSourceConfig(String name, String newName) throws Exception {
+        SourceConfig sourceConfig = sourceConfigs.remove(name);
+        sourceConfig.setName(newName);
+        sourceConfigs.put(newName, sourceConfig);
+    }
+
+    public void updateSourceConfig(SourceConfig sourceConfig) throws Exception {
+
+        String sourceName = sourceConfig.getName();
+        String connectionName = sourceConfig.getConnectionName();
 
         SourceConfig oldSourceConfig = sourceConfigs.get(sourceName);
+        if (oldSourceConfig == null) throw new Exception("Source "+sourceName+" not found.");
 
         String oldConnectionName = oldSourceConfig.getConnectionName();
-        String newConnectionName = sourceConfig.getConnectionName();
 
         oldSourceConfig.copy(sourceConfig);
 
-        if (!sourceName.equals(sourceConfig.getName())) {
-            sourceConfigs.remove(sourceName);
-            sourceConfigs.put(sourceConfig.getName(), sourceConfig);
-        }
-
-        if (!oldConnectionName.equals(newConnectionName)) {
+        if (!oldConnectionName.equals(connectionName)) {
             Collection<SourceConfig> list = sourceConfigsByConnectionName.get(oldConnectionName);
             if (list != null) {
                 list.remove(oldSourceConfig);
                 if (list.isEmpty()) sourceConfigsByConnectionName.remove(oldConnectionName);
             }
 
-            list = sourceConfigsByConnectionName.get(newConnectionName);
+            list = sourceConfigsByConnectionName.get(connectionName);
             if (list == null) {
                 list = new ArrayList<SourceConfig>();
-                sourceConfigsByConnectionName.put(newConnectionName, list);
+                sourceConfigsByConnectionName.put(connectionName, list);
             }
             list.add(sourceConfig);
         }

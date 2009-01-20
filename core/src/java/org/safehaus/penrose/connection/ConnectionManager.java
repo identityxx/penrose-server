@@ -85,21 +85,33 @@ public class ConnectionManager {
 
         if (debug) log.debug("Creating connection "+connectionConfig.getName()+".");
 
-        String adapterName = connectionConfig.getAdapterName();
-        if (adapterName == null) throw new Exception("Missing adapter name.");
-
-        Adapter adapter = partition.getAdapterManager().getAdapter(adapterName);
-        if (adapter == null) throw new Exception("Unknown adapter "+adapterName+".");
-
         PartitionContext partitionContext = partition.getPartitionContext();
         ClassLoader cl = partitionContext.getClassLoader();
 
         ConnectionContext connectionContext = new ConnectionContext();
         connectionContext.setPartition(partition);
-        connectionContext.setAdapter(adapter);
         connectionContext.setClassLoader(cl);
 
-        return adapter.createConnection(connectionConfig, connectionContext);
+        String className = connectionConfig.getConnectionClass();
+        if (className == null) {
+            String adapterName = connectionConfig.getAdapterName();
+            if (adapterName == null) throw new Exception("Missing adapter name.");
+
+            Adapter adapter = partition.getAdapterManager().getAdapter(adapterName);
+            if (adapter == null) throw new Exception("Unknown adapter "+adapterName+".");
+
+            connectionContext.setAdapter(adapter);
+            className = adapter.getConnectionClassName();
+        }
+
+        Class clazz = cl.loadClass(className);
+
+        if (debug) log.debug("Creating "+className+".");
+        Connection connection = (Connection)clazz.newInstance();
+
+        connection.init(connectionConfig, connectionContext);
+
+        return connection;
     }
 
     public void addConnection(Connection connection) {
@@ -126,7 +138,6 @@ public class ConnectionManager {
     }
 
     public void updateConnectionConfig(ConnectionConfig connectionConfig) throws Exception {
-
         connectionConfigManager.updateConnectionConfig(connectionConfig);
     }
 

@@ -57,6 +57,10 @@ if (n.cn == void || n.cn == null) n.cn = n.givenName+" "+n.sn;
     </rule>
 
     <!-- posixAccount -->
+    <rule name="cn" required="false">
+      <condition>!n.cn.equals("0")</condition>
+      <variable>n.cn</variable>
+    </rule>
     <rule name="uidNumber" required="false">
       <condition>!n.uidNumber.equals("0")</condition>
       <variable>n.uidNumber</variable>

@@ -81,22 +81,4 @@ public abstract class Adapter {
     public void setAdapterContext(AdapterContext adapterContext) {
         this.adapterContext = adapterContext;
     }
-
-    public Connection createConnection(
-            ConnectionConfig connectionConfig,
-            ConnectionContext connectionContext
-    ) throws Exception {
-
-        String className = getConnectionClassName();
-
-        ClassLoader cl = connectionContext.getClassLoader();
-        Class clazz = cl.loadClass(className);
-
-        if (debug) log.debug("Creating "+className+".");
-        Connection connection = (Connection)clazz.newInstance();
-
-        connection.init(connectionConfig, connectionContext);
-
-        return connection;
-    }
 }

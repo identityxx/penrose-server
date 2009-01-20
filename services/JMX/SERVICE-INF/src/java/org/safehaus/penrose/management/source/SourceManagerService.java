@@ -8,6 +8,7 @@ import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.directory.Directory;
 import org.safehaus.penrose.directory.Entry;
+import org.safehaus.penrose.util.TextUtil;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -117,21 +118,64 @@ public class SourceManagerService extends BaseService implements SourceManagerSe
         sourceService.register();
     }
 
-    public void updateSource(String name, SourceConfig sourceConfig) throws Exception {
+    public void renameSource(String name, String newName) throws Exception {
+
+        if (debug) {
+            log.debug(TextUtil.repeat("-", 70));
+            log.debug("Renaming source "+name+" to "+newName+".");
+        }
 
         Partition partition = getPartition();
+        boolean running = false;
 
-        SourceManager sourceManager = partition.getSourceManager();
+        if (partition != null) {
+            SourceManager sourceManager = partition.getSourceManager();
+            running = sourceManager.isRunning(name);
+            if (running) sourceManager.stopSource(name);
+        }
 
-        Source oldSource = sourceManager.removeSource(name);
-        SourceService oldSourceService = getSourceService(oldSource.getName());
+        SourceService oldSourceService = getSourceService(name);
         oldSourceService.unregister();
 
-        sourceManager.updateSourceConfig(name, sourceConfig);
+        PartitionConfig partitionConfig = getPartitionConfig();
+        SourceConfigManager sourceConfigManager = partitionConfig.getSourceConfigManager();
+        sourceConfigManager.renameSourceConfig(name, newName);
 
-        Source newSource = sourceManager.createSource(sourceConfig);
-        SourceService newSourceService = getSourceService(newSource.getName());
+        if (partition != null) {
+            SourceManager sourceManager = partition.getSourceManager();
+            if (running) sourceManager.startSource(newName);
+        }
+
+        SourceService newSourceService = getSourceService(newName);
         newSourceService.register();
+    }
+
+    public void updateSource(String name, SourceConfig sourceConfig) throws Exception {
+
+        String sourceName = sourceConfig.getName();
+
+        if (debug) {
+            log.debug(TextUtil.repeat("-", 70));
+            log.debug("Updating source "+sourceName+".");
+        }
+
+        Partition partition = getPartition();
+        boolean running = false;
+
+        if (partition != null) {
+            SourceManager sourceManager = partition.getSourceManager();
+            running = sourceManager.isRunning(sourceName);
+            if (running) sourceManager.stopSource(sourceName);
+        }
+
+        PartitionConfig partitionConfig = getPartitionConfig();
+        SourceConfigManager sourceConfigManager = partitionConfig.getSourceConfigManager();
+        sourceConfigManager.updateSourceConfig(sourceConfig);
+
+        if (partition != null) {
+            SourceManager sourceManager = partition.getSourceManager();
+            if (running) sourceManager.startSource(sourceName);
+        }
     }
 
     public void removeSource(String name) throws Exception {

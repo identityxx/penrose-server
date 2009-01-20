@@ -191,7 +191,18 @@ public class SourceConfig implements Serializable, Cloneable {
 		return fieldConfigs.values();
 	}
 
-	public void addFieldConfig(FieldConfig fieldConfig) {
+    public  void setFieldConfigs(Collection<FieldConfig> fieldConfigs) throws Exception {
+        this.fieldConfigs.clear();
+        fieldConfigsByOriginalName.clear();
+        pkFieldConfigs.clear();
+        nonPkFieldConfigs.clear();
+
+        for (FieldConfig fieldConfig : fieldConfigs) {
+            addFieldConfig((FieldConfig)fieldConfig.clone());
+        }
+    }
+
+    public void addFieldConfig(FieldConfig fieldConfig) {
         String name = fieldConfig.getName();
         //log.debug("Adding field "+name+" ("+fieldConfig.isPrimaryKey()+")");
 
@@ -243,6 +254,12 @@ public class SourceConfig implements Serializable, Cloneable {
         return parameters;
     }
     
+    public void setParameters(Map<String,String> parameters) {
+        if (parameters == this.parameters) return;
+        this.parameters.clear();
+        this.parameters.putAll(parameters);
+    }
+
     public Collection<String> getParameterNames() {
         return parameters.keySet();
     }

@@ -67,6 +67,12 @@ public class ModuleConfig implements Serializable, Cloneable {
         return parameters;
     }
 
+    public void setParameters(Map<String,String> parameters) {
+        if (parameters == this.parameters) return;
+        this.parameters.clear();
+        this.parameters.putAll(parameters);
+    }
+
     public void clearParameters() {
         parameters.clear();
     }

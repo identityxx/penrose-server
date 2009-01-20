@@ -67,7 +67,7 @@ public class EntryService extends BaseService implements EntryServiceMBean {
         Collection<String> list = new ArrayList<String>();
         DirectoryConfig directoryConfig = getDirectoryConfig();
         for (EntryConfig childConfig : directoryConfig.getChildren(entryId)) {
-            list.add(childConfig.getId());
+            list.add(childConfig.getName());
         }
         return list;
     }

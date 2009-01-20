@@ -1,6 +1,7 @@
 package org.safehaus.penrose.federation;
 
 import org.safehaus.penrose.client.PenroseClient;
+import org.safehaus.penrose.synchronization.SynchronizationResult;
 import org.apache.log4j.*;
 import org.apache.log4j.xml.DOMConfigurator;
 

@@ -71,6 +71,14 @@ public class SourceManagerClient extends BaseClient implements SourceManagerServ
         );
     }
 
+    public void renameSource(String name, String newName) throws Exception {
+        invoke(
+                "renameSource",
+                new Object[] { name, newName },
+                new String[] { String.class.getName(), String.class.getName() }
+        );
+    }
+
     public void updateSource(String name, SourceConfig sourceConfig) throws Exception {
         invoke(
                 "updateSource",

@@ -1,5 +1,0 @@
-dn: dc=Example,dc=com
-objectClass: dcObject
-objectClass: organization
-dc: Example
-o: Example

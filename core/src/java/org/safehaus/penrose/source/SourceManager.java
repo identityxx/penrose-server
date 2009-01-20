@@ -82,6 +82,10 @@ public class SourceManager {
         source.destroy();
     }
 
+    public boolean isRunning(String name) {
+        return sources.containsKey(name);
+    }
+
     public Source createSource(SourceConfig sourceConfig) throws Exception {
 
         if (debug) log.debug("Creating source "+sourceConfig.getName()+".");
@@ -146,9 +150,10 @@ public class SourceManager {
         list.add(source);
     }
 
-    public void updateSourceConfig(String name, SourceConfig sourceConfig) throws Exception {
+    public void updateSourceConfig(SourceConfig sourceConfig) throws Exception {
 
-        sourceConfigManager.updateSourceConfig(name, sourceConfig);
+        String sourceName = sourceConfig.getName();
+        sourceConfigManager.updateSourceConfig(sourceConfig);
 
         // fix references
         PartitionConfig partitionConfig = partition.getPartitionConfig();
@@ -156,7 +161,7 @@ public class SourceManager {
         for (EntryConfig entryConfig : directoryConfig.getEntryConfigs()) {
 
             for (EntrySourceConfig sourceMapping : entryConfig.getSourceConfigs()) {
-                if (!sourceMapping.getSourceName().equals(name)) continue;
+                if (!sourceMapping.getSourceName().equals(sourceName)) continue;
                 sourceMapping.setSourceName(sourceConfig.getName());
             }
         }

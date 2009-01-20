@@ -66,8 +66,8 @@ public class DirectoryWriter {
             element.add(new DefaultAttribute("dn", entryConfig.getDn().toString()));
         }
 
-        if (!entryConfig.isEnabled()) element.add(new DefaultAttribute("enabled", "false"));
-        if (!entryConfig.isAttached()) element.add(new DefaultAttribute("attached", "false"));
+        if (!entryConfig.isEnabled()) element.addAttribute("enabled", "false");
+        if (!entryConfig.isAttached()) element.addAttribute("attached", "false");
         configElement.add(element);
 
         if (entryConfig.getEntryClass() != null) {

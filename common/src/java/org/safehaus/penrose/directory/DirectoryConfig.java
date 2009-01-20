@@ -39,20 +39,20 @@ public class DirectoryConfig implements Serializable, Cloneable {
         DN dn = entryConfig.getDn();
         if (debug) log.debug("Adding entry \""+dn+"\".");
 
-        String id = entryConfig.getId();
-        if (id == null) {
+        String name = entryConfig.getName();
+        if (name == null) {
             int counter = 0;
-            id = "entry"+counter;
-            while (entryConfigsById.containsKey(id)) {
+            name = "entry"+counter;
+            while (entryConfigsById.containsKey(name)) {
                 counter++;
-                id = "entry"+counter;
+                name = "entry"+counter;
             }
-            entryConfig.setId(id);
+            entryConfig.setName(name);
         }
-        if (debug) log.debug(" - ID: "+id);
+        if (debug) log.debug(" - ID: "+name);
 
-        // index by id
-        entryConfigsById.put(id, entryConfig);
+        // index by name
+        entryConfigsById.put(name, entryConfig);
 
         // index by dn
         String normalizedDn = dn.getNormalizedDn();
@@ -61,7 +61,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
             c1 = new ArrayList<String>();
             entryConfigsByDn.put(normalizedDn, c1);
         }
-        c1.add(id);
+        c1.add(name);
 
         // index by source
         Collection<EntrySourceConfig> sourceConfigs = entryConfig.getSourceConfigs();
@@ -72,18 +72,18 @@ public class DirectoryConfig implements Serializable, Cloneable {
                 c2 = new ArrayList<String>();
                 entryConfigsBySource.put(sourceName, c2);
             }
-            c2.add(entryConfig.getId());
+            c2.add(entryConfig.getName());
         }
 
-        String parentId = entryConfig.getParentId();
+        String parentId = entryConfig.getParentName();
 
         if (parentId != null) {
-            if (debug) log.debug(" - Searching parent with id "+parentId);
+            if (debug) log.debug(" - Searching parent with name "+parentId);
             EntryConfig parent = getEntryConfig(parentId);
 
             if (parent != null) {
                 if (debug) log.debug(" - Found parent \""+parent.getDn()+"\".");
-                addChild(parentId, entryConfig.getId());
+                addChild(parentId, entryConfig.getName());
                 return;
             }
         }
@@ -98,17 +98,17 @@ public class DirectoryConfig implements Serializable, Cloneable {
             if (!parents.isEmpty()) {
                 EntryConfig parent = parents.iterator().next();
                 if (debug) log.debug(" - Found parent \""+parent.getDn()+"\".");
-                addChild(parent.getId(), entryConfig.getId());
+                addChild(parent.getName(), entryConfig.getName());
                 return;
             }
         }
 
         if (debug) log.debug(" - Add suffix \""+dn+"\"");
-        rootIds.add(id);
+        rootIds.add(name);
     }
 
     public boolean contains(EntryConfig entryConfig) {
-        return entryConfigsById.containsKey(entryConfig.getId());
+        return entryConfigsById.containsKey(entryConfig.getName());
     }
 
     public EntryConfig getEntryConfig(String id) {
@@ -122,13 +122,13 @@ public class DirectoryConfig implements Serializable, Cloneable {
     public EntryConfig getParent(EntryConfig entryConfig) {
         if (entryConfig == null) return null;
 
-        String parentId = parentById.get(entryConfig.getId());
+        String parentId = parentById.get(entryConfig.getName());
         return entryConfigsById.get(parentId);
     }
 
     public void updateEntryConfig(EntryConfig entryConfig) throws Exception {
 
-        String id = entryConfig.getId();
+        String id = entryConfig.getName();
         EntryConfig oldEntryConfig = entryConfigsById.get(id);
 
         DN oldParentDn = oldEntryConfig.getParentDn();
@@ -155,7 +155,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
     }
 
     public void removeEntryConfig(EntryConfig entryConfig) throws Exception {
-        String id = entryConfig.getId();
+        String id = entryConfig.getName();
         entryConfigsById.remove(id);
 
         EntryConfig parent = getParent(entryConfig);
@@ -164,7 +164,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
             rootIds.remove(id);
 
         } else {
-            removeChild(parent.getId(), id);
+            removeChild(parent.getName(), id);
         }
 
         Collection<String> c = entryConfigsByDn.get(entryConfig.getDn().getNormalizedDn());
@@ -244,7 +244,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
             newList = new ArrayList<String>();
             entryConfigsByDn.put(newDn.toLowerCase(), newList);
         }
-        newList.add(entryConfig.getId());
+        newList.add(entryConfig.getName());
 
         Collection<EntryConfig> children = getChildren(entryConfig);
 
@@ -275,7 +275,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
             return;
         }
 
-        c.remove(entryConfig.getId());
+        c.remove(entryConfig.getName());
         if (c.isEmpty()) {
         	if (debug) log.debug("Last "+oldDn);
             entryConfigsByDn.remove(oldDn.getNormalizedDn());
@@ -288,13 +288,13 @@ public class DirectoryConfig implements Serializable, Cloneable {
             newList = new ArrayList<String>();
             entryConfigsByDn.put(newDn.getNormalizedDn(), newList);
         }
-        newList.add(entryConfig.getId());
+        newList.add(entryConfig.getName());
 
         EntryConfig newParent = getParent(entryConfig);
         if (debug) log.debug("New parent "+(newParent == null ? null : newParent.getDn()));
 
         if (newParent != null) {
-            addChild(newParent.getId(), entryConfig.getId());
+            addChild(newParent.getName(), entryConfig.getName());
         }
 
         Collection<EntryConfig> children = getChildren(entryConfig);
@@ -332,7 +332,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
             return;
         }
 
-        c.remove(entryConfig.getId());
+        c.remove(entryConfig.getName());
         if (c.isEmpty()) {
         	if (debug) log.debug("Last "+oldDn+".");
             entryConfigsByDn.remove(oldDn.getNormalizedDn());
@@ -346,7 +346,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
             newList = new ArrayList<String>();
             entryConfigsByDn.put(newDn.getNormalizedDn(), newList);
         }
-        newList.add(entryConfig.getId());
+        newList.add(entryConfig.getName());
     }
 
     public Collection<String> getChildIds(String parentId) {
@@ -379,7 +379,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
     }
 
     public Collection<EntryConfig> getChildren(EntryConfig parentConfig) {
-        return getChildren(parentConfig.getId());
+        return getChildren(parentConfig.getName());
     }
 
     public Collection<EntryConfig> getChildren(String parentId) {
@@ -389,7 +389,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
     }
 
     public void removeChildren(EntryConfig parentConfig) {
-        Collection<String> childIds = childrenById.remove(parentConfig.getId());
+        Collection<String> childIds = childrenById.remove(parentConfig.getName());
         for (String childId : childIds) {
             parentById.remove(childId);
         }
