@@ -33,7 +33,7 @@ public class EntrySourceConfig implements Serializable, Cloneable {
 
     public final static String FILTER     = "filter";
 
-	public String alias = "DEFAULT";
+	public String alias;
 
     public String partitionName;
     public String sourceName;
@@ -63,6 +63,10 @@ public class EntrySourceConfig implements Serializable, Cloneable {
 
     public EntrySourceConfig() {
 	}
+
+    public EntrySourceConfig(String sourceName) {
+        this.sourceName = sourceName;
+    }
 
     public EntrySourceConfig(String alias, String sourceName) {
         this.alias = alias;
@@ -95,7 +99,14 @@ public class EntrySourceConfig implements Serializable, Cloneable {
         return results;
 	}
 
-	public void addFieldConfig(EntryFieldConfig fieldConfig) {
+    public void setFieldConfigs(Collection<EntryFieldConfig> fieldConfigs) {
+        this.fieldConfigs.clear();
+        for (EntryFieldConfig fieldConfig : fieldConfigs) {
+            addFieldConfig(fieldConfig);
+        }
+    }
+
+    public void addFieldConfig(EntryFieldConfig fieldConfig) {
         String name = fieldConfig.getName().toLowerCase();
         Collection<EntryFieldConfig> list = fieldConfigs.get(name);
         if (list == null) {

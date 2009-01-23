@@ -9,6 +9,7 @@ create table users (
 
 create table groups (
     groupname varchar(50),
+    description varchar(255),
     primary key (groupname)
 );
 

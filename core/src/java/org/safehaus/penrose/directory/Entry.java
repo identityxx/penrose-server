@@ -463,7 +463,7 @@ public class Entry implements Cloneable {
         return entryConfig.getSourceConfig(index);
     }
     
-    public EntrySourceConfig getSourceMapping(String alias) {
+    public EntrySourceConfig getSourceConfig(String alias) {
         return entryConfig.getSourceConfig(alias);
     }
 

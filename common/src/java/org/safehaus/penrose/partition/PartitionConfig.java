@@ -71,10 +71,9 @@ public class PartitionConfig implements Serializable, Cloneable {
 
     protected Collection<URL>         classPaths               = new ArrayList<URL>();
 
-    public PartitionConfig(String name) {
-        this.name = name;
+    public PartitionConfig() {
     }
-
+    
     public boolean isEnabled() {
         return enabled;
     }

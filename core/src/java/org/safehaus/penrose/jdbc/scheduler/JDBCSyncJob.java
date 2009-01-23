@@ -244,7 +244,7 @@ public class JDBCSyncJob extends Job {
             }
         }
     }
-
+/*
     public List<Collection<EntrySource>> getGroupsOfSources(Collection<Source> sources) throws Exception {
 
         List<Collection<EntrySource>> results = new ArrayList<Collection<EntrySource>>();
@@ -274,7 +274,7 @@ public class JDBCSyncJob extends Job {
 
         return results;
     }
-
+*/
     public void loadSources() throws Exception {
 
         Session session = createAdminSession();

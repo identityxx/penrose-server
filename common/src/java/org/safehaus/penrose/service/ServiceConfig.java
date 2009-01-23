@@ -29,8 +29,9 @@ import java.io.Serializable;
  */
 public class ServiceConfig implements Serializable, Cloneable {
 
-    private String name;
     private boolean enabled = true;
+    
+    private String name;
     private String serviceClass;
     private String description;
 
@@ -83,6 +84,12 @@ public class ServiceConfig implements Serializable, Cloneable {
 
     public Map<String,String> getParameters() {
         return parameters;
+    }
+
+    public void setParameters(Map<String,String> parameters) {
+        if (parameters == this.parameters) return;
+        this.parameters.clear();
+        this.parameters.putAll(parameters);
     }
 
     public void setParameter(String name, String value) {

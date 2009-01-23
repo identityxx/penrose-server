@@ -72,7 +72,8 @@ public class Demo {
 
         log.warn("Creating partition.");
 
-        PartitionConfig partitionConfig = new PartitionConfig("Example");
+        PartitionConfig partitionConfig = new PartitionConfig();
+        partitionConfig.setName("Example");
 
         EntryConfig rootEntry = createRootEntry();
         partitionConfig.getDirectoryConfig().addEntryConfig(rootEntry);

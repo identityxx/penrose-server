@@ -1705,14 +1705,14 @@ public class DynamicEntry extends Entry implements Cloneable {
             SourceAttributes sourceValues
     ) throws Exception {
 
-        EntrySourceConfig sourceMapping = getSourceMapping(sourceRef.getAlias());
+        EntrySourceConfig sourceConfig = getSourceConfig(sourceRef.getAlias());
 
-        Attributes attributes = sourceValues.get(sourceMapping.getAlias());
+        Attributes attributes = sourceValues.get(sourceConfig.getAlias());
 
         for (EntryField fieldRef : sourceRef.getFields()) {
             String name = fieldRef.getName();
 
-            for (EntryFieldConfig fieldMapping : sourceMapping.getFieldConfigs(name)) {
+            for (EntryFieldConfig fieldMapping : sourceConfig.getFieldConfigs(name)) {
                 Object value = interpreter.eval(fieldMapping);
                 if (value == null) continue;
 
@@ -1763,20 +1763,20 @@ public class DynamicEntry extends Entry implements Cloneable {
     }
 
     public void propagateSource(
-            EntrySourceConfig sourceMapping,
+            EntrySourceConfig sourceConfig,
             SourceAttributes sourceValues,
             Interpreter interpreter
     ) throws Exception {
 
-        if (debug) log.debug("Propagating source "+sourceMapping.getAlias()+" in "+getDn()+":");
+        if (debug) log.debug("Propagating source "+sourceConfig.getAlias()+" in "+getDn()+":");
 
         interpreter.set(sourceValues);
 
-        Collection<EntryFieldConfig> fieldMappings = sourceMapping.getFieldConfigs();
+        Collection<EntryFieldConfig> fieldMappings = sourceConfig.getFieldConfigs();
         for (EntryFieldConfig fieldMapping : fieldMappings) {
 
             propagateField(
-                    sourceMapping,
+                    sourceConfig,
                     fieldMapping,
                     sourceValues,
                     interpreter
@@ -1787,13 +1787,13 @@ public class DynamicEntry extends Entry implements Cloneable {
     }
 
     public void propagateField(
-            EntrySourceConfig sourceMapping,
+            EntrySourceConfig sourceConfig,
             EntryFieldConfig fieldMapping,
             SourceAttributes sourceValues,
             Interpreter interpreter
     ) throws Exception {
 
-        String lsourceName = sourceMapping.getAlias();
+        String lsourceName = sourceConfig.getAlias();
 
         String lfieldName;
         if (fieldMapping.isPrimaryKey()) {

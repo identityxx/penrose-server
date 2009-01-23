@@ -32,7 +32,8 @@ public class StaticTestCase extends TestCase {
         penrose = penroseFactory.createPenrose(penroseConfig);
         penrose.start();
 
-        PartitionConfig partitionConfig = new PartitionConfig("DEFAULT");
+        PartitionConfig partitionConfig = new PartitionConfig();
+        partitionConfig.setName("DEFAULT");
 
         EntryConfig ou = new EntryConfig(baseDn);
         ou.addObjectClass("organizationalUnit");

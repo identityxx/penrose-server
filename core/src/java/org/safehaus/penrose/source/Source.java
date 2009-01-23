@@ -505,6 +505,7 @@ public class Source implements Cloneable {
     ) throws Exception {
 
         if (debug) log.debug("Searching "+request.getDn()+".");
+        response.close();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

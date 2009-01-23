@@ -179,8 +179,13 @@ public class DirectoryWriter {
     public Element createElement(EntrySourceConfig sourceConfig) throws Exception {
         Element element = new DefaultElement("source");
 
-        element.add(new DefaultAttribute("alias", sourceConfig.getAlias()));
-        
+        String sourceName = sourceConfig.getSourceName();
+        String alias = sourceConfig.getAlias();
+
+        if (alias != null && !alias.equals("DEFAULT") && !alias.equals(sourceName)) {
+            element.add(new DefaultAttribute("alias", alias));
+        }
+
         if (sourceConfig.isReadOnly()) element.add(new DefaultAttribute("readOnly", "true"));
 
         if (sourceConfig.getSearch() != null) {
@@ -209,14 +214,14 @@ public class DirectoryWriter {
 
         String partitionName = sourceConfig.getPartitionName();
         if (partitionName != null) {
-            Element sourceName = new DefaultElement("partition-name");
-            sourceName.add(new DefaultText(partitionName));
-            element.add(sourceName);
+            Element partitionNameElement = new DefaultElement("partition-name");
+            partitionNameElement.add(new DefaultText(partitionName));
+            element.add(partitionNameElement);
         }
 
-        Element sourceName = new DefaultElement("source-name");
-        sourceName.add(new DefaultText(sourceConfig.getSourceName()));
-        element.add(sourceName);
+        Element sourceNameElement = new DefaultElement("source-name");
+        sourceNameElement.add(new DefaultText(sourceName));
+        element.add(sourceNameElement);
 
         if (sourceConfig.getMappingName() != null) {
             Element mappingNameElement = new DefaultElement("mapping-name");

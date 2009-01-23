@@ -69,7 +69,8 @@ public class PartitionManagerTest extends TestCase {
         penrose = penroseFactory.createPenrose();
         penrose.start();
 
-        PartitionConfig partitionConfig = new PartitionConfig("DEFAULT");
+        PartitionConfig partitionConfig = new PartitionConfig();
+        partitionConfig.setName("DEFAULT");
 
         EntryConfig entryConfig = new EntryConfig();
         entryConfig.setDn("ou=Test,dc=Example,dc=com");

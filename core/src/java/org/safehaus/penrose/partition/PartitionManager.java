@@ -162,7 +162,8 @@ public class PartitionManager {
 
         File partitionDir = new File(partitionsDir, partitionName);
 
-        partitionConfig = new PartitionConfig(partitionName);
+        partitionConfig = new PartitionConfig();
+        partitionConfig.setName(partitionName);
         partitionConfig.load(partitionDir);
 
         addPartitionConfig(partitionConfig);

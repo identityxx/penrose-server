@@ -125,6 +125,14 @@ public class ConnectionManagerService extends BaseService implements ConnectionM
             throw new Exception("Partition is stopped.");
         }
 
+        log.debug("Class: "+connectionConfig.getConnectionClass());
+        log.debug("Adapter: "+connectionConfig.getAdapterName());
+
+        log.debug("Parameters:");
+        for (String name : connectionConfig.getParameterNames()) {
+            log.debug(" - "+name+": "+connectionConfig.getParameter(name));
+        }
+
         ConnectionManager connectionManager = partition.getConnectionManager();
         Connection connection = connectionManager.createConnection(connectionConfig);
         connection.validate();

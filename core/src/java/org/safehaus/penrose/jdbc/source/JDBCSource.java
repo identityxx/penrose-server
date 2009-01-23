@@ -649,7 +649,7 @@ public class JDBCSource extends Source {
 
         SelectStatement statement = new SelectStatement();
 
-        EntrySource sourceRef = new EntrySource(this);
+        //EntrySource entrySource = new EntrySource(this);
 
         Filter filter = null;
 
@@ -668,10 +668,14 @@ public class JDBCSource extends Source {
 
         filter = FilterTool.appendAndFilter(filter, request.getFilter());
 
-        for (EntryField fieldRef : sourceRef.getFields()) {
-            statement.addColumn(fieldRef.getSourceName()+"."+fieldRef.getOriginalName());
+        for (Field field : getFields()) {
+            statement.addColumn(getName()+"."+field.getOriginalName());
         }
-        statement.addSource(sourceRef.getAlias(), sourceRef.getSource().getPartition().getName(), sourceRef.getSource().getName());
+        //for (EntryField field : entrySource.getFields()) {
+        //    statement.addColumn(field.getSourceName()+"."+field.getOriginalName());
+        //}
+        statement.addSource(getName(), getPartition().getName(), getName());
+        //statement.addSource(entrySource.getAlias(), entrySource.getSource().getPartition().getName(), entrySource.getSource().getName());
         statement.setFilter(filter);
 
         String where = getParameter(FILTER);
@@ -679,9 +683,12 @@ public class JDBCSource extends Source {
             statement.setWhereClause(where);
         }
 
-        for (EntryField fieldRef : sourceRef.getPrimaryKeyFields()) {
-            statement.addOrder(fieldRef.getSourceName()+"."+fieldRef.getOriginalName());
+        for (Field field : getPrimaryKeyFields()) {
+            statement.addColumn(getName()+"."+field.getOriginalName());
         }
+        //for (EntryField field : entrySource.getPrimaryKeyFields()) {
+        //    statement.addOrder(field.getSourceName()+"."+field.getOriginalName());
+        //}
 
         QueryResponse queryResponse = new QueryResponse() {
             public void add(Object object) throws Exception {

@@ -4,13 +4,13 @@ insert into users (username, firstName, lastName, encPassword, password) values 
 insert into users (username, firstName, lastName, encPassword, password) values ('lwalker', 'Lee', 'Walker', 'ed7369e175739f26aa2f421a67e3d8a66d753bdd', 'lw4lk3r');
 insert into users (username, firstName, lastName, encPassword, password) values ('alange', 'Andy', 'Lange', '545308e67a464b01c7b56d12b21b46d41e88d99b', '4l4ng3');
 
-insert into groups (groupname) values ('manager');
-insert into groups (groupname) values ('administrator');
-insert into groups (groupname) values ('user');
+insert into groups (groupname, description) values ('managers', 'Managers');
+insert into groups (groupname, description) values ('administrators', 'Administrators');
+insert into groups (groupname, description) values ('users', 'Users');
 
-insert into usergroups values ('manager', 'jstockton');
-insert into usergroups values ('administrator', 'swhite');
-insert into usergroups values ('user', 'jstockton');
-insert into usergroups values ('user', 'swhite');
-insert into usergroups values ('user', 'alange');
-insert into usergroups values ('user', 'lwalker');
+insert into usergroups values ('managers', 'jstockton');
+insert into usergroups values ('administrators', 'swhite');
+insert into usergroups values ('users', 'jstockton');
+insert into usergroups values ('users', 'swhite');
+insert into usergroups values ('users', 'alange');
+insert into usergroups values ('users', 'lwalker');

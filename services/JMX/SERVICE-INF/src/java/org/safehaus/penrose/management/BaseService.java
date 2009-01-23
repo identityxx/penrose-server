@@ -99,6 +99,8 @@ public abstract class BaseService implements DynamicMBean {
             }
 
             Object object = getObject();
+            if (object == null) throw new Exception(getObjectName()+" is unavailable.");
+
             Class objectClass = object.getClass();
 
             try {
@@ -126,6 +128,10 @@ public abstract class BaseService implements DynamicMBean {
             Exception cause = (Exception)e.getCause();
             log.error(cause.getMessage(), cause);
             throw new MBeanException(cause);
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new MBeanException(e);
 
         } finally {
             if (info) log.info("Get attribute completed.");

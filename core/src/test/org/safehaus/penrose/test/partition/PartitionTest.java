@@ -22,7 +22,8 @@ public class PartitionTest extends TestCase {
     }
 
     public void setUp() throws Exception {
-        partitionConfig = new PartitionConfig("example");
+        partitionConfig = new PartitionConfig();
+        partitionConfig.setName("example");
 
         EntryConfig rootEntry = new EntryConfig("dc=Example,dc=com");
         rootEntry.addAttributesFromRdn();

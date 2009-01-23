@@ -67,8 +67,6 @@ public class SourceConfig implements Serializable, Cloneable {
     public final static int    DEFAULT_SIZE_LIMIT              = 0;
     public final static int    DEFAULT_TIME_LIMIT              = 0;
 
-    public final static String DEFAULT_CACHE                   = "DEFAULT";
-
     public boolean enabled = true;
 
 	public String name;

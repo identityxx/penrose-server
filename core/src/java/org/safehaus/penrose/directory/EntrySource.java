@@ -55,9 +55,11 @@ public class EntrySource implements Cloneable {
 
     public EntrySource(Entry entry, EntrySourceConfig sourceConfig, Source source) throws Exception {
         this.entry = entry;
-        this.source = source;
         this.sourceConfig = sourceConfig;
+        this.source = source;
         this.alias = sourceConfig.getAlias();
+
+        String alias = getAlias();
 
         String primarySourceName = entry.getPrimarySourceAlias();
         this.primarySourceRef = alias.equals(primarySourceName);
@@ -127,7 +129,7 @@ public class EntrySource implements Cloneable {
     }
 
     public String getAlias() {
-        return alias;
+        return alias == null ? source.getName() : alias;
     }
 
     public String getSearch() {
@@ -135,7 +137,7 @@ public class EntrySource implements Cloneable {
     }
 
     public String toString() {
-        return alias;
+        return getAlias();
     }
 
     public Source getSource() {

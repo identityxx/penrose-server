@@ -19,7 +19,7 @@ import java.io.File;
 public class DefaultPartitionConfig extends PartitionConfig {
 
     public DefaultPartitionConfig() {
-        super("DEFAULT");
+        name = "DEFAULT";
     }
 
     public void load(File partitionDir) throws Exception {
