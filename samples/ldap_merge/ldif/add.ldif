@@ -1,0 +1,4 @@
+dn: cn=test,ou=Groups,dc=LDAP Merge,dc=Example,dc=com
+objectClass: groupOfUniqueNames
+cn: test
+uniqueMember: uid=test,ou=Users,dc=LDAP Merge,dc=Example,dc=com

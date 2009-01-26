@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sources PUBLIC
+  "-//Penrose/DTD Sources ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/sources.dtd">
+
+<sources>
+
+  <source name="source1">
+    <connection-name>LDAP1</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>dc=LDAP Merge,dc=Example,dc=com</param-value>
+    </parameter>
+  </source>
+
+  <source name="source2">
+    <connection-name>LDAP2</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>dc=LDAP Merge,dc=my-domain,dc=com</param-value>
+    </parameter>
+    <parameter>
+      <param-name>newBaseDn</param-name>
+      <param-value>dc=LDAP Merge,dc=Example,dc=com</param-value>
+    </parameter>
+    <parameter>
+      <param-name>attributes</param-name>
+      <param-value>uniqueMember</param-value>
+    </parameter>
+  </source>
+
+  <source name="mergedSource">
+    <source-class>org.safehaus.penrose.source.MergeSource</source-class>
+    <parameter>
+      <param-name>sources</param-name>
+      <param-value>source1,source2</param-value>
+    </parameter>
+  </source>
+
+</sources>

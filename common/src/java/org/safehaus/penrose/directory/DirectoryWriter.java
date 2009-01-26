@@ -182,7 +182,7 @@ public class DirectoryWriter {
         String sourceName = sourceConfig.getSourceName();
         String alias = sourceConfig.getAlias();
 
-        if (alias != null && !alias.equals("DEFAULT") && !alias.equals(sourceName)) {
+        if (alias != null && !alias.equals(sourceName)) {
             element.add(new DefaultAttribute("alias", alias));
         }
 

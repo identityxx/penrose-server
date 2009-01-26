@@ -9,7 +9,15 @@
     <connection-name>LDAP</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>dc=my-domain,dc=com</param-value>
+      <param-value>dc=Proxy,dc=my-domain,dc=com</param-value>
+    </parameter>
+    <parameter>
+      <param-name>newBaseDn</param-name>
+      <param-value>dc=Proxy,dc=Example,dc=com</param-value>
+    </parameter>
+    <parameter>
+      <param-name>attributes</param-name>
+      <param-value>uniqueMember</param-value>
     </parameter>
   </source>
 

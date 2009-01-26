@@ -7,14 +7,11 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.ldap.source.LDAPSource;
-import org.safehaus.penrose.pipeline.Pipeline;
 import org.safehaus.penrose.pipeline.SOPipeline;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.operation.SearchOperation;
-import org.safehaus.penrose.operation.BasicSearchOperation;
-import org.safehaus.penrose.operation.PipelineSearchOperation;
 import org.safehaus.penrose.util.TextUtil;
+import org.safehaus.penrose.source.Source;
 
 import java.util.*;
 
@@ -37,7 +34,7 @@ public class ProxyEntry extends Entry {
     public final static String AUTHENTICATON_DISABLED = "disabled";
 
     EntrySource entrySource;
-    LDAPSource source;
+    Source source;
 
     DN proxyBaseDn;
     Filter proxyFilter;
@@ -52,10 +49,10 @@ public class ProxyEntry extends Entry {
     public void init() throws Exception {
 
         entrySource = localSources.values().iterator().next();
-        source = (LDAPSource) entrySource.getSource();
+        source = entrySource.getSource();
 
         String s = entryConfig.getParameter(BASE_DN);
-        if (s == null) s = source.getParameter(BASE_DN);
+        //if (s == null) s = source.getParameter(BASE_DN);
 
         if (s != null) {
             proxyBaseDn = new DN(s);
@@ -63,7 +60,7 @@ public class ProxyEntry extends Entry {
         }
 
         s = entryConfig.getParameter(FILTER);
-        if (s == null) s = source.getParameter(FILTER);
+        //if (s == null) s = source.getParameter(FILTER);
 
         if (s != null) {
             proxyFilter = FilterTool.parseFilter(s);
@@ -71,7 +68,7 @@ public class ProxyEntry extends Entry {
         }
 
         s = entryConfig.getParameter(SCOPE);
-        if (s == null) s = source.getParameter(SCOPE);
+        //if (s == null) s = source.getParameter(SCOPE);
 
         if (s != null) {
             if ("OBJECT".equals(s)) {
@@ -98,7 +95,7 @@ public class ProxyEntry extends Entry {
         }
 
         s = entryConfig.getParameter(SIZE_LIMIT);
-        if (s == null) s = source.getParameter(SIZE_LIMIT);
+        //if (s == null) s = source.getParameter(SIZE_LIMIT);
 
         if (s != null) {
             proxySizeLimit = Long.parseLong(s);
@@ -106,7 +103,7 @@ public class ProxyEntry extends Entry {
         }
 
         s = entryConfig.getParameter(TIME_LIMIT);
-        if (s == null) s = source.getParameter(TIME_LIMIT);
+        //if (s == null) s = source.getParameter(TIME_LIMIT);
 
         if (s != null) {
             proxyTimeLimit = Long.parseLong(s);
@@ -114,13 +111,15 @@ public class ProxyEntry extends Entry {
         }
 
         authentication = entryConfig.getParameter(AUTHENTICATON);
-        if (authentication == null) authentication = source.getParameter(AUTHENTICATON);
+        //if (authentication == null) authentication = source.getParameter(AUTHENTICATON);
         if (debug) log.debug("Authentication: "+authentication);
 
         super.init();
     }
 
     public DN convertDn(DN dn, DN oldSuffix, DN newSuffix) throws Exception {
+
+        if (proxyBaseDn == null) return dn;
 
         if (debug) {
             log.debug("Converting "+dn+":");
@@ -178,11 +177,11 @@ public class ProxyEntry extends Entry {
         DN dn = request.getDn();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("PROXY ADD", 80));
-            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("PROXY ADD", 70));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         validatePermission(session, request);
@@ -217,10 +216,10 @@ public class ProxyEntry extends Entry {
     ) throws Exception {
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("PROXY BIND", 80));
-            log.debug(TextUtil.displayLine("DN : "+request.getDn(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("PROXY BIND", 70));
+            log.debug(TextUtil.displayLine("DN : "+request.getDn(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         BindRequest newRequest = (BindRequest)request.clone();
@@ -242,11 +241,11 @@ public class ProxyEntry extends Entry {
         DN dn = request.getDn();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("PROXY COMPARE", 80));
-            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("PROXY COMPARE", 70));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         validatePermission(session, request);
@@ -377,11 +376,11 @@ public class ProxyEntry extends Entry {
         DN dn = request.getDn();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("PROXY DELETE", 80));
-            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("PROXY DELETE", 70));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         validatePermission(session, request);
@@ -405,11 +404,11 @@ public class ProxyEntry extends Entry {
         DN dn = request.getDn();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("PROXY MODIFY", 80));
-            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("PROXY MODIFY", 70));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         validatePermission(session, request);
@@ -447,11 +446,11 @@ public class ProxyEntry extends Entry {
         DN dn = request.getDn();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("PROXY MODRDN", 80));
-            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("PROXY MODRDN", 70));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         validatePermission(session, request);
@@ -475,13 +474,13 @@ public class ProxyEntry extends Entry {
         final int scope     = operation.getScope();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("PROXY SEARCH", 80));
-            log.debug(TextUtil.displayLine("Entry  : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("Base   : "+baseDn, 80));
-            log.debug(TextUtil.displayLine("Filter : "+filter, 80));
-            log.debug(TextUtil.displayLine("Scope  : "+ LDAP.getScope(scope), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("PROXY SEARCH", 70));
+            log.debug(TextUtil.displayLine("Entry  : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("Base   : "+baseDn, 70));
+            log.debug(TextUtil.displayLine("Filter : "+filter, 70));
+            log.debug(TextUtil.displayLine("Scope  : "+ LDAP.getScope(scope), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         try {
@@ -521,14 +520,14 @@ public class ProxyEntry extends Entry {
 
             if (inside) {
                 newRequest.setDn(convertDn(baseDn, getDn(), proxyBaseDn));
-
+/*
                 if (proxyScope == SearchRequest.SCOPE_BASE) {
                     newRequest.setScope(SearchRequest.SCOPE_BASE);
 
                 } else if (proxyScope == SearchRequest.SCOPE_ONE && scope == SearchRequest.SCOPE_SUB) {
                     newRequest.setScope(SearchRequest.SCOPE_ONE);
                 }
-
+*/
             } else {
                 newRequest.setDn(proxyBaseDn);
 
@@ -557,7 +556,7 @@ public class ProxyEntry extends Entry {
             };
 
             fp.process(filter);
-
+/*
             if (proxyFilter != null) {
                 newRequest.setFilter(FilterTool.appendAndFilter(proxyFilter, filter));
             }
@@ -569,7 +568,7 @@ public class ProxyEntry extends Entry {
             if (proxyTimeLimit > 0 && request.getTimeLimit() > proxyTimeLimit) {
                 newRequest.setTimeLimit(proxyTimeLimit);
             }
-
+*/
             final Interpreter interpreter = partition.newInterpreter();
 
             SearchResponse newResponse = new SOPipeline(operation) {
@@ -702,11 +701,11 @@ public class ProxyEntry extends Entry {
     ) throws Exception {
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("UNBIND", 80));
-            log.debug(TextUtil.displayLine("Entry DN    : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("Entry Class : "+getClass().getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("UNBIND", 70));
+            log.debug(TextUtil.displayLine("Entry DN    : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("Entry Class : "+getClass().getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         UnbindRequest newRequest = (UnbindRequest)request.clone();
