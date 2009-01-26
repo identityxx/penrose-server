@@ -33,6 +33,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
 
     public Logger log    = LoggerFactory.getLogger(getClass());
     public boolean warn  = log.isWarnEnabled();
+    public boolean info  = log.isInfoEnabled();
     public boolean debug = log.isDebugEnabled();
 
     public final static Collection<String> DEFAULT_BINARY_ATTRIBUTES = Arrays.asList(
@@ -265,25 +266,25 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
 
         LDAPConnection connection = getConnection();
 
+        if (debug) log.debug("Executing LDAP bind...");
+
+        long startTime = System.currentTimeMillis();
+
         try {
-            if (debug) log.debug("Executing LDAP bind...");
-
-            long startTime = System.currentTimeMillis();
-
             connection.bind(3, bindDn, bindPassword);
 
-            long endTime = System.currentTimeMillis();
-
-            if (debug) log.debug("Elapsed time: "+(endTime - startTime)+" ms");
-
-            this.bindDn       = bindDn;
-            this.bindPassword = bindPassword;
-
         } catch (Exception e) {
-            log.info("LDAP Result: "+e.getMessage());
+            if (info) log.info("LDAP Result: "+e.getMessage());
             //response.setException(e);
             throw e;
+
+        } finally {
+            long endTime = System.currentTimeMillis();
+            if (debug) log.debug("Elapsed time: "+(endTime - startTime)+" ms");
         }
+
+        this.bindDn       = bindDn;
+        this.bindPassword = bindPassword;
 
         log.debug("Bind operation completed.");
     }

@@ -1,0 +1,52 @@
+dn: dc=LDAP Merge,dc=my-domain,dc=com
+objectClass: dcObject
+objectClass: organization
+dc: LDAP Merge
+o: LDAP Merge
+
+dn: ou=Users,dc=LDAP Merge,dc=my-domain,dc=com
+objectClass: organizationalUnit
+ou: Users
+
+dn: uid=swhite,ou=Users,dc=LDAP Merge,dc=my-domain,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: swhite
+cn: Scott White
+sn: White
+userPassword: swh1t3
+
+dn: uid=pfarmer,ou=Users,dc=LDAP Merge,dc=my-domain,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: pfarmer
+cn: Pete J. Farmer
+sn: Farmer
+userPassword: pf4rm3r
+
+dn: uid=lwalker,ou=Users,dc=LDAP Merge,dc=my-domain,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: lwalker
+cn: Lee Walker
+sn: Walker
+userPassword: secret
+
+dn: ou=Groups,dc=LDAP Merge,dc=my-domain,dc=com
+objectClass: organizationalUnit
+ou: Groups
+
+dn: cn=administrators,ou=Groups,dc=LDAP Merge,dc=my-domain,dc=com
+objectClass: groupOfUniqueNames
+cn: administrators
+uniqueMember: uid=swhite,ou=Users,dc=LDAP Merge,dc=my-domain,dc=com
+
+dn: cn=users,ou=Groups,dc=LDAP Merge,dc=my-domain,dc=com
+objectClass: groupOfUniqueNames
+cn: users
+uniqueMember: uid=swhite,ou=Users,dc=LDAP Merge,dc=my-domain,dc=com
+uniqueMember: uid=lwalker,ou=Users,dc=LDAP Merge,dc=my-domain,dc=com
+

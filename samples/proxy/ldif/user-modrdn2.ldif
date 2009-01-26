@@ -1,2 +1,2 @@
-uid=newTest,ou=Users,dc=my-domain,dc=Example,dc=com
+uid=newTest,ou=Users,dc=Proxy,dc=Example,dc=com
 uid=test

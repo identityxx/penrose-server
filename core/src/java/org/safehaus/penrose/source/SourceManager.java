@@ -125,9 +125,9 @@ public class SourceManager {
 
         PartitionContext partitionContext = partition.getPartitionContext();
         ClassLoader cl = partitionContext.getClassLoader();
-        Class clazz = cl.loadClass(className);
 
-         if (debug) log.debug("Creating "+className+".");
+        if (debug) log.debug("Creating "+className+".");
+        Class clazz = cl.loadClass(className);
         source = (Source)clazz.newInstance();
         source.init(sourceConfig, sourceContext);
 

@@ -1,0 +1,52 @@
+dn: dc=LDAP Merge,dc=Example,dc=com
+objectClass: dcObject
+objectClass: organization
+dc: LDAP Merge
+o: LDAP Merge
+
+dn: ou=Users,dc=LDAP Merge,dc=Example,dc=com
+objectClass: organizationalUnit
+ou: Users
+
+dn: uid=jstockton,ou=Users,dc=LDAP Merge,dc=Example,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: jstockton
+cn: Jim Stockton
+sn: Stockton
+userPassword: j5t0ckt0n
+
+dn: uid=pfarmer,ou=Users,dc=LDAP Merge,dc=Example,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: pfarmer
+cn: Pete Farmer
+sn: Farmer
+userPassword: pf4rm3r
+
+dn: uid=lwalker,ou=Users,dc=LDAP Merge,dc=Example,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: lwalker
+cn: Lee Walker
+sn: Walker
+userPassword: lw4lk3r
+
+dn: ou=Groups,dc=LDAP Merge,dc=Example,dc=com
+objectClass: organizationalUnit
+ou: Groups
+
+dn: cn=managers,ou=Groups,dc=LDAP Merge,dc=Example,dc=com
+objectClass: groupOfUniqueNames
+cn: managers
+uniqueMember: uid=jstockton,ou=Users,dc=LDAP Merge,dc=Example,dc=com
+
+dn: cn=users,ou=Groups,dc=LDAP Merge,dc=Example,dc=com
+objectClass: groupOfUniqueNames
+cn: users
+uniqueMember: uid=jstockton,ou=Users,dc=LDAP Merge,dc=Example,dc=com
+uniqueMember: uid=lwalker,ou=Users,dc=LDAP Merge,dc=Example,dc=com
+
