@@ -154,6 +154,8 @@ public class Partition implements Cloneable {
         sourceManager.destroy();
         connectionManager.destroy();
 
+        partitionContext.destroy();
+
         status = STOPPED;
         //log.debug("Partition "+partitionConfig.getName()+" stopped.");
     }

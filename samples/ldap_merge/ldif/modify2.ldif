@@ -1,0 +1,6 @@
+dn: cn=users,ou=Groups,dc=LDAP Merge,dc=Example,dc=com
+changetype: modify
+replace: uniqueMember
+uniqueMember: uid=jstockton,ou=Users,dc=LDAP Merge,dc=Example,dc=com
+uniqueMember: uid=swhite,ou=Users,dc=LDAP Merge,dc=Example,dc=com
+-

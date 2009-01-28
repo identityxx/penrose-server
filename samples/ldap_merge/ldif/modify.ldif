@@ -1,2 +1,0 @@
-dn: cn=users,ou=Groups,dc=LDAP Merge,dc=Example,dc=com
-uniqueMember: uid=test,ou=Users,dc=LDAP Merge,dc=Example,dc=com

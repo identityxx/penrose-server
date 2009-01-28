@@ -19,21 +19,16 @@ package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.connection.ConnectionConfigManager;
-import org.safehaus.penrose.connection.ConnectionReader;
 import org.safehaus.penrose.connection.ConnectionWriter;
 import org.safehaus.penrose.directory.DirectoryConfig;
-import org.safehaus.penrose.directory.DirectoryReader;
 import org.safehaus.penrose.directory.DirectoryWriter;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.mapping.MappingConfigManager;
-import org.safehaus.penrose.mapping.MappingReader;
 import org.safehaus.penrose.mapping.MappingWriter;
 import org.safehaus.penrose.module.ModuleConfigManager;
-import org.safehaus.penrose.module.ModuleReader;
 import org.safehaus.penrose.module.ModuleWriter;
 import org.safehaus.penrose.scheduler.SchedulerConfig;
 import org.safehaus.penrose.source.SourceConfigManager;
-import org.safehaus.penrose.source.SourceReader;
 import org.safehaus.penrose.source.SourceWriter;
 import org.safehaus.penrose.thread.ThreadManagerConfig;
 
@@ -69,7 +64,7 @@ public class PartitionConfig implements Serializable, Cloneable {
     protected ThreadManagerConfig     threadManagerConfig;
     protected SchedulerConfig         schedulerConfig;
 
-    protected Collection<URL>         classPaths               = new ArrayList<URL>();
+    protected Collection<URL>         xclassPaths               = new ArrayList<URL>();
 
     public PartitionConfig() {
     }
@@ -132,81 +127,6 @@ public class PartitionConfig implements Serializable, Cloneable {
         return parameters.remove(name);
     }
 
-    public int hashCode() {
-        return name == null ? 0 : name.hashCode();
-    }
-
-    boolean equals(Object o1, Object o2) {
-        if (o1 == null && o2 == null) return true;
-        if (o1 != null) return o1.equals(o2);
-        return o2.equals(o1);
-    }
-
-    public boolean equals(Object object) {
-        if (this == object) return true;
-        if (object == null) return false;
-        if (object.getClass() != this.getClass()) return false;
-
-        PartitionConfig partitionConfig = (PartitionConfig)object;
-        if (enabled != partitionConfig.enabled) return false;
-
-        if (!equals(name, partitionConfig.name)) return false;
-        if (!equals(description, partitionConfig.description)) return false;
-        if (!equals(partitionClass, partitionConfig.partitionClass)) return false;
-
-        if (!equals(depends, partitionConfig.depends)) return false;
-
-        if (!equals(adapterConfigs, partitionConfig.adapterConfigs)) return false;
-        if (!equals(interpreterConfigs, partitionConfig.interpreterConfigs)) return false;
-
-        if (!equals(parameters, partitionConfig.parameters)) return false;
-
-        if (!equals(threadManagerConfig, partitionConfig.threadManagerConfig)) return false;
-        if (!equals(schedulerConfig, partitionConfig.schedulerConfig)) return false;
-
-        return true;
-    }
-
-    public Object clone() throws CloneNotSupportedException {
-        PartitionConfig partitionConfig = (PartitionConfig)super.clone();
-
-        partitionConfig.enabled = enabled;
-
-        partitionConfig.name = name;
-        partitionConfig.description = description;
-        partitionConfig.partitionClass = partitionClass;
-
-        partitionConfig.depends = new ArrayList<String>();
-        partitionConfig.depends.addAll(depends);
-
-        partitionConfig.adapterConfigs = new LinkedHashMap<String,AdapterConfig>();
-        for (AdapterConfig adapterConfig : adapterConfigs.values()) {
-            partitionConfig.addAdapterConfig((AdapterConfig) adapterConfig.clone());
-        }
-
-        partitionConfig.interpreterConfigs = new LinkedHashMap<String,InterpreterConfig>();
-        for (InterpreterConfig interpreterConfig : interpreterConfigs.values()) {
-            partitionConfig.addInterpreterConfig((InterpreterConfig) interpreterConfig.clone());
-        }
-
-        partitionConfig.parameters = new LinkedHashMap<String,String>();
-        partitionConfig.parameters.putAll(parameters);
-
-        partitionConfig.connectionConfigManager = (ConnectionConfigManager) connectionConfigManager.clone();
-        partitionConfig.sourceConfigManager = (SourceConfigManager) sourceConfigManager.clone();
-        partitionConfig.mappingConfigManager = (MappingConfigManager) mappingConfigManager.clone();
-        partitionConfig.directoryConfig = (DirectoryConfig) directoryConfig.clone();
-        partitionConfig.moduleConfigManager = (ModuleConfigManager) moduleConfigManager.clone();
-
-        partitionConfig.threadManagerConfig = threadManagerConfig == null ? null : (ThreadManagerConfig)threadManagerConfig.clone();
-        partitionConfig.schedulerConfig = schedulerConfig == null ? null : (SchedulerConfig)schedulerConfig.clone();
-
-        partitionConfig.classPaths = new ArrayList<URL>();
-        partitionConfig.classPaths.addAll(classPaths);
-
-        return partitionConfig;
-    }
-
     public ConnectionConfigManager getConnectionConfigManager() {
         return connectionConfigManager;
     }
@@ -225,14 +145,6 @@ public class PartitionConfig implements Serializable, Cloneable {
 
     public ModuleConfigManager getModuleConfigManager() {
         return moduleConfigManager;
-    }
-
-    public Collection<URL> getClassPaths() {
-        return classPaths;
-    }
-
-    public void addClassPath(URL library) {
-        classPaths.add(library);
     }
 
     public Collection<InterpreterConfig> getInterpreterConfigs() {
@@ -310,7 +222,7 @@ public class PartitionConfig implements Serializable, Cloneable {
     }
 
     public void load(File partitionDir) throws Exception {
-
+/*
         File baseDir = new File(partitionDir, "DIR-INF");
 
         PartitionReader reader = new PartitionReader();
@@ -335,6 +247,7 @@ public class PartitionConfig implements Serializable, Cloneable {
         File modulesXml = new File(baseDir, "modules.xml");
         ModuleReader moduleReader = new ModuleReader();
         moduleReader.read(modulesXml, moduleConfigManager);
+*/
     }
 
     public void store(File partitionDir) throws Exception {
@@ -363,5 +276,77 @@ public class PartitionConfig implements Serializable, Cloneable {
         File modulesXml = new File(baseDir, "modules.xml");
         ModuleWriter moduleWriter = new ModuleWriter();
         moduleWriter.write(modulesXml, moduleConfigManager);
+    }
+
+    public int hashCode() {
+        return name == null ? 0 : name.hashCode();
+    }
+
+    boolean equals(Object o1, Object o2) {
+        if (o1 == null && o2 == null) return true;
+        if (o1 != null) return o1.equals(o2);
+        return o2.equals(o1);
+    }
+
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null) return false;
+        if (object.getClass() != this.getClass()) return false;
+
+        PartitionConfig partitionConfig = (PartitionConfig)object;
+        if (enabled != partitionConfig.enabled) return false;
+
+        if (!equals(name, partitionConfig.name)) return false;
+        if (!equals(description, partitionConfig.description)) return false;
+        if (!equals(partitionClass, partitionConfig.partitionClass)) return false;
+
+        if (!equals(depends, partitionConfig.depends)) return false;
+
+        if (!equals(adapterConfigs, partitionConfig.adapterConfigs)) return false;
+        if (!equals(interpreterConfigs, partitionConfig.interpreterConfigs)) return false;
+
+        if (!equals(parameters, partitionConfig.parameters)) return false;
+
+        if (!equals(threadManagerConfig, partitionConfig.threadManagerConfig)) return false;
+        if (!equals(schedulerConfig, partitionConfig.schedulerConfig)) return false;
+
+        return true;
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        PartitionConfig partitionConfig = (PartitionConfig)super.clone();
+
+        partitionConfig.enabled = enabled;
+
+        partitionConfig.name = name;
+        partitionConfig.description = description;
+        partitionConfig.partitionClass = partitionClass;
+
+        partitionConfig.depends = new ArrayList<String>();
+        partitionConfig.depends.addAll(depends);
+
+        partitionConfig.adapterConfigs = new LinkedHashMap<String,AdapterConfig>();
+        for (AdapterConfig adapterConfig : adapterConfigs.values()) {
+            partitionConfig.addAdapterConfig((AdapterConfig) adapterConfig.clone());
+        }
+
+        partitionConfig.interpreterConfigs = new LinkedHashMap<String,InterpreterConfig>();
+        for (InterpreterConfig interpreterConfig : interpreterConfigs.values()) {
+            partitionConfig.addInterpreterConfig((InterpreterConfig) interpreterConfig.clone());
+        }
+
+        partitionConfig.parameters = new LinkedHashMap<String,String>();
+        partitionConfig.parameters.putAll(parameters);
+
+        partitionConfig.connectionConfigManager = (ConnectionConfigManager) connectionConfigManager.clone();
+        partitionConfig.sourceConfigManager = (SourceConfigManager) sourceConfigManager.clone();
+        partitionConfig.mappingConfigManager = (MappingConfigManager) mappingConfigManager.clone();
+        partitionConfig.directoryConfig = (DirectoryConfig) directoryConfig.clone();
+        partitionConfig.moduleConfigManager = (ModuleConfigManager) moduleConfigManager.clone();
+
+        partitionConfig.threadManagerConfig = threadManagerConfig == null ? null : (ThreadManagerConfig)threadManagerConfig.clone();
+        partitionConfig.schedulerConfig = schedulerConfig == null ? null : (SchedulerConfig)schedulerConfig.clone();
+
+        return partitionConfig;
     }
 }

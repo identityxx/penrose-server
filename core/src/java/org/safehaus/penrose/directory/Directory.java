@@ -38,19 +38,28 @@ public class Directory implements Cloneable {
         for (EntryConfig entryConfig : directoryConfig.getEntryConfigs()) {
             if (!entryConfig.isEnabled()) continue;
 
-            createEntry(entryConfig);
+            try {
+                createEntry(entryConfig);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }
     }
 
     public void destroy() throws Exception {
         for (String id : getRootIds()) {
-            destroy(id);
+            try {
+                destroy(id);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }
     }
 
     public void destroy(String id) throws Exception {
 
         Entry entry = removeEntry(id);
+        if (entry == null) throw new Exception("Entry "+id+" not found.");
 
         Collection<Entry> children = new ArrayList<Entry>();
         children.addAll(entry.getChildren());

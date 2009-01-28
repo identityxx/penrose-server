@@ -23,7 +23,7 @@ public class DefaultPartitionConfig extends PartitionConfig {
     }
 
     public void load(File partitionDir) throws Exception {
-
+/*
         File baseDir = new File(partitionDir, "conf");
 
         File connectionsXml = new File(baseDir, "connections.xml");
@@ -45,6 +45,7 @@ public class DefaultPartitionConfig extends PartitionConfig {
         File modulesXml = new File(baseDir, "modules.xml");
         ModuleReader moduleReader = new ModuleReader();
         moduleReader.read(modulesXml, moduleConfigManager);
+*/
     }
 
     public void store(File partitionDir) throws Exception {

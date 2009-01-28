@@ -42,7 +42,11 @@ public class ConnectionManager {
             ConnectionConfig connectionConfig = getConnectionConfig(name);
             if (!connectionConfig.isEnabled()) continue;
 
-            startConnection(name);
+            try {
+                startConnection(name);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }
     }
 
@@ -119,6 +123,7 @@ public class ConnectionManager {
     }
 
     public Connection removeConnection(String name) throws Exception {
+        if (debug) log.debug("Removing connection "+name+".");
         return connections.remove(name);
     }
 

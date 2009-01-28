@@ -1254,6 +1254,8 @@ public class Entry implements Cloneable {
                     }
 
                     Object value = interpreter.eval(field);
+                    if (debug) log.debug(" - " + entrySource.getAlias() + "." + field.getName() + ": " + value);
+
                     if (value == null) continue;
 
                     if (FieldConfig.TYPE_INTEGER.equals(field.getType()) && value instanceof String) {
@@ -1261,9 +1263,6 @@ public class Entry implements Cloneable {
                     }
 
                     attributes.addValue(field.getName(), value);
-
-                    String fieldName = entrySource.getAlias() + "." + field.getName();
-                    if (debug) log.debug(" - " + fieldName + ": " + value);
                 }
             }
         }

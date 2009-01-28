@@ -48,7 +48,11 @@ public class SourceManager {
             SourceConfig sourceConfig = getSourceConfig(name);
             if (!sourceConfig.isEnabled()) continue;
 
-            startSource(name);
+            try {
+                startSource(name);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }
     }
 
@@ -183,6 +187,9 @@ public class SourceManager {
     }
 
     public Source removeSource(String name) {
+
+        if (debug) log.debug("Removing source "+name+".");
+
         Source source = sources.remove(name);
 
         String connectionName = source.getConnectionName();

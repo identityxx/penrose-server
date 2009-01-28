@@ -48,5 +48,4 @@ dn: cn=users,ou=Groups,dc=LDAP Merge,dc=Example,dc=com
 objectClass: groupOfUniqueNames
 cn: users
 uniqueMember: uid=jstockton,ou=Users,dc=LDAP Merge,dc=Example,dc=com
-uniqueMember: uid=lwalker,ou=Users,dc=LDAP Merge,dc=Example,dc=com
 

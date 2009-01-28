@@ -16,6 +16,7 @@ import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.SourceClient;
 import org.safehaus.penrose.source.SourceServiceMBean;
 
+import javax.management.MBeanException;
 import java.util.Collection;
 
 /**
@@ -87,6 +88,7 @@ public class SourceService extends BaseService implements SourceServiceMBean {
 
         try {
             Source source = getSource();
+            if (source == null) throw new Exception("Source "+sourceName+" not found.");
             return source.getCount(session);
 
         } finally {
@@ -99,6 +101,7 @@ public class SourceService extends BaseService implements SourceServiceMBean {
         log.debug("Creating source "+partitionName+"/"+sourceName+"...");
 
         Source source = getSource();
+        if (source == null) throw new Exception("Source "+sourceName+" not found.");
         source.create();
 
         log.debug("Source created.");
@@ -112,6 +115,7 @@ public class SourceService extends BaseService implements SourceServiceMBean {
 
         try {
             Source source = getSource();
+            if (source == null) throw new Exception("Source "+sourceName+" not found.");
             source.clear(session);
             
         } finally {
@@ -126,6 +130,7 @@ public class SourceService extends BaseService implements SourceServiceMBean {
         log.debug("Dropping source "+partitionName+"/"+sourceName+"...");
 
         Source source = getSource();
+        if (source == null) throw new Exception("Source "+sourceName+" not found.");
         source.drop();
 
         log.debug("Source dropped.");
@@ -224,12 +229,16 @@ public class SourceService extends BaseService implements SourceServiceMBean {
 
         try {
             Source source = getSource();
+            if (source == null) throw new Exception("Source "+sourceName+" not found.");
             source.add(session, request, response);
 
             int rc = response.getReturnCode();
             log.debug("RC: "+rc);
 
             return response;
+
+        } catch (Exception e) {
+            throw new MBeanException(e);
 
         } finally {
             session.close();
@@ -285,6 +294,7 @@ public class SourceService extends BaseService implements SourceServiceMBean {
 
         try {
             Source source = getSource();
+            if (source == null) throw new Exception("Source "+sourceName+" not found.");
             source.delete(session, request, response);
 
             int rc = response.getReturnCode();
@@ -317,6 +327,7 @@ public class SourceService extends BaseService implements SourceServiceMBean {
 
         try {
             Source source = getSource();
+            if (source == null) throw new Exception("Source "+sourceName+" not found.");
             return source.find(session, dn);
 
         } finally {
@@ -379,6 +390,7 @@ public class SourceService extends BaseService implements SourceServiceMBean {
 
         try {
             Source source = getSource();
+            if (source == null) throw new Exception("Source "+sourceName+" not found.");
             source.modify(session, request, response);
 
             int rc = response.getReturnCode();
@@ -452,6 +464,7 @@ public class SourceService extends BaseService implements SourceServiceMBean {
 
         try {
             Source source = getSource();
+            if (source == null) throw new Exception("Source "+sourceName+" not found.");
             source.modrdn(session, request, response);
 
             int rc = response.getReturnCode();
@@ -525,6 +538,7 @@ public class SourceService extends BaseService implements SourceServiceMBean {
 
         try {
             Source source = getSource();
+            if (source == null) throw new Exception("Source "+sourceName+" not found.");
             source.search(session, request, response);
 
             int rc = response.waitFor();
