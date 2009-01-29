@@ -128,6 +128,30 @@ public class MappingRuleConfig implements Serializable, Cloneable {
         expression = null;
     }
 
+    public String getCondition() {
+        return condition;
+    }
+
+    public void setCondition(String condition) {
+        this.condition = condition;
+    }
+
+    public boolean isRequired() {
+        return required;
+    }
+
+    public void setRequired(boolean required) {
+        this.required = required;
+    }
+
+    public String getAction() {
+        return action;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
+    }
+
     public int hashCode() {
         return name == null ? 0 : name.hashCode();
     }
@@ -183,29 +207,5 @@ public class MappingRuleConfig implements Serializable, Cloneable {
         MappingRuleConfig ruleConfig = (MappingRuleConfig)super.clone();
         ruleConfig.copy(this);
         return ruleConfig;
-    }
-
-    public String getCondition() {
-        return condition;
-    }
-
-    public void setCondition(String condition) {
-        this.condition = condition;
-    }
-
-    public boolean isRequired() {
-        return required;
-    }
-
-    public void setRequired(boolean required) {
-        this.required = required;
-    }
-
-    public String getAction() {
-        return action;
-    }
-
-    public void setAction(String action) {
-        this.action = action;
     }
 }

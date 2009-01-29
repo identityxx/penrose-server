@@ -57,6 +57,7 @@ public class MappingWriter {
 
         Element element = new DefaultElement("mapping");
         element.add(new DefaultAttribute("name", mappingConfig.getName()));
+        if (!mappingConfig.isEnabled()) element.addAttribute("enabled", "false");
 
         if (mappingConfig.getMappingClass() != null) {
             Element mappingClassElement = new DefaultElement("mapping-class");
