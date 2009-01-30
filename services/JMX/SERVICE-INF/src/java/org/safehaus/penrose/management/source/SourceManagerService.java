@@ -189,12 +189,12 @@ public class SourceManagerService extends BaseService implements SourceManagerSe
         }
 
         SourceManager sourceManager = partition.getSourceManager();
-        Source source = sourceManager.removeSource(name);
+        sourceManager.stopSource(name);
 
         SourceConfigManager sourceConfigManager = sourceManager.getSourceConfigManager();
         sourceConfigManager.removeSourceConfig(name);
 
-        SourceService sourceService = getSourceService(source.getName());
+        SourceService sourceService = getSourceService(name);
         sourceService.unregister();
     }
 }

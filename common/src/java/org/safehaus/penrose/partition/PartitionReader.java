@@ -67,7 +67,7 @@ public class PartitionReader implements EntityResolver {
             digester.parse(partitionXml);
             digester.pop();
         }
-
+/*
         //log.debug("Classpath:");
 
         File classesDir = new File(baseDir, "classes");
@@ -91,7 +91,7 @@ public class PartitionReader implements EntityResolver {
                 partitionConfig.addClassPath(url);
             }
         }
-
+*/
         readSchedulerConfig(baseDir, partitionConfig);
     }
 

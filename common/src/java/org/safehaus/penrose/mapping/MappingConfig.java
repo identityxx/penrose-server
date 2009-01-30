@@ -65,6 +65,15 @@ public class MappingConfig implements Serializable, Cloneable {
         ruleConfigsByName.clear();
     }
 
+    public void setRuleConfigs(Collection<MappingRuleConfig> ruleConfigs) {
+
+        removeRuleConfigs();
+
+        for (MappingRuleConfig ruleConfig : ruleConfigs) {
+            addRuleConfig(ruleConfig);
+        }
+    }
+
     public void addRuleConfig(MappingRuleConfig mappingRuleConfig) {
 
         String name = mappingRuleConfig.getName().toLowerCase();
@@ -139,6 +148,12 @@ public class MappingConfig implements Serializable, Cloneable {
 
     public Map<String,String> getParameters() {
         return parameters;
+    }
+
+    public void setParameters(Map<String,String> parameters) {
+        if (parameters == this.parameters) return;
+        this.parameters.clear();
+        this.parameters.putAll(parameters);
     }
 
     public String getParameter(String name) {

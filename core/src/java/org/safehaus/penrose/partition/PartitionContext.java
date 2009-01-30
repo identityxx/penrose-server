@@ -64,10 +64,6 @@ public class PartitionContext implements Cloneable {
         this.penroseContext = penroseContext;
     }
 
-    public Object clone() throws CloneNotSupportedException {
-        return super.clone();
-    }
-
     public ClassLoader getClassLoader() {
         return classLoader;
     }
@@ -91,5 +87,13 @@ public class PartitionContext implements Cloneable {
 
     public void setPartitionManager(PartitionManager partitionManager) {
         this.partitionManager = partitionManager;
+    }
+
+    public void destroy() {
+        classLoader = null;
+    }
+    
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
     }
 }

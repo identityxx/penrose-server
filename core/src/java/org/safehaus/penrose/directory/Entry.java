@@ -629,9 +629,9 @@ public class Entry implements Cloneable {
             log.debug(TextUtil.displaySeparator(80));
         }
 
-        String password = new String(request.getPassword());
-
+        if (debug) log.debug("Searching for "+dn+".");
         SearchResult searchResult = find(dn);
+        if (debug) log.debug("Entry "+dn+" found.");
 
         Attributes attributes = searchResult.getAttributes();
         Attribute attribute = attributes.get("userPassword");
@@ -644,6 +644,8 @@ public class Entry implements Cloneable {
         Collection<Object> userPasswords = attribute.getValues();
         for (Object userPassword : userPasswords) {
             if (debug) log.debug("userPassword: " + userPassword);
+
+            String password = new String(request.getPassword());
             if (LDAPPassword.validate(password, (String)userPassword)) return;
         }
 
@@ -1254,6 +1256,8 @@ public class Entry implements Cloneable {
                     }
 
                     Object value = interpreter.eval(field);
+                    if (debug) log.debug(" - " + entrySource.getAlias() + "." + field.getName() + ": " + value);
+
                     if (value == null) continue;
 
                     if (FieldConfig.TYPE_INTEGER.equals(field.getType()) && value instanceof String) {
@@ -1261,9 +1265,6 @@ public class Entry implements Cloneable {
                     }
 
                     attributes.addValue(field.getName(), value);
-
-                    String fieldName = entrySource.getAlias() + "." + field.getName();
-                    if (debug) log.debug(" - " + fieldName + ": " + value);
                 }
             }
         }

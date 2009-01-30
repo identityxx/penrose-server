@@ -289,16 +289,16 @@ public class Session {
             try {
                 partition.add(this, request, response);
 
-            } catch (LDAPException e) {
-                response.setException(e);
-                throw e;
-
             } finally {
                 if (eventsEnabled) {
                     AddEvent addEvent = new AddEvent(this, AddEvent.AFTER_ADD, this, partition, request, response);
                     eventManager.postEvent(addEvent);
                 }
             }
+
+        } catch (LDAPException e) {
+            log.error(e.getMessage());
+            throw e;
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -412,16 +412,16 @@ public class Session {
                     log.debug("Bind failed.");
                 }
 
-            } catch (LDAPException e) {
-                response.setException(e);
-                throw e;
-
             } finally {
                 if (eventsEnabled) {
                 	BindEvent afterBindEvent = new BindEvent(this, BindEvent.AFTER_BIND, this, partition, request, response);
                 	eventManager.postEvent(afterBindEvent);
                 }
             }
+
+        } catch (LDAPException e) {
+            log.error(e.getMessage());
+            throw e;
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -505,16 +505,16 @@ public class Session {
             try {
                 partition.compare(this, request, response);
 
-            } catch (LDAPException e) {
-                response.setException(e);
-                throw e;
-
             } finally {
                 if (eventsEnabled) {
                 	CompareEvent afterCompareEvent = new CompareEvent(this, CompareEvent.AFTER_COMPARE, this, partition, request, response);
                 	eventManager.postEvent(afterCompareEvent);
                 }
             }
+
+        } catch (LDAPException e) {
+            log.error(e.getMessage());
+            throw e;
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -581,16 +581,16 @@ public class Session {
             try {
                 partition.delete(this, request, response);
 
-            } catch (LDAPException e) {
-                response.setException(e);
-                throw e;
-
             } finally {
                 if (eventsEnabled) {
                 	DeleteEvent afterDeleteEvent = new DeleteEvent(this, DeleteEvent.AFTER_DELETE, this, partition, request, response);
                 	eventManager.postEvent(afterDeleteEvent);
                 }
             }
+
+        } catch (LDAPException e) {
+            log.error(e.getMessage());
+            throw e;
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -671,16 +671,16 @@ public class Session {
             try {
                 partition.modify(this, request, response);
 
-            } catch (LDAPException e) {
-                response.setException(e);
-                throw e;
-
             } finally {
                 if (eventsEnabled) {
                 	ModifyEvent afterModifyEvent = new ModifyEvent(this, ModifyEvent.AFTER_MODIFY, this, partition, request, response);
                 	eventManager.postEvent(afterModifyEvent);
                 }
             }
+
+        } catch (LDAPException e) {
+            log.error(e.getMessage());
+            throw e;
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -755,16 +755,16 @@ public class Session {
             try {
                 partition.modrdn(this, request, response);
 
-            } catch (LDAPException e) {
-                response.setException(e);
-                throw e;
-
             } finally {
                 if (eventsEnabled) {
                     ModRdnEvent afterModRdnEvent = new ModRdnEvent(this, ModRdnEvent.AFTER_MODRDN, this, partition, request, response);
                     eventManager.postEvent(afterModRdnEvent);
                 }
             }
+
+        } catch (LDAPException e) {
+            log.error(e.getMessage());
+            throw e;
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -871,6 +871,11 @@ public class Session {
             Partition partition = partitionManager.getPartition(operation.getDn());
             partition.search(operation);
 
+        } catch (LDAPException e) {
+            log.error(e.getMessage());
+            try { operation.close(); } catch (Exception ex) { log.error(ex.getMessage(), ex); }
+            throw e;
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
 
@@ -948,16 +953,16 @@ public class Session {
                 partition.unbind(this, request, response);
                 bindDn = null;
 
-            } catch (LDAPException e) {
-                response.setException(e);
-                throw e;
-
             } finally {
                 if (eventsEnabled) {
 	                UnbindEvent afterUnbindEvent = new UnbindEvent(this, UnbindEvent.AFTER_UNBIND, this, partition, request, response);
 	                eventManager.postEvent(afterUnbindEvent);
                 }
             }
+
+        } catch (LDAPException e) {
+            log.error(e.getMessage());
+            throw e;
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);

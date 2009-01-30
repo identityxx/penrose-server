@@ -2,20 +2,26 @@ package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.PenroseConfig;
+import org.safehaus.penrose.module.ModuleReader;
+import org.safehaus.penrose.mapping.MappingReader;
 import org.safehaus.penrose.connection.ConnectionConfig;
+import org.safehaus.penrose.connection.ConnectionReader;
 import org.safehaus.penrose.directory.Directory;
 import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.directory.EntrySourceConfig;
+import org.safehaus.penrose.directory.DirectoryReader;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.event.PartitionEvent;
 import org.safehaus.penrose.partition.event.PartitionListener;
 import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.source.SourceReader;
 import org.safehaus.penrose.util.TextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.util.*;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -140,7 +146,29 @@ public class PartitionManager {
             partitionConfig.addAdapterConfig(adapterConfig);
         }
 
-        partitionConfig.load(home);
+        //partitionConfig.load(home);
+
+        File baseDir = new File(home, "conf");
+
+        File connectionsXml = new File(baseDir, "connections.xml");
+        ConnectionReader connectionReader = new ConnectionReader();
+        connectionReader.read(connectionsXml, partitionConfig.getConnectionConfigManager());
+
+        File sourcesXml = new File(baseDir, "sources.xml");
+        SourceReader sourceReader = new SourceReader();
+        sourceReader.read(sourcesXml, partitionConfig.getSourceConfigManager());
+
+        File mappingsXml = new File(baseDir, "mappings.xml");
+        MappingReader mappingReader = new MappingReader();
+        mappingReader.read(mappingsXml, partitionConfig.getMappingConfigManager());
+
+        File directoryXml = new File(baseDir, "directory.xml");
+        DirectoryReader directoryReader = new DirectoryReader();
+        directoryReader.read(directoryXml, partitionConfig.getDirectoryConfig());
+
+        File modulesXml = new File(baseDir, "modules.xml");
+        ModuleReader moduleReader = new ModuleReader();
+        moduleReader.read(modulesXml, partitionConfig.getModuleConfigManager());
 
         partitionConfigManager.addPartitionConfig(partitionConfig);
 
@@ -164,7 +192,32 @@ public class PartitionManager {
 
         partitionConfig = new PartitionConfig();
         partitionConfig.setName(partitionName);
-        partitionConfig.load(partitionDir);
+        //partitionConfig.load(partitionDir);
+
+        File baseDir = new File(partitionDir, "DIR-INF");
+
+        PartitionReader reader = new PartitionReader();
+        reader.read(baseDir, partitionConfig);
+
+        File connectionsXml = new File(baseDir, "connections.xml");
+        ConnectionReader connectionReader = new ConnectionReader();
+        connectionReader.read(connectionsXml, partitionConfig.getConnectionConfigManager());
+
+        File sourcesXml = new File(baseDir, "sources.xml");
+        SourceReader sourceReader = new SourceReader();
+        sourceReader.read(sourcesXml, partitionConfig.getSourceConfigManager());
+
+        File mappingsXml = new File(baseDir, "mappings.xml");
+        MappingReader mappingReader = new MappingReader();
+        mappingReader.read(mappingsXml, partitionConfig.getMappingConfigManager());
+
+        File directoryXml = new File(baseDir, "directory.xml");
+        DirectoryReader directoryReader = new DirectoryReader();
+        directoryReader.read(directoryXml, partitionConfig.getDirectoryConfig());
+
+        File modulesXml = new File(baseDir, "modules.xml");
+        ModuleReader moduleReader = new ModuleReader();
+        moduleReader.read(modulesXml, partitionConfig.getModuleConfigManager());
 
         addPartitionConfig(partitionConfig);
 
@@ -221,28 +274,56 @@ public class PartitionManager {
         log.debug("Partition "+name+" started.");
     }
 
-    public ClassLoader createClassLoader(PartitionConfig partitionConfig) throws Exception {
-        Collection<URL> classPaths = partitionConfig.getClassPaths();
-        return new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]), getClass().getClassLoader());
-    }
-
     public PartitionContext createPartitionContext(PartitionConfig partitionConfig) throws Exception {
-
-        ClassLoader classLoader = createClassLoader(partitionConfig);
 
         PartitionContext partitionContext = new PartitionContext();
 
         if (partitionConfig instanceof DefaultPartitionConfig) {
             partitionContext.setPath(null);
+
+            partitionContext.setClassLoader(getClass().getClassLoader());
+
         } else {
-            partitionContext.setPath(partitionsDir == null ? null : new File(partitionsDir, partitionConfig.getName()));
+            File partitionDir = new File(partitionsDir, partitionConfig.getName());
+            partitionContext.setPath(partitionsDir == null ? null : partitionDir);
+
+            File baseDir = new File(partitionDir, "DIR-INF");
+
+            if (debug) log.debug("Creating class loader:");
+            Collection<File> classPaths = new ArrayList<File>();
+
+            File classesDir = new File(baseDir, "classes");
+            if (classesDir.isDirectory()) {
+                log.debug(" - "+classesDir);
+                classPaths.add(classesDir);
+            }
+
+            File libDir = new File(baseDir, "lib");
+            if (libDir.isDirectory()) {
+                File files[] = libDir.listFiles(new FilenameFilter() {
+                    public boolean accept(File dir, String name) {
+                        return name.toLowerCase().endsWith(".jar");
+                    }
+                });
+
+                for (File f : files) {
+                    log.debug(" - "+f);
+                    classPaths.add(f);
+                }
+            }
+
+            ClassLoader classLoader = new PartitionClassLoader(
+                    classPaths,
+                    getClass().getClassLoader()
+            );
+
+            partitionContext.setClassLoader(classLoader);
         }
 
         partitionContext.setPenroseConfig(penroseConfig);
         partitionContext.setPenroseContext(penroseContext);
 
         partitionContext.setPartitionManager(penroseContext.getPartitionManager());
-        partitionContext.setClassLoader(classLoader);
 
         return partitionContext;
     }

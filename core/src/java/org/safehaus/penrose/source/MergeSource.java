@@ -14,14 +14,23 @@ import java.util.*;
  */
 public class MergeSource extends Source {
 
-    public final static String SOURCES = "sources";
+    public final static String SOURCES    = "sources";
+    public final static String ATTRIBUTES = "attributes";
 
-    public Collection<String> sourceNames = new ArrayList<String>();
+    public Collection<String> sourceNames = new LinkedHashSet<String>();
+    public Collection<String> attributeNames = new LinkedHashSet<String>();
 
     public void init() throws Exception {
         String value = getParameter(SOURCES);
         String[] s = value.split(",");
         sourceNames.addAll(Arrays.asList(s));
+
+        value = getParameter(ATTRIBUTES);
+        if (value != null) {
+            for (String attributeName : value.split(",")) {
+                attributeNames.add(attributeName.toLowerCase());
+            }
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -165,12 +174,48 @@ public class MergeSource extends Source {
         SourceManager sourceManager = partition.getSourceManager();
 
         for (String sourceName : sourceNames) {
+
+            log.debug("Modifying source "+sourceName+".");
             Source source = sourceManager.getSource(sourceName);
+
+            ModifyRequest newRequest = new ModifyRequest();
+            newRequest.setDn(request.getDn());
+
+            for (Modification modification : request.getModifications()) {
+
+                Attribute attribute = modification.getAttribute();
+                String attributeName = attribute.getName();
+
+                if (!attributeNames.contains(attributeName.toLowerCase())) continue;
+
+                Attribute newAttribute = new Attribute(attributeName);
+
+                for (Object value : attribute.getValues()) {
+                    DN dn = new DN(value.toString());
+
+                    try {
+                        source.find(session, dn);
+                        log.debug("Entry "+dn+" is in source "+sourceName+".");
+                        newAttribute.addValue(value);
+
+                    } catch (Exception e) {
+                        log.debug("Entry "+dn+" is not in source "+sourceName+".");
+                        // ignore
+                    }
+                }
+
+                if (newAttribute.isEmpty()) continue;
+
+                Modification newModification = new Modification(modification.getType(), newAttribute);
+                newRequest.addModification(newModification);
+            }
+
+            if (newRequest.getModifications().isEmpty()) continue;
 
             ModifyResponse newResponse = new ModifyResponse();
             
             try {
-                source.modify(session, request, newResponse);
+                source.modify(session, newRequest, newResponse);
             } catch (LDAPException e) {
                 log.debug(e.getMessage());
                 // ignore

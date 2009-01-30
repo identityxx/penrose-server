@@ -154,6 +154,8 @@ public class Partition implements Cloneable {
         sourceManager.destroy();
         connectionManager.destroy();
 
+        partitionContext.destroy();
+
         status = STOPPED;
         //log.debug("Partition "+partitionConfig.getName()+" stopped.");
     }
@@ -616,36 +618,42 @@ public class Partition implements Cloneable {
             AddResponse response
     ) throws Exception {
 
-        normalize(request);
+        try {
+            normalize(request);
 
-        DN dn = request.getDn();
+            DN dn = request.getDn();
 
-        Collection<Entry> entries = findEntries(dn);
+            Collection<Entry> entries = findEntries(dn);
 
-        if (entries.isEmpty()) {
-            if (debug) log.debug("Entry "+dn+" not found.");
-            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
-        }
-
-        Collection<Module> modules = findModules(dn);
-
-        Exception exception = null;
-
-        for (Entry entry : entries) {
-            try {
-                if (debug) log.debug("Adding " + dn + " into " + entry.getDn());
-
-                ModuleChain chain = createModuleChain(entry, modules);
-                chain.add(session, request, response);
-
-                return; // return after the first successful operation
-
-            } catch (Exception e) {
-                exception = e;
+            if (entries.isEmpty()) {
+                if (debug) log.debug("Entry "+dn+" not found.");
+                throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
             }
-        }
 
-        throw exception;
+            Collection<Module> modules = findModules(dn);
+
+            Exception exception = null;
+
+            for (Entry entry : entries) {
+                try {
+                    if (debug) log.debug("Adding " + dn + " into " + entry.getDn());
+
+                    ModuleChain chain = createModuleChain(entry, modules);
+                    chain.add(session, request, response);
+
+                    return; // return after the first successful operation
+
+                } catch (Exception e) {
+                    exception = e;
+                }
+            }
+
+            throw exception;
+
+        } catch (LDAPException e) {
+            response.setException(e);
+            throw e;
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -658,42 +666,50 @@ public class Partition implements Cloneable {
             BindResponse response
     ) throws Exception {
 
-        normalize(request);
+        try {
+            normalize(request);
 
-        DN dn = request.getDn();
+            DN dn = request.getDn();
 
-        Collection<Entry> entries = findEntries(dn);
+            Collection<Entry> entries = findEntries(dn);
 
-        if (entries.isEmpty()) {
-            if (debug) log.debug("Entry "+dn+" not found.");
-            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
-        }
-
-        Collection<Module> modules = findModules(dn);
-
-        boolean found = false;
-        Exception exception = null;
-
-        for (Entry entry : entries) {
-            try {
-                if (debug) log.debug("Binding " + dn + " in " + entry.getDn());
-
-                ModuleChain chain = createModuleChain(entry, modules);
-                chain.bind(session, request, response);
-
-                return; // return after the first successful operation
-
-            } catch (LDAPException e) {
-                if (e.getResultCode() == LDAP.INVALID_CREDENTIALS) found = true;
-
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-                exception = e;
+            if (entries.isEmpty()) {
+                if (debug) log.debug("Entry "+dn+" not found.");
+                throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
             }
-        }
 
-        if (found) throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
-        throw exception;
+            Collection<Module> modules = findModules(dn);
+
+            boolean found = false;
+            Exception exception = null;
+
+            for (Entry entry : entries) {
+                try {
+                    if (debug) log.debug("Binding " + dn + " in " + entry.getDn());
+
+                    ModuleChain chain = createModuleChain(entry, modules);
+                    chain.bind(session, request, response);
+
+                    return; // return after the first successful operation
+
+                } catch (LDAPException e) {
+                    log.debug(e.getMessage());
+                    if (e.getResultCode() == LDAP.INVALID_CREDENTIALS) found = true;
+                    exception = e;
+
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                    exception = e;
+                }
+            }
+
+            if (found) throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
+            throw exception;
+
+        } catch (LDAPException e) {
+            response.setException(e);
+            throw e;
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -706,36 +722,42 @@ public class Partition implements Cloneable {
             CompareResponse response
     ) throws Exception {
 
-        normalize(request);
+        try {
+            normalize(request);
 
-        DN dn = request.getDn();
+            DN dn = request.getDn();
 
-        Collection<Entry> entries = findEntries(dn);
+            Collection<Entry> entries = findEntries(dn);
 
-        if (entries.isEmpty()) {
-            if (debug) log.debug("Entry "+dn+" not found.");
-            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
-        }
-
-        Collection<Module> modules = findModules(dn);
-
-        Exception exception = null;
-
-        for (Entry entry : entries) {
-            try {
-                if (debug) log.debug("Comparing " + dn + " in " + entry.getDn());
-
-                ModuleChain chain = createModuleChain(entry, modules);
-                chain.compare(session, request, response);
-
-                return; // return after the first successful operation
-
-            } catch (Exception e) {
-                exception = e;
+            if (entries.isEmpty()) {
+                if (debug) log.debug("Entry "+dn+" not found.");
+                throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
             }
-        }
 
-        throw exception;
+            Collection<Module> modules = findModules(dn);
+
+            Exception exception = null;
+
+            for (Entry entry : entries) {
+                try {
+                    if (debug) log.debug("Comparing " + dn + " in " + entry.getDn());
+
+                    ModuleChain chain = createModuleChain(entry, modules);
+                    chain.compare(session, request, response);
+
+                    return; // return after the first successful operation
+
+                } catch (Exception e) {
+                    exception = e;
+                }
+            }
+
+            throw exception;
+
+        } catch (LDAPException e) {
+            response.setException(e);
+            throw e;
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -748,36 +770,42 @@ public class Partition implements Cloneable {
             DeleteResponse response
     ) throws Exception {
 
-        normalize(request);
+        try {
+            normalize(request);
 
-        DN dn = request.getDn();
+            DN dn = request.getDn();
 
-        Collection<Entry> entries = findEntries(dn);
+            Collection<Entry> entries = findEntries(dn);
 
-        if (entries.isEmpty()) {
-            if (debug) log.debug("Entry "+dn+" not found.");
-            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
-        }
-
-        Collection<Module> modules = findModules(dn);
-
-        Exception exception = null;
-
-        for (Entry entry : entries) {
-            try {
-                if (debug) log.debug("Deleting " + dn + " from " + entry.getDn());
-
-                ModuleChain chain = createModuleChain(entry, modules);
-                chain.delete(session, request, response);
-
-                return; // return after the first successful operation
-
-            } catch (Exception e) {
-                exception = e;
+            if (entries.isEmpty()) {
+                if (debug) log.debug("Entry "+dn+" not found.");
+                throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
             }
-        }
 
-        throw exception;
+            Collection<Module> modules = findModules(dn);
+
+            Exception exception = null;
+
+            for (Entry entry : entries) {
+                try {
+                    if (debug) log.debug("Deleting " + dn + " from " + entry.getDn());
+
+                    ModuleChain chain = createModuleChain(entry, modules);
+                    chain.delete(session, request, response);
+
+                    return; // return after the first successful operation
+
+                } catch (Exception e) {
+                    exception = e;
+                }
+            }
+
+            throw exception;
+
+        } catch (LDAPException e) {
+            response.setException(e);
+            throw e;
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -827,36 +855,42 @@ public class Partition implements Cloneable {
             ModifyResponse response
     ) throws Exception {
 
-        normalize(request);
+        try {
+            normalize(request);
 
-        DN dn = request.getDn();
+            DN dn = request.getDn();
 
-        Collection<Entry> entries = findEntries(dn);
+            Collection<Entry> entries = findEntries(dn);
 
-        if (entries.isEmpty()) {
-            if (debug) log.debug("Entry "+dn+" not found.");
-            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
-        }
-
-        Collection<Module> modules = findModules(dn);
-
-        Exception exception = null;
-
-        for (Entry entry : entries) {
-            try {
-                if (debug) log.debug("Modifying " + dn + " in " + entry.getDn());
-
-                ModuleChain chain = createModuleChain(entry, modules);
-                chain.modify(session, request, response);
-
-                return; // return after the first successful operation
-
-            } catch (Exception e) {
-                exception = e;
+            if (entries.isEmpty()) {
+                if (debug) log.debug("Entry "+dn+" not found.");
+                throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
             }
-        }
 
-        throw exception;
+            Collection<Module> modules = findModules(dn);
+
+            Exception exception = null;
+
+            for (Entry entry : entries) {
+                try {
+                    if (debug) log.debug("Modifying " + dn + " in " + entry.getDn());
+
+                    ModuleChain chain = createModuleChain(entry, modules);
+                    chain.modify(session, request, response);
+
+                    return; // return after the first successful operation
+
+                } catch (Exception e) {
+                    exception = e;
+                }
+            }
+
+            throw exception;
+
+        } catch (LDAPException e) {
+            response.setException(e);
+            throw e;
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -869,36 +903,42 @@ public class Partition implements Cloneable {
             ModRdnResponse response
     ) throws Exception {
 
-        normalize(request);
+        try {
+            normalize(request);
 
-        DN dn = request.getDn();
+            DN dn = request.getDn();
 
-        Collection<Entry> entries = findEntries(dn);
+            Collection<Entry> entries = findEntries(dn);
 
-        if (entries.isEmpty()) {
-            if (debug) log.debug("Entry "+dn+" not found.");
-            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
-        }
-
-        Collection<Module> modules = findModules(dn);
-
-        Exception exception = null;
-
-        for (Entry entry : entries) {
-            try {
-                if (debug) log.debug("Renaming " + dn + " in " + entry.getDn());
-
-                ModuleChain chain = createModuleChain(entry, modules);
-                chain.modrdn(session, request, response);
-
-                return; // return after the first successful operation
-
-            } catch (Exception e) {
-                exception = e;
+            if (entries.isEmpty()) {
+                if (debug) log.debug("Entry "+dn+" not found.");
+                throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
             }
-        }
 
-        throw exception;
+            Collection<Module> modules = findModules(dn);
+
+            Exception exception = null;
+
+            for (Entry entry : entries) {
+                try {
+                    if (debug) log.debug("Renaming " + dn + " in " + entry.getDn());
+
+                    ModuleChain chain = createModuleChain(entry, modules);
+                    chain.modrdn(session, request, response);
+
+                    return; // return after the first successful operation
+
+                } catch (Exception e) {
+                    exception = e;
+                }
+            }
+
+            throw exception;
+
+        } catch (LDAPException e) {
+            response.setException(e);
+            throw e;
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -911,9 +951,15 @@ public class Partition implements Cloneable {
             SearchResponse response
     ) throws Exception {
 
-        SearchOperation operation = session.createSearchOperation(""+request.getMessageId(), request, response);
+        try {
+            SearchOperation operation = session.createSearchOperation(""+request.getMessageId(), request, response);
 
-        search(operation);
+            search(operation);
+
+        } catch (LDAPException e) {
+            response.setException(e);
+            throw e;
+        }
     }
 
     public void search(
@@ -1053,35 +1099,41 @@ public class Partition implements Cloneable {
             UnbindResponse response
     ) throws Exception {
 
-        DN dn = session.getBindDn();
-        if (dn == null || dn.isEmpty()) return;
+        try {
+            DN dn = session.getBindDn();
+            if (dn == null || dn.isEmpty()) return;
 
-        Collection<Entry> entries = findEntries(dn);
+            Collection<Entry> entries = findEntries(dn);
 
-        if (entries.isEmpty()) {
-            if (debug) log.debug("Entry "+dn+" not found.");
-            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
-        }
-
-        Collection<Module> modules = findModules(dn);
-
-        Exception exception = null;
-
-        for (Entry entry : entries) {
-            try {
-                if (debug) log.debug("Unbinding " + dn + " from " + entry.getDn());
-
-                ModuleChain chain = createModuleChain(entry, modules);
-                chain.unbind(session, request, response);
-
-                return; // return after the first successful operation
-
-            } catch (Exception e) {
-                exception = e;
+            if (entries.isEmpty()) {
+                if (debug) log.debug("Entry "+dn+" not found.");
+                throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
             }
-        }
 
-        throw exception;
+            Collection<Module> modules = findModules(dn);
+
+            Exception exception = null;
+
+            for (Entry entry : entries) {
+                try {
+                    if (debug) log.debug("Unbinding " + dn + " from " + entry.getDn());
+
+                    ModuleChain chain = createModuleChain(entry, modules);
+                    chain.unbind(session, request, response);
+
+                    return; // return after the first successful operation
+
+                } catch (Exception e) {
+                    exception = e;
+                }
+            }
+
+            throw exception;
+
+        } catch (LDAPException e) {
+            response.setException(e);
+            throw e;
+        }
     }
 
     public ACLEvaluator getAclEvaluator() {

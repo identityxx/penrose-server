@@ -9,7 +9,7 @@
     <connection-name>LDAP1</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>dc=LDAP Merge,dc=Example,dc=com</param-value>
+      <param-value>dc=ad,dc=Example,dc=com</param-value>
     </parameter>
   </source>
 
@@ -17,15 +17,7 @@
     <connection-name>LDAP2</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>dc=LDAP Merge,dc=my-domain,dc=com</param-value>
-    </parameter>
-    <parameter>
-      <param-name>newBaseDn</param-name>
-      <param-value>dc=LDAP Merge,dc=Example,dc=com</param-value>
-    </parameter>
-    <parameter>
-      <param-name>attributes</param-name>
-      <param-value>uniqueMember</param-value>
+      <param-value>dc=ad,dc=Example,dc=com</param-value>
     </parameter>
   </source>
 
@@ -37,7 +29,7 @@
     </parameter>
     <parameter>
       <param-name>attributes</param-name>
-      <param-value>uniqueMember</param-value>
+      <param-value>member</param-value>
     </parameter>
   </source>
 
