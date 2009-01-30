@@ -9,7 +9,7 @@ Installing Penrose on Unix
 --------------------------
 
 On Linux and other Unix-like platforms, create an installation directory
-(e.g. /usr/local/${project.name}-${product.version}), then unzip/untar the distribution file.
+(e.g. /opt/${project.name}-${product.version}), then unzip/untar the distribution file.
 
   tar xzvf ${project.name}-${product.version}.tar.gz
 

@@ -5,7 +5,7 @@
 # chkconfig: - 38 62
 # description: ${project.title} Server ${product.version}.
 # processname: java
-# pidfile: /usr/local/${product.name}-${product.version}/logs/vd-server.pid
+# pidfile: /opt/${product.name}-${product.version}/logs/vd-server.pid
 
 # Source function library.
 . /etc/init.d/functions
@@ -21,37 +21,40 @@ if [ -r /etc/sysconfig/vd-server ] ; then
 	. /etc/sysconfig/vd-server
 fi
 
-VD_SERVER_HOME=/usr/local/${product.name}-${product.version}
-PENROSE_SCRIPT=$VD_SERVER_HOME/bin/vd-server.sh
+VD_SERVER_HOME=/opt/${product.name}-${product.version}
+VD_SERVER_SCRIPT=$VD_SERVER_HOME/bin/vd-server.sh
 
-PENROSE_PROG=vd-server
-PENROSE_USER=root
+VD_SERVER_PROG=vd-server
+VD_SERVER_USER=root
 
-[ -x $PENROSE_SCRIPT ] || exit 0
+[ -x $VD_SERVER_SCRIPT ] || exit 0
 
 RETVAL=0
 
 function start() {
-        # Start daemons.
-        echo -n $"Starting $PENROSE_PROG: "
-        daemon --user $PENROSE_USER $PENROSE_SCRIPT start
-	RETVAL=$?
-        echo
-	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/vd-server
-	return $RETVAL
+    echo -n $"Starting $VD_SERVER_PROG: "
+    daemon --user $VD_SERVER_USER $VD_SERVER_SCRIPT start
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && touch /var/lock/subsys/vd-server
+    return $RETVAL
 }
 
 function stop() {
-        # Stop daemons.
-	echo -n $"Stopping $PENROSE_PROG: "
-        daemon --user $PENROSE_USER $PENROSE_SCRIPT stop
-	RETVAL=$?
-        echo
-        [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/vd-server /var/run/vd-server.args
-	return $RETVAL
+    echo -n $"Stopping $VD_SERVER_PROG: "
+    daemon --user $VD_SERVER_USER $VD_SERVER_SCRIPT stop
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/vd-server /var/run/vd-server.args
+    return $RETVAL
 }
 
-# See how we were called.
+function status() {
+    su $VD_SERVER_USER -c "$VD_SERVER_SCRIPT status"
+    RETVAL=$?
+    return $RETVAL
+}
+
 case "$1" in
     start)
         start
@@ -60,14 +63,14 @@ case "$1" in
         stop
         ;;
     status)
-        status $PENROSE_PROG
+        status
 	;;
     restart)
 	stop
 	start
 	;;
     reload)
-    	killproc $PENROSE_PROG -HUP
+    	killproc $VD_SERVER_PROG -HUP
 	RETVAL=$?
 	;;
     condrestart)
