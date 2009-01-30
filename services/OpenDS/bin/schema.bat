@@ -63,11 +63,10 @@ echo.
 
 :runPenrose
 
-set LOCALLIBPATH=%JAVA_HOME%\jre\lib\ext
+set LOCALLIBPATH=%JAVA_HOME%\lib\ext;%JAVA_HOME%\jre\lib\ext
 set LOCALLIBPATH=%LOCALLIBPATH%;%VD_SERVER_HOME%\lib
 set LOCALLIBPATH=%LOCALLIBPATH%;%VD_SERVER_HOME%\lib\ext
 set LOCALLIBPATH=%LOCALLIBPATH%;%VD_SERVER_HOME%\server\lib
-set LOCALLIBPATH=%LOCALLIBPATH%;%VD_SERVER_HOME%\server\lib\ext
 set LOCALLIBPATH=%LOCALLIBPATH%;%VD_SERVER_HOME%\services\OpenDS\SERVICE-INF\lib
 
 "%_JAVACMD%" %VD_SERVER_OPTS% -Djava.ext.dirs="%LOCALLIBPATH%" -Djava.library.path="%LOCALLIBPATH%" -Dpenrose.home="%VD_SERVER_HOME%" org.safehaus.penrose.opends.OpenDSSchemaConverter %PENROSE_CMD_LINE_ARGS%

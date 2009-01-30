@@ -30,7 +30,7 @@ goto end
 
 :run
 
-set LOCALLIBPATH=%JAVA_HOME%\jre\lib\ext
+set LOCALLIBPATH=%JAVA_HOME%\lib\ext;%JAVA_HOME%\jre\lib\ext
 set LOCALLIBPATH=%LOCALLIBPATH%;%VD_CLIENT_HOME%\lib
 set LOCALLIBPATH=%LOCALLIBPATH%;%VD_CLIENT_HOME%\lib\ext
 
