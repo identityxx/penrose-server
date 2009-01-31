@@ -20,6 +20,10 @@
       <param-value>errors</param-value>
     </parameter>
     <parameter>
+      <param-name>ignoredObjectClasses</param-name>
+      <param-value>nisNoSync</param-value>
+    </parameter>
+    <parameter>
       <param-name>ignoredAttributes</param-name>
       <param-value>seeAlso</param-value>
     </parameter>
