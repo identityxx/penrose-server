@@ -22,6 +22,7 @@ public class OpenDSServiceConfigurator extends ServiceConfigurator {
     Attribute ldapsEnabledAttribute;
     Attribute ldapsPortAttribute;
     Attribute keyManagerAttribute;
+    Attribute sslCertificateNameAttribute;
 
     public void init() throws Exception {
 
@@ -33,34 +34,40 @@ public class OpenDSServiceConfigurator extends ServiceConfigurator {
         configHandler.initializeConfigHandler(configFile.getAbsolutePath(), false);
 
         Entry ldapEntry = configHandler.getConfigEntry(org.opends.server.types.DN.decode("cn=LDAP Connection Handler,cn=Connection Handlers,cn=config")).getEntry();
-        ldapEnabledAttribute = ldapEntry.getAttribute("ds-cfg-enabled").get(0);
-        ldapPortAttribute = ldapEntry.getAttribute("ds-cfg-listen-port").get(0);
 
+        ldapEnabledAttribute = ldapEntry.getAttribute("ds-cfg-enabled").get(0);
         String ldapEnabled = ldapEnabledAttribute.getValues().iterator().next().getStringValue();
         if (ldapEnabled == null) ldapEnabled = "true";
 
         addParameter(new Parameter("ldapEnabled", "LDAP Enabled", ldapEnabled));
 
+        ldapPortAttribute = ldapEntry.getAttribute("ds-cfg-listen-port").get(0);
         String ldapPort = ldapPortAttribute.getValues().iterator().next().getStringValue();
         if (ldapPort == null) ldapPort = "10389";
 
         addParameter(new Parameter("ldapPort", "LDAP Port", ldapPort));
 
         Entry ldapsEntry = configHandler.getConfigEntry(DN.decode("cn=LDAPS Connection Handler,cn=Connection Handlers,cn=config")).getEntry();
-        ldapsEnabledAttribute = ldapsEntry.getAttribute("ds-cfg-enabled").get(0);
-        ldapsPortAttribute = ldapsEntry.getAttribute("ds-cfg-listen-port").get(0);
-        keyManagerAttribute = ldapsEntry.getAttribute("ds-cfg-key-manager-provider").get(0);
 
+        ldapsEnabledAttribute = ldapsEntry.getAttribute("ds-cfg-enabled").get(0);
         String ldapsEnabled = ldapsEnabledAttribute.getValues().iterator().next().getStringValue();
         if (ldapsEnabled == null) ldapsEnabled = "true";
 
         addParameter(new Parameter("ldapsEnabled", "Secure LDAP Enabled", ldapsEnabled));
 
+        ldapsPortAttribute = ldapsEntry.getAttribute("ds-cfg-listen-port").get(0);
         String ldapsPort = ldapsPortAttribute.getValues().iterator().next().getStringValue();
         if (ldapsPort == null) ldapsPort = "10636";
 
         addParameter(new Parameter("ldapsPort", "Secure LDAP Port", ldapsPort));
 
+        sslCertificateNameAttribute = ldapsEntry.getAttribute("ds-cfg-ssl-cert-nickname").get(0);
+        String sslCertificateName = sslCertificateNameAttribute.getValues().iterator().next().getStringValue();
+        if (sslCertificateName == null) sslCertificateName = "server-cert";
+
+        addParameter(new Parameter("sslCertificateName", "SSL Certificate Name", sslCertificateName));
+
+        keyManagerAttribute = ldapsEntry.getAttribute("ds-cfg-key-manager-provider").get(0);
         String keyManagerDn = keyManagerAttribute.getValues().iterator().next().getStringValue();
         int i = keyManagerDn.indexOf("=");
         int j = keyManagerDn.indexOf(",", i+1);
@@ -107,11 +114,17 @@ public class OpenDSServiceConfigurator extends ServiceConfigurator {
             values.clear();
             values.add(new AttributeValue(ldapsEnabledAttribute.getAttributeType(), value));
 
-        } else if (parameter.getName().equals("ldapsEnabled")) {
+        } else if (parameter.getName().equals("ldapsPort")) {
 
-            LinkedHashSet<AttributeValue> values = ldapsEnabledAttribute.getValues();
+            LinkedHashSet<AttributeValue> values = ldapsPortAttribute.getValues();
             values.clear();
-            values.add(new AttributeValue(ldapsEnabledAttribute.getAttributeType(), value));
+            values.add(new AttributeValue(ldapsPortAttribute.getAttributeType(), value));
+
+        } else if (parameter.getName().equals("sslCertificateName")) {
+
+            LinkedHashSet<AttributeValue> values = sslCertificateNameAttribute.getValues();
+            values.clear();
+            values.add(new AttributeValue(sslCertificateNameAttribute.getAttributeType(), value));
 
         } else if (parameter.getName().equals("keyStoreType")) {
 
