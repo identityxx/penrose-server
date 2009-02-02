@@ -29,6 +29,7 @@ public class SynchronizationModule extends Module implements SynchronizationMBea
     protected Source changes;
     protected Source errors;
 
+    protected Collection<String> ignoredObjectClasses = new HashSet<String>();
     protected Collection<String> ignoredAttributes = new HashSet<String>();
 
     public void init() throws Exception {
@@ -71,12 +72,22 @@ public class SynchronizationModule extends Module implements SynchronizationMBea
         changes = sourceManager.getSource(changesName);
         errors = sourceManager.getSource(errorsName);
 
+        s = getParameter("ignoredObjectClasses");
+        log.debug("Ignored object classes: "+s);
+        if (s != null) {
+            StringTokenizer st = new StringTokenizer(s, ", \t\n\r\f");
+            while (st.hasMoreTokens()) {
+                String ignoredObjectClass = st.nextToken().toLowerCase();
+                ignoredObjectClasses.add(ignoredObjectClass);
+            }
+        }
+
         s = getParameter("ignoredAttributes");
         log.debug("Ignored attributes: "+s);
         if (s != null) {
             StringTokenizer st = new StringTokenizer(s, ", \t\n\r\f");
             while (st.hasMoreTokens()) {
-                String ignoredAttribute = st.nextToken();
+                String ignoredAttribute = st.nextToken().toLowerCase();
                 ignoredAttributes.add(ignoredAttribute);
             }
         }
@@ -285,6 +296,20 @@ public class SynchronizationModule extends Module implements SynchronizationMBea
     }
 
     public boolean checkSearchResult(SearchResult result) throws Exception {
+
+        Attributes attributes = result.getAttributes();
+        Attribute objectClass = attributes.get("objectClass");
+
+        if (objectClass != null && !ignoredObjectClasses.isEmpty()) {
+            for (Object value : objectClass.getValues()) {
+                String s = value.toString().toLowerCase();
+                if (ignoredObjectClasses.contains(s)) {
+                    if (warn) log.warn("Don't synchronize "+result.getDn()+".");
+                    return false;
+                }
+            }
+        }
+
         return true;
     }
 

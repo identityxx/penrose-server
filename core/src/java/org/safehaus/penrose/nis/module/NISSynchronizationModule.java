@@ -41,19 +41,6 @@ public class NISSynchronizationModule extends SynchronizationModule {
         return nisMapRDNs.get(nisMap);
     }
     
-    public boolean checkSearchResult(SearchResult result) throws Exception {
-
-        Attributes attributes = result.getAttributes();
-        Attribute objectClass = attributes.get("objectClass");
-
-        if (objectClass != null && objectClass.containsValue("nisNoSync")) {
-            if (warn) log.warn("Don't synchronize "+result.getDn()+".");
-            return false;
-        }
-
-        return true;
-    }
-
     public Collection<Modification> createModifications(
             Attributes attributes1,
             Attributes attributes2

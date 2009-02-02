@@ -65,11 +65,10 @@ echo.
 
 set APACHEDS_HOME=%VD_SERVER_HOME%\services\ApacheDS
 
-set LOCALLIBPATH=%JAVA_HOME%\jre\lib\ext
+set LOCALLIBPATH=%JAVA_HOME%\lib\ext;%JAVA_HOME%\jre\lib\ext
 set LOCALLIBPATH=%LOCALLIBPATH%;%VD_SERVER_HOME%\lib
 set LOCALLIBPATH=%LOCALLIBPATH%;%VD_SERVER_HOME%\lib\ext
 set LOCALLIBPATH=%LOCALLIBPATH%;%VD_SERVER_HOME%\server\lib
-set LOCALLIBPATH=%LOCALLIBPATH%;%VD_SERVER_HOME%\server\lib\ext
 set LOCALLIBPATH=%LOCALLIBPATH%;%APACHEDS_HOME%\SERVICE-INF\lib
 
 "%_JAVACMD%" %VD_SERVER_OPTS% -Djava.ext.dirs="%LOCALLIBPATH%" -Djava.library.path="%LOCALLIBPATH%" -Dpenrose.home="%VD_SERVER_HOME%" -Dorg.safehaus.penrose.apacheds.home="%APACHEDS_HOME%" org.safehaus.penrose.apacheds.SchemaGenerator %PENROSE_CMD_LINE_ARGS%

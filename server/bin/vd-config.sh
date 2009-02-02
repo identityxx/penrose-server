@@ -80,11 +80,10 @@ if [ ! -x "$JAVACMD" ] ; then
   exit 1
 fi
 
-LOCALLIBPATH="$JAVA_HOME/jre/lib/ext"
+LOCALLIBPATH="$JAVA_HOME/lib/ext:$JAVA_HOME/jre/lib/ext"
 LOCALLIBPATH="$LOCALLIBPATH:$VD_SERVER_HOME/lib"
 LOCALLIBPATH="$LOCALLIBPATH:$VD_SERVER_HOME/lib/ext"
 LOCALLIBPATH="$LOCALLIBPATH:$VD_SERVER_HOME/server/lib"
-LOCALLIBPATH="$LOCALLIBPATH:$VD_SERVER_HOME/server/lib/ext"
 
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then

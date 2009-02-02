@@ -225,13 +225,11 @@
         <copy todir="target/dist/schema">
             <fileset dir="../schema"/>
         </copy>
-        <mkdir dir="target/dist/schema/ext"/>
 
         <copy todir="target/dist/server/lib" includeEmptyDirs="false">
             <fileset dir="lib" includes="*"/>
             <fileset dir="target" includes="${product.name}-${product.version}.jar"/>
         </copy>
-        <mkdir dir="target/dist/server/lib/ext"/>
 
         <fixcrlf
             srcdir="target/dist"

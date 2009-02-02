@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# penrose-monitor This shell script takes care of starting and stopping ${project.title} Monitor.
+# vd-monitor This shell script takes care of starting and stopping ${project.title} Monitor.
 #
 # chkconfig: - 38 62
 # description: ${project.title} Monitor ${product.version}.
@@ -17,41 +17,44 @@ if [ -r /etc/sysconfig/network ] ; then
 fi
 
 # Source an auxiliary options file if we have one.
-if [ -r /etc/sysconfig/penrose ] ; then
-	. /etc/sysconfig/penrose
+if [ -r /etc/sysconfig/vd-monitor ] ; then
+	. /etc/sysconfig/vd-monitor
 fi
 
 VD_SERVER_HOME=/opt/${product.name}-${product.version}
-PENROSE_MONITOR_SCRIPT=$VD_SERVER_HOME/bin/vd-monitor.sh
+VD_MONITOR_SCRIPT=$VD_SERVER_HOME/bin/vd-monitor.sh
 
-PENROSE_MONITOR_PROG=vd-monitor
-PENROSE_USER=root
+VD_MONITOR_PROG=vd-monitor
+VD_MONITOR_USER=root
 
-[ -x $PENROSE_MONITOR_SCRIPT ] || exit 0
+[ -x $VD_MONITOR_SCRIPT ] || exit 0
 
 RETVAL=0
 
 function start() {
-        # Start daemons.
-        echo -n $"Starting $PENROSE_MONITOR_PROG: "
-        daemon --user $PENROSE_USER $PENROSE_MONITOR_SCRIPT start
-	RETVAL=$?
-        echo
-	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/vd-monitor
-	return $RETVAL
+    echo -n $"Starting $VD_MONITOR_PROG: "
+    daemon --user $VD_MONITOR_USER $VD_MONITOR_SCRIPT start
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && touch /var/lock/subsys/vd-monitor
+    return $RETVAL
 }
 
 function stop() {
-        # Stop daemons.
-	echo -n $"Stopping $PENROSE_MONITOR_PROG: "
-        daemon --user $PENROSE_USER $PENROSE_MONITOR_SCRIPT stop
-	RETVAL=$?
-        echo
-        [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/vd-monitor /var/run/vd-monitor.args
-	return $RETVAL
+    echo -n $"Stopping $VD_MONITOR_PROG: "
+    daemon --user $VD_MONITOR_USER $VD_MONITOR_SCRIPT stop
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/vd-monitor /var/run/vd-monitor.args
+    return $RETVAL
 }
 
-# See how we were called.
+function status() {
+    su $VD_MONITOR_USER -c "$VD_MONITOR_SCRIPT status"
+    RETVAL=$?
+    return $RETVAL
+}
+
 case "$1" in
     start)
         start
@@ -60,14 +63,14 @@ case "$1" in
         stop
         ;;
     status)
-        status $PENROSE_MONITOR_PROG
+        status
 	;;
     restart)
 	stop
 	start
 	;;
     reload)
-    	killproc $PENROSE_MONITOR_PROG -HUP
+    	killproc $VD_MONITOR_PROG -HUP
 	RETVAL=$?
 	;;
     condrestart)
