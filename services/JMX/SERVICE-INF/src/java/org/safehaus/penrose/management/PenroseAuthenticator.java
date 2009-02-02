@@ -81,7 +81,7 @@ public class PenroseAuthenticator implements JMXAuthenticator {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new RuntimeException("Error: "+e.getMessage());
+            throw new RuntimeException(e);
         }
 
         Subject subject = new Subject();

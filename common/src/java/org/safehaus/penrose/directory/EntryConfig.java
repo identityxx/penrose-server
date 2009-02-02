@@ -98,11 +98,11 @@ public class EntryConfig implements Serializable, Cloneable {
         dn = db.toDn();
     }
 
-    public RDN getRdn() {
+    public RDN getRdn() throws Exception {
         return dn.getRdn();
     }
     
-    public DN getParentDn() {
+    public DN getParentDn() throws Exception {
         return dn.getParentDn();
     }
 
@@ -275,7 +275,7 @@ public class EntryConfig implements Serializable, Cloneable {
         rdnAttributeConfigs.clear();
     }
 
-    public void addAttributesFromRdn() {
+    public void addAttributesFromRdn() throws Exception {
         RDN rdn = dn.getRdn();
         for (String name : rdn.getNames()) {
             Object value = rdn.get(name);

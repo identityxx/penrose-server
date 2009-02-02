@@ -33,7 +33,7 @@ public class Demo {
         logger.setLevel(Level.WARN);
     }
 
-    public EntryConfig createRootEntry() {
+    public EntryConfig createRootEntry() throws Exception {
 
         EntryConfig entryConfig = new EntryConfig();
         entryConfig.setDn("dc=Example,dc=com");
@@ -48,7 +48,7 @@ public class Demo {
         return entryConfig;
     }
 
-    public EntryConfig createUsersEntry() {
+    public EntryConfig createUsersEntry() throws Exception {
 
         EntryConfig entryConfig = new EntryConfig();
         entryConfig.setDn("ou=Users,dc=Example,dc=com");

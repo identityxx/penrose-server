@@ -28,7 +28,7 @@ public class DNBuilder {
         rdns.add(rdn);
     }
 
-    public void append(String dn) {
+    public void append(String dn) throws Exception {
         if (dn == null) return;
         Collection<RDN> list = parse(dn);
         for (RDN rdn : list) {
@@ -41,7 +41,7 @@ public class DNBuilder {
         rdns.add(rdn);
     }
 
-    public void append(DN dn) {
+    public void append(DN dn) throws Exception {
         if (dn == null) return;
         Collection<RDN> list = dn.getRdns();
         for (RDN rdn : list) {
@@ -103,9 +103,10 @@ public class DNBuilder {
      * A multi-valued RDN will have name=value pairs separated by the '+'
      *     character.
      * @param dn DN
+     * @throws java.lang.Exception Invalid DN format
      * @return a Collection of RDN objects
      */
-    public static Collection<RDN> parse(String dn) {
+    public static Collection<RDN> parse(String dn) throws Exception {
 
         Collection<RDN> list = new ArrayList<RDN>();
 
@@ -257,6 +258,8 @@ public class DNBuilder {
         		}
         	}
         }
+
+        if (inName) throw new Exception("Invalid DN format: "+dn);
 
         // a well formed DN will have left us 1 more RDN at the end
         if (!bytes.isEmpty()) {
