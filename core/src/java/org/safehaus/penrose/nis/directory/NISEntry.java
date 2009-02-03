@@ -11,6 +11,7 @@ import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.operation.SearchOperation;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.util.TextUtil;
+import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
 
@@ -79,16 +80,19 @@ public class NISEntry extends DynamicEntry {
 
                 for (int i=1; i< getSourceCount(); i++) {
                     try {
-                        EntrySource sourceRef = getSource(i);
+                        EntrySource source = getSource(i);
 
-                        SearchResult secondaryResult = find(session, sourceRef, interpreter);
+                        SearchResult secondaryResult = find(session, source, interpreter);
                         if (secondaryResult == null) continue;
 
-                        sv.set(sourceRef.getAlias(), secondaryResult.getAttributes());
+                        sv.set(source.getAlias(), secondaryResult.getAttributes());
                         interpreter.set(sv);
 
+                    } catch (LDAPException e) {
+                        log.debug(e.getMessage());
+                        
                     } catch (Exception e) {
-                        log.debug(e.getMessage(), e);
+                        log.error(e.getMessage(), e);
                     }
                 }
 

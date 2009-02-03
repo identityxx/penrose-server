@@ -420,7 +420,7 @@ public class Entry implements Cloneable {
         return path;
     }
 
-    public List<Entry> getRelativePath(DN baseDn) {
+    public List<Entry> getRelativePath(DN baseDn) throws Exception {
 
         List<Entry> path = new ArrayList<Entry>();
 

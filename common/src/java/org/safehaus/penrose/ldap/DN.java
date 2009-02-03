@@ -31,7 +31,7 @@ public class DN implements Serializable, Comparable {
         rdns.add(rdn);
     }
 
-    public synchronized void parse() {
+    public synchronized void parse() throws Exception {
         if (rdns != null) return;
         rdns = new ArrayList<RDN>();
         Collection<RDN> list = DNBuilder.parse(originalDn);
@@ -40,7 +40,7 @@ public class DN implements Serializable, Comparable {
         }
     }
 
-    public synchronized DN getDn(int start, int end) {
+    public synchronized DN getDn(int start, int end) throws Exception {
         parse();
 
         DNBuilder db = new DNBuilder();
@@ -81,7 +81,7 @@ public class DN implements Serializable, Comparable {
         return db.toDn();
     }
 
-    public synchronized DN getSuffix(int i) {
+    public synchronized DN getSuffix(int i) throws Exception {
         return getDn(i, getSize());
     }
 
@@ -139,23 +139,23 @@ public class DN implements Serializable, Comparable {
         }
     }
 
-    public synchronized int getSize() {
+    public synchronized int getSize() throws Exception {
         parse();
         return rdns.size();
     }
 
-    public synchronized RDN getRdn() {
+    public synchronized RDN getRdn() throws Exception {
         parse();
         if (rdns.size() == 0) return null;
         return rdns.get(0);
     }
 
-    public synchronized RDN get(int i) {
+    public synchronized RDN get(int i) throws Exception {
         parse();
         return rdns.get(i);
     }
 
-    public synchronized Collection<RDN> getRdns() {
+    public synchronized Collection<RDN> getRdns() throws Exception {
         parse();
         return rdns;
     }
@@ -192,7 +192,7 @@ public class DN implements Serializable, Comparable {
         return normalizedDn;
     }
 
-    public synchronized DN getParentDn() {
+    public synchronized DN getParentDn() throws Exception {
         if (parentDn != null) return parentDn;
 
         parse();
@@ -300,8 +300,12 @@ public class DN implements Serializable, Comparable {
 
         DN dn = (DN)object;
 
-        parse();
-        dn.parse();
+        try {
+            parse();
+            dn.parse();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         
         if (rdns.size() < dn.rdns.size()) return -1;
         if (rdns.size() > dn.rdns.size()) return 1;
