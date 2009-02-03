@@ -226,6 +226,9 @@
             <fileset dir="../schema"/>
         </copy>
 
+      <!-- create folder for schema extension -->
+        <mkdir dir="target/dist/schema/ext"/>
+
         <copy todir="target/dist/server/lib" includeEmptyDirs="false">
             <fileset dir="lib" includes="*"/>
             <fileset dir="target" includes="${product.name}-${product.version}.jar"/>
