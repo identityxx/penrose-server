@@ -14,6 +14,6 @@ public interface EntryServiceMBean {
     public DN getDn() throws Exception;
     public EntryConfig getEntryConfig() throws Exception;
 
-    public String getParentId() throws Exception;
-    public Collection<String> getChildIds() throws Exception;
+    public String getParentName() throws Exception;
+    public Collection<String> getChildNames() throws Exception;
 }

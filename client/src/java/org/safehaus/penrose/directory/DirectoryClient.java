@@ -145,7 +145,7 @@ public class DirectoryClient extends BaseClient implements DirectoryServiceMBean
         EntryClient entryClient = directoryClient.getEntryClient(entryId);
         EntryConfig entryConfig = entryClient.getEntryConfig();
 
-        System.out.println("ID          : "+entryConfig.getName());
+        System.out.println("Name        : "+entryConfig.getName());
         System.out.println("DN          : "+entryConfig.getDn());
 
         String entryClass = entryConfig.getEntryClass();
@@ -155,11 +155,11 @@ public class DirectoryClient extends BaseClient implements DirectoryServiceMBean
         System.out.println("Description : "+(description == null ? "" : description));
         System.out.println();
 
-        String parentId = entryClient.getParentId();
-        System.out.println("Parent ID   : "+(parentId == null ? "" : parentId));
+        String parentName = entryClient.getParentName();
+        System.out.println("Parent Name : "+(parentName == null ? "" : parentName));
 
-        Collection<String> childIds = entryClient.getChildIds();
-        System.out.println("Child IDs   : "+childIds);
+        Collection<String> childNames = entryClient.getChildNames();
+        System.out.println("Child Names : "+childNames);
         System.out.println();
 
         System.out.println("Parameters  :");

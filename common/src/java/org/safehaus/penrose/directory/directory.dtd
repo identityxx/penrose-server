@@ -3,11 +3,11 @@
 <!ELEMENT directory (entry*)>
 
 <!ELEMENT entry (entry-class?,description?,mapping-name?,oc*,at*,source*,aci*,parameter*,init?,add?,bind?,compare?,delete?,modify?,modrdn?,search?,unbind?,destroy?)>
+<!ATTLIST entry name CDATA #IMPLIED>
+<!ATTLIST entry parent CDATA #IMPLIED>
 <!ATTLIST entry dn CDATA "">
 <!ATTLIST entry enabled CDATA #IMPLIED>
 <!ATTLIST entry attached CDATA #IMPLIED>
-<!ATTLIST entry id CDATA #IMPLIED>
-<!ATTLIST entry parentId CDATA #IMPLIED>
 
 <!ELEMENT init (#PCDATA)>
 <!ELEMENT add (#PCDATA)>

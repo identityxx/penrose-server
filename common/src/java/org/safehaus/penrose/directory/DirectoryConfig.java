@@ -392,8 +392,8 @@ public class DirectoryConfig implements Serializable, Cloneable {
         newList.add(entryConfig);
     }
 
-    public Collection<String> getChildNames(String parentId) {
-        Collection<String> children = childrenByName.get(parentId);
+    public Collection<String> getChildNames(String parentName) {
+        Collection<String> children = childrenByName.get(parentName);
         if (children == null) return EMPTY_IDS;
         return children;
     }

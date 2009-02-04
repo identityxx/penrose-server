@@ -131,11 +131,11 @@ public class Directory implements Cloneable {
 
         if (debug) log.debug("Searching parent of \""+entryConfig.getDn()+"\".");
 
-        String parentId = entryConfig.getParentName();
+        String parentName = entryConfig.getParentName();
 
-        if (parentId != null) {
-            if (debug) log.debug("Searching parent ID: "+parentId);
-            Entry parent = getEntry(parentId);
+        if (parentName != null) {
+            if (debug) log.debug("Searching parent: "+parentName);
+            Entry parent = getEntry(parentName);
 
             if (parent != null) {
                 if (debug) log.debug("Found parent \""+parent.getDn()+"\".");

@@ -51,14 +51,15 @@ public class DirectoryWriter {
     public Element createElement(DirectoryConfig directoryConfig) throws Exception {
         Element directoryElement = new DefaultElement("directory");
 
-        for (EntryConfig entryConfig : directoryConfig.getRootEntryConfigs()) {
-            createElement(directoryConfig, entryConfig, directoryElement);
+        for (EntryConfig entryConfig : directoryConfig.getEntryConfigs()) {
+            Element child = createElement(entryConfig);
+            directoryElement.add(child);
         }
 
         return directoryElement;
     }
 
-    public Element createElement(DirectoryConfig directoryConfig, EntryConfig entryConfig, Element configElement) throws Exception {
+    public Element createElement(EntryConfig entryConfig) throws Exception {
 
         Element element = new DefaultElement("entry");
 
@@ -66,9 +67,13 @@ public class DirectoryWriter {
             element.add(new DefaultAttribute("dn", entryConfig.getDn().toString()));
         }
 
+        String parentName = entryConfig.getParentName();
+        if (parentName != null) {
+            element.add(new DefaultAttribute("parentName", parentName));
+        }
+
         if (!entryConfig.isEnabled()) element.addAttribute("enabled", "false");
         if (!entryConfig.isAttached()) element.addAttribute("attached", "false");
-        configElement.add(element);
 
         if (entryConfig.getEntryClass() != null) {
             Element entryClassElement = new DefaultElement("entry-class");
@@ -126,11 +131,6 @@ public class DirectoryWriter {
             parameter.add(paramValue);
 
             element.add(parameter);
-        }
-
-        Collection<EntryConfig> children = directoryConfig.getChildren(entryConfig);
-        for (EntryConfig child : children) {
-            createElement(directoryConfig, child, configElement);
         }
 
         return element;

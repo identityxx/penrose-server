@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
             <set-properties-rule>
                 <alias attr-name="dn" prop-name="stringDn" />
+                <alias attr-name="parent" prop-name="parentName" />
             </set-properties-rule>
 
             <call-method-rule pattern="entry-class"  methodname="setEntryClass"  paramcount="0" />
