@@ -7,9 +7,7 @@ import org.safehaus.penrose.directory.EntrySource;
 import org.safehaus.penrose.directory.Directory;
 import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.jdbc.source.JDBCSource;
-import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.operation.SearchOperation;
 
@@ -98,10 +96,10 @@ public class JDBCSyncJob extends Job {
 
         Directory directory = partition.getDirectory();
         for (Entry entry : directory.findEntries(baseDn)) {
-            entries.put(entry.getId(), entry);
+            entries.put(entry.getName(), entry);
 
             Entry tmpEntry = createTmpEntry(entry);
-            tmpEntries.put(tmpEntry.getId(), tmpEntry);
+            tmpEntries.put(tmpEntry.getName(), tmpEntry);
         }
 
         String changeLogName = jobConfig.getParameter("changelog");
@@ -337,7 +335,7 @@ public class JDBCSyncJob extends Job {
 
         try {
             for (Entry entry : entries.values()) {
-                Entry tmpEntry = tmpEntries.get(entry.getId());
+                Entry tmpEntry = tmpEntries.get(entry.getName());
 
                 log.debug("=============================================================================");
                 log.debug("Searching old snapshot.");

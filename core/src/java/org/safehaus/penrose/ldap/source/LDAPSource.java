@@ -698,8 +698,11 @@ public class LDAPSource extends Source {
 
                     log.debug("Returning root entry.");
 
-                    SearchResult root = new SearchResult();
+                    SearchResult root = client.find(baseDn);
+
 /*
+                    SearchResult root = new SearchResult();
+
                     if (debug) log.debug("Naming contexts:");
                     Attribute namingContexts = new Attribute("namingContexts");
 

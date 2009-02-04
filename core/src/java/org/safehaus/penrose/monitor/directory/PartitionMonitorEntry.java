@@ -71,7 +71,7 @@ public class PartitionMonitorEntry extends Entry {
         attributes.addValue("cn", partition.getName());
 
         SearchResult result = new SearchResult(entryDn, attributes);
-        result.setEntryId(getId());
+        result.setEntryName(getName());
 
         return result;
     }

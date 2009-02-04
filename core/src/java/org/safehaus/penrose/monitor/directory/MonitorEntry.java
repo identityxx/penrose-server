@@ -260,7 +260,7 @@ public class MonitorEntry extends Entry {
         Attributes attributes = computeAttributes(interpreter);
 
         SearchResult result = new SearchResult(baseDn, attributes);
-        result.setEntryId(getId());
+        result.setEntryName(getName());
 
         return result;
     }

@@ -18,7 +18,7 @@ import java.util.Collection;
 /**
  * @author Endi Sukma Dewata
  */
-public class ActiveDirectorySchemaEntry extends SchemaEntry {
+public class ADSchemaEntry extends SchemaEntry {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Filter
@@ -42,7 +42,7 @@ public class ActiveDirectorySchemaEntry extends SchemaEntry {
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("ACTIVE DIRECTORY SCHEMA SEARCH", 80));
+            log.debug(TextUtil.displayLine("AD SCHEMA SEARCH", 80));
             log.debug(TextUtil.displayLine("Entry  : "+getDn(), 80));
             log.debug(TextUtil.displayLine("Base   : "+baseDn, 80));
             log.debug(TextUtil.displayLine("Filter : "+filter, 80));
@@ -99,7 +99,7 @@ public class ActiveDirectorySchemaEntry extends SchemaEntry {
         source.search(session, newRequest, newResponse);
 
         SearchResult result = new SearchResult(dn, attributes);
-        result.setEntryId(getId());
+        result.setEntryName(getName());
 
         response.add(result);
     }

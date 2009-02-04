@@ -208,6 +208,10 @@ public class PenroseClient implements PenroseServiceMBean {
         connection.setAttribute(objectName, attribute);
     }
 
+    public String getProductVendor() throws Exception {
+        return (String)getAttribute("ProductVendor");
+    }
+
     public String getProductName() throws Exception {
         return (String)getAttribute("ProductName");
     }

@@ -5,7 +5,19 @@
 
 <sources>
 
-  <source name="schema">
+  <source name="ad_schema">
+    <connection-name>Active Directory</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>cn=Schema,cn=Configuration,dc=AD,dc=Example,dc=com</param-value>
+    </parameter>
+    <parameter>
+      <param-name>newBaseDn</param-name>
+      <param-value>cn=AD Style,dc=AD Schema,dc=Example,dc=com</param-value>
+    </parameter>
+  </source>
+
+  <source name="ldap_schema">
     <connection-name>Active Directory</connection-name>
     <field name="lDAPDisplayName" primaryKey="true"/>
     <field name="objectClass"/>
@@ -20,15 +32,11 @@
     <field name="systemMayContain"/>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>cn=Schema,cn=Configuration,dc=Example,dc=com</param-value>
+      <param-value>cn=Schema,cn=Configuration,dc=AD,dc=Example,dc=com</param-value>
     </parameter>
     <parameter>
       <param-name>scope</param-name>
       <param-value>ONELEVEL</param-value>
-    </parameter>
-    <parameter>
-      <param-name>filter</param-name>
-      <param-value>(objectClass=*)</param-value>
     </parameter>
   </source>
 

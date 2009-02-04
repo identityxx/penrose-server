@@ -81,7 +81,7 @@ public class RuntimeMonitorEntry extends Entry {
         attributes.addValue("totalMemory", totalMemory);
 
         SearchResult result = new SearchResult(entryDn, attributes);
-        result.setEntryId(getId());
+        result.setEntryName(getName());
 
         operation.add(result);
     }

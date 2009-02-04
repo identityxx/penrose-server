@@ -288,28 +288,30 @@ public class ProxyEntry extends Entry {
 
     public Collection<Entry> findEntries(DN dn) throws Exception {
 
-        if (dn == null) return EMPTY_ENTRIES;
+        Collection<Entry> results = new ArrayList<Entry>();
+        if (dn == null) return results;
 
-        DN entryDn        = getDn();
+        DN entryDn = getDn();
         //if (debug) log.debug("Finding matching entries for \""+dn+"\" in \""+entryDn+"\".");
 
         int entryDnLength = entryDn.getSize();
         int dnLength      = dn.getSize();
 
-        if (dnLength == 0 && entryDnLength == 0) { // Root DSE
-            Collection<Entry> results = new ArrayList<Entry>();
-            results.add(this);
-            return results;
+        if (entryDnLength == 0) { // Root DSE
+            if (dnLength == 0) {
+                results.add(this);
+                return results;
+            } else {
+                return results;
+            }
         }
 
         if (!dn.endsWith(entryDn)) {
             //if (debug) log.debug("Doesn't match "+entryDn);
-            return EMPTY_ENTRIES;
+            return results;
         }
 
         if (debug) log.debug("Searching children of \""+entryDn+"\".");
-
-        Collection<Entry> results = new ArrayList<Entry>();
 
         if (dnLength > entryDnLength) { // children has priority
             for (Entry child : getChildren()) {
@@ -574,7 +576,7 @@ public class ProxyEntry extends Entry {
             SearchResponse newResponse = new SOPipeline(operation) {
                 public void add(SearchResult result) throws Exception {
                     SearchResult newResult = createSearchResult(interpreter, result);
-                    newResult.setEntryId(getId());
+                    newResult.setEntryName(getName());
                     super.add(newResult);
                 }
 

@@ -74,6 +74,6 @@ public class EntryService extends BaseService implements EntryServiceMBean {
 
     public String getParentId() throws Exception {
         DirectoryConfig directoryConfig = getDirectoryConfig();
-        return directoryConfig.getParentId(entryId);
+        return directoryConfig.getParentName(entryId);
     }
 }

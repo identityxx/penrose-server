@@ -33,6 +33,7 @@ public class SearchRequest extends Request implements Cloneable {
     public final static int SCOPE_BASE      = 0;
     public final static int SCOPE_ONE       = 1;
     public final static int SCOPE_SUB       = 2;
+    public final static int SCOPE_SUBORD    = 3;
 
     public final static int DEREF_NEVER     = 0;
     public final static int DEREF_SEARCHING = 1;

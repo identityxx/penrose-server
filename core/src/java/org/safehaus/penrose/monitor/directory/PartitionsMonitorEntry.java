@@ -103,7 +103,7 @@ public class PartitionsMonitorEntry extends Entry {
         attributes.addValue("cn", "Partitions");
 
         SearchResult result = new SearchResult(entryDn, attributes);
-        result.setEntryId(getId());
+        result.setEntryName(getName());
 
         return result;
     }

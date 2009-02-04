@@ -86,7 +86,7 @@ public class SchemaEntry extends Entry {
         }
 
         SearchResult result = new SearchResult(dn, attributes);
-        result.setEntryId(getId());
+        result.setEntryName(getName());
 
         operation.add(result);
     }

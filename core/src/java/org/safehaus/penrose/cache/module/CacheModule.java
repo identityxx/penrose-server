@@ -64,7 +64,7 @@ public class CacheModule extends Module implements CacheMBean {
             ModuleChain chain
     ) throws Exception {
 
-        String entryId = chain.getEntry().getId();
+        String entryId = chain.getEntry().getName();
 
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.setDn(request.getDn());
@@ -94,7 +94,7 @@ public class CacheModule extends Module implements CacheMBean {
             ModuleChain chain
     ) throws Exception {
 
-        String entryId = chain.getEntry().getId();
+        String entryId = chain.getEntry().getName();
 
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.setDn(request.getDn());
@@ -155,7 +155,7 @@ public class CacheModule extends Module implements CacheMBean {
             final ModuleChain chain
     ) throws Exception {
 
-        String entryId = chain.getEntry().getId();
+        String entryId = chain.getEntry().getName();
 
         final CacheKey key = new CacheKey();
         key.setBindDn(operation.getSession().getBindDn());

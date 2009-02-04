@@ -118,6 +118,9 @@ public class LDAP {
 
             case SearchRequest.SCOPE_SUB:
                 return "subtree";
+
+            case SearchRequest.SCOPE_SUBORD:
+                return "subordinate subtree";
         }
 
         return null;

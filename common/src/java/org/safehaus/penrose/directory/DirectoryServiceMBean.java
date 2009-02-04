@@ -15,10 +15,11 @@ public interface DirectoryServiceMBean {
 
     public DN getSuffix() throws Exception;
     public Collection<DN> getSuffixes() throws Exception;
-    public Collection<String> getRootEntryIds() throws Exception;
-    public Collection<String> getEntryIds() throws Exception;
+    public Collection<String> getRootEntryNames() throws Exception;
+    public Collection<String> getEntryNames() throws Exception;
+    public String getEntryName(DN dn) throws Exception;
 
     public String createEntry(EntryConfig entryConfig) throws Exception;
-    public void updateEntry(EntryConfig entryConfig) throws Exception;
-    public void removeEntry(String id) throws Exception;
+    public void updateEntry(String name, EntryConfig entryConfig) throws Exception;
+    public void removeEntry(String name) throws Exception;
 }

@@ -104,7 +104,7 @@ public class NISEntry extends DynamicEntry {
                 SearchResult newResult = new SearchResult();
                 newResult.setDn(dn);
                 newResult.setAttributes(attributes);
-                newResult.setEntryId(getId());
+                newResult.setEntryName(getName());
 
                 super.add(newResult);
             }

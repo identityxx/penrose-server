@@ -40,7 +40,7 @@ public class AbandonEntry extends Entry {
             attributes.addValue("sn", "user"+i);
 
             SearchResult result = new SearchResult(dn, attributes);
-            result.setEntryId(getId());
+            result.setEntryName(getName());
 
             operation.add(result);
 

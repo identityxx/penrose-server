@@ -170,7 +170,7 @@ public class LDAPMergeEntry extends DynamicEntry {
                     newResult.setDn(newDn);
                     newResult.setAttributes(newAttributes);
                     newResult.setSourceAttributes(sv);
-                    newResult.setEntryId(getId());
+                    newResult.setEntryName(getName());
 
                     log.debug("New entry:");
                     newResult.print();

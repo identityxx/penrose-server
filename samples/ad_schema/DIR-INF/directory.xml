@@ -5,18 +5,38 @@
 
 <directory>
 
-  <entry dn="cn=AD Schema,dc=Example,dc=com">
-    <entry-class>org.safehaus.penrose.activeDirectory.directory.ActiveDirectorySchemaEntry</entry-class>
+  <entry dn="dc=AD Schema,dc=Example,dc=com">
+    <oc>dcObject</oc>
+    <oc>organization</oc>
+    <at name="dc" rdn="true">
+      <constant>AD Schema</constant>
+    </at>
+    <at name="o">
+      <constant>AD Schema</constant>
+    </at>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
+  <entry dn="cn=AD Style,dc=AD Schema,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
+    <source>
+      <source-name>ad_schema</source-name>
+    </source>
+  </entry>
+
+  <entry dn="cn=LDAP Style,dc=AD Schema,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.activeDirectory.directory.ADSchemaEntry</entry-class>
     <oc>subentry</oc>
     <oc>subschema</oc>
     <oc>extensibleObject</oc>
     <at name="cn" rdn="true">
-      <constant>AD Schema</constant>
+      <constant>LDAP Style</constant>
     </at>
-    <source alias="schema"/>
-    <aci>
-      <permission>rs</permission>
-    </aci>
+    <source>
+      <source-name>ldap_schema</source-name>
+    </source>
   </entry>
 
 </directory>

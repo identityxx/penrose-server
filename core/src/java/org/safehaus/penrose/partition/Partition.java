@@ -454,7 +454,7 @@ public class Partition implements Cloneable {
     public void validatePermission(SearchOperation operation, SearchResult result) throws Exception {
 
         DN dn = result.getDn();
-        String entryId = result.getEntryId();
+        String entryId = result.getEntryName();
         Entry entry = directory.getEntry(entryId);
 
         int rc = aclEvaluator.checkRead(operation.getSession(), entry, dn);
@@ -1053,7 +1053,7 @@ public class Partition implements Cloneable {
         }
 
         for (final Entry entry : entries) {
-            if (debug) log.debug("Searching \""+entry.getDn()+"\".");
+            if (debug) log.debug("Searching \""+entry.getDn()+"\" ("+entry.getName()+").");
 
             if (op.isAbandoned()) {
                 if (debug) log.debug("Operation "+op.getOperationName()+" has been abandoned.");
