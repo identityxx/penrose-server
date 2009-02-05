@@ -98,8 +98,11 @@ public class PenroseServerConfigurator {
 
         String osName = System.getProperty("os.name");
         if ("Linux".equalsIgnoreCase(osName)) {
-            String user = "vduser";
-            String group = "vduser";
+
+            String owner[] = getOwner();
+
+            String user = owner[0];
+            String group = owner[1];
 
             out.print("User account ["+user+"]: ");
             out.flush();
@@ -119,7 +122,8 @@ public class PenroseServerConfigurator {
                 if (!"".equals(s)) group = s;
             }
 
-            setFileOwner(user, group);
+            setOwner(user, group);
+            setPermission();
         }
 
         PenroseConfigWriter penroseWriter = new PenroseConfigWriter();
@@ -226,13 +230,85 @@ public class PenroseServerConfigurator {
         app.run();
     }
 
-    public void setFileOwner(String user, String group) throws Exception {
-
-        String command = "/bin/chown -R "+user+"."+group+" \""+home.getAbsolutePath()+"\"";
-        out.println("Executing "+command);
+    public String[] getOwner() throws Exception {
 
         Runtime rt = Runtime.getRuntime();
-        final Process p = rt.exec(command);
+        final Process p = rt.exec(new String[] {
+                "/bin/ls",
+                "-ld",
+                home.getAbsolutePath()
+        });
+
+        new Thread() {
+            public void run() {
+                BufferedReader error = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                String line;
+                try {
+                    while ((line = error.readLine()) != null) err.println(line);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+
+        BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
+        String line = input.readLine();
+
+        String s[] = line.split(" *");
+
+        String owner[] = new String[2];
+        owner[0] = s[2];
+        owner[1] = s[3];
+
+        return owner;
+    }
+
+    public void setOwner(String user, String group) throws Exception {
+
+        Runtime rt = Runtime.getRuntime();
+        final Process p = rt.exec(new String[] {
+                "/bin/chown",
+                "-R",
+                user+"."+group,
+                home.getAbsolutePath()
+        });
+
+        new Thread() {
+            public void run() {
+                BufferedReader error = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                String line;
+                try {
+                    while ((line = error.readLine()) != null) err.println(line);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+
+        new Thread() {
+            public void run() {
+                BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                String line;
+                try {
+                    while ((line = input.readLine()) != null) out.println(line);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+
+        p.waitFor();
+    }
+
+    public void setPermission() throws Exception {
+
+        Runtime rt = Runtime.getRuntime();
+        final Process p = rt.exec(new String[] {
+                "/bin/chown",
+                "-R",
+                "o-rwx",
+                home.getAbsolutePath()
+        });
 
         new Thread() {
             public void run() {
