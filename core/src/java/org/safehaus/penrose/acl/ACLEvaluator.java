@@ -384,7 +384,7 @@ public class ACLEvaluator {
 
         DN bindDn = session.getBindDn();
 
-        String entryId = result.getEntryId();
+        String entryId = result.getEntryName();
         Entry entry = partition.getDirectory().getEntry(entryId);
 
         getReadableAttributes(bindDn, entry, dn, null, attributeNames, grants, denies);

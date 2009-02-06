@@ -67,12 +67,20 @@ public class DirectoryClient extends BaseClient implements DirectoryServiceMBean
         return (Collection<DN>)getAttribute("Suffixes");
     }
 
-    public Collection<String> getRootEntryIds() throws Exception {
-        return (Collection<String>)getAttribute("RootEntryIds");
+    public Collection<String> getRootEntryNames() throws Exception {
+        return (Collection<String>)getAttribute("RootEntryNames");
     }
 
-    public Collection<String> getEntryIds() throws Exception {
-        return (Collection<String>)getAttribute("EntryIds");
+    public Collection<String> getEntryNames() throws Exception {
+        return (Collection<String>)getAttribute("EntryNames");
+    }
+
+    public String getEntryName(DN dn) throws Exception {
+        return (String)invoke(
+                "getEntryName",
+                new Object[] { dn },
+                new String[] { DN.class.getName() }
+        );
     }
 
     public EntryClient getEntryClient(String entryId) throws Exception {
@@ -87,18 +95,18 @@ public class DirectoryClient extends BaseClient implements DirectoryServiceMBean
         );
     }
 
-    public void updateEntry(EntryConfig entryConfig) throws Exception {
+    public void updateEntry(String name, EntryConfig entryConfig) throws Exception {
         invoke(
                 "updateEntry",
-                new Object[] { entryConfig },
-                new String[] { EntryConfig.class.getName() }
+                new Object[] { name, entryConfig },
+                new String[] { String.class.getName(), EntryConfig.class.getName() }
         );
     }
 
-    public void removeEntry(String id) throws Exception {
+    public void removeEntry(String name) throws Exception {
         invoke(
                 "removeEntry",
-                new Object[] { id },
+                new Object[] { name },
                 new String[] { String.class.getName() }
         );
     }
@@ -119,7 +127,7 @@ public class DirectoryClient extends BaseClient implements DirectoryServiceMBean
         System.out.print(TextUtil.repeat("-", 10)+" ");
         System.out.println(TextUtil.repeat("-", 50));
 
-        for (String entryId : directoryClient.getEntryIds()) {
+        for (String entryId : directoryClient.getEntryNames()) {
 
             EntryClient entryClient = directoryClient.getEntryClient(entryId);
             DN dn = entryClient.getDn();
@@ -137,7 +145,7 @@ public class DirectoryClient extends BaseClient implements DirectoryServiceMBean
         EntryClient entryClient = directoryClient.getEntryClient(entryId);
         EntryConfig entryConfig = entryClient.getEntryConfig();
 
-        System.out.println("ID          : "+entryConfig.getName());
+        System.out.println("Name        : "+entryConfig.getName());
         System.out.println("DN          : "+entryConfig.getDn());
 
         String entryClass = entryConfig.getEntryClass();
@@ -147,11 +155,11 @@ public class DirectoryClient extends BaseClient implements DirectoryServiceMBean
         System.out.println("Description : "+(description == null ? "" : description));
         System.out.println();
 
-        String parentId = entryClient.getParentId();
-        System.out.println("Parent ID   : "+(parentId == null ? "" : parentId));
+        String parentName = entryClient.getParentName();
+        System.out.println("Parent Name : "+(parentName == null ? "" : parentName));
 
-        Collection<String> childIds = entryClient.getChildIds();
-        System.out.println("Child IDs   : "+childIds);
+        Collection<String> childNames = entryClient.getChildNames();
+        System.out.println("Child Names : "+childNames);
         System.out.println();
 
         System.out.println("Parameters  :");

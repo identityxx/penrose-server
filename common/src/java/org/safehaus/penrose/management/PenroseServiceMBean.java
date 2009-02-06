@@ -25,6 +25,7 @@ import java.util.*;
 
 public interface PenroseServiceMBean {
 
+    public String getProductVendor() throws Exception;
     public String getProductName() throws Exception;
     public String getProductVersion() throws Exception;
 

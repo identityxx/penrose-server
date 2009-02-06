@@ -80,7 +80,7 @@ public class RootEntry extends Entry {
         Attributes attributes = computeAttributes(interpreter);
 
         SearchResult result = new SearchResult(dn, attributes);
-        result.setEntryId(getId());
+        result.setEntryName(getName());
 
         operation.add(result);
     }

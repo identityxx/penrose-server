@@ -141,18 +141,20 @@ public class Penrose {
 
     public PenroseConfig loadConfig(File dir) throws Exception {
 
-        File path = new File(dir, "conf"+File.separator+"server.xml");
+        File conf = new File(dir, "conf");
+        File serverXml = new File(conf, "server.xml");
 
         PenroseConfigReader reader = new PenroseConfigReader();
-        return reader.read(path);
+        return reader.read(serverXml);
     }
 
     public void store() throws Exception {
 
         File conf = new File(home, "conf");
+        File serverXml = new File(conf, "server.xml");
 
         PenroseConfigWriter writer = new PenroseConfigWriter();
-        writer.write(conf, penroseConfig);
+        writer.write(serverXml, penroseConfig);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

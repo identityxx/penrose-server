@@ -18,18 +18,18 @@ public class EntryService extends BaseService implements EntryServiceMBean {
 
     private PartitionManager partitionManager;
     private String partitionName;
-    private String entryId;
+    private String entryName;
     
-    public EntryService(PenroseJMXService jmxService, PartitionManager partitionManager, String partitionName, String entryId) throws Exception {
+    public EntryService(PenroseJMXService jmxService, PartitionManager partitionManager, String partitionName, String entryName) throws Exception {
 
         this.jmxService = jmxService;
         this.partitionManager = partitionManager;
         this.partitionName = partitionName;
-        this.entryId = entryId;
+        this.entryName = entryName;
     }
 
     public String getObjectName() {
-        return EntryClient.getStringObjectName(partitionName, entryId);
+        return EntryClient.getStringObjectName(partitionName, entryName);
     }
 
     public Object getObject() {
@@ -37,13 +37,13 @@ public class EntryService extends BaseService implements EntryServiceMBean {
     }
 
     public EntryConfig getEntryConfig() {
-        return getDirectoryConfig().getEntryConfig(entryId);
+        return getDirectoryConfig().getEntryConfig(entryName);
     }
 
     public Entry getEntry() {
         Directory directory = getDirectory();
         if (directory == null) return null;
-        return directory.getEntry(entryId);
+        return directory.getEntry(entryName);
     }
 
     public DirectoryConfig getDirectoryConfig() {
@@ -63,17 +63,17 @@ public class EntryService extends BaseService implements EntryServiceMBean {
         return entryConfig.getDn();
     }
     
-    public Collection<String> getChildIds() throws Exception {
+    public Collection<String> getChildNames() throws Exception {
         Collection<String> list = new ArrayList<String>();
         DirectoryConfig directoryConfig = getDirectoryConfig();
-        for (EntryConfig childConfig : directoryConfig.getChildren(entryId)) {
+        for (EntryConfig childConfig : directoryConfig.getChildren(entryName)) {
             list.add(childConfig.getName());
         }
         return list;
     }
 
-    public String getParentId() throws Exception {
+    public String getParentName() throws Exception {
         DirectoryConfig directoryConfig = getDirectoryConfig();
-        return directoryConfig.getParentId(entryId);
+        return directoryConfig.getParentName(entryName);
     }
 }

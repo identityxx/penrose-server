@@ -35,6 +35,8 @@ public class Directory implements Cloneable {
 
     public void init() throws Exception {
 
+        if (debug) log.debug("Root entries: "+directoryConfig.getRootNames());
+
         for (EntryConfig entryConfig : directoryConfig.getEntryConfigs()) {
             if (!entryConfig.isEnabled()) continue;
 
@@ -47,7 +49,7 @@ public class Directory implements Cloneable {
     }
 
     public void destroy() throws Exception {
-        for (String id : getRootIds()) {
+        for (String id : getRootNames()) {
             try {
                 destroy(id);
             } catch (Exception e) {
@@ -66,7 +68,7 @@ public class Directory implements Cloneable {
 
         for (Entry child : children) {
             if (child.getPartition() != partition) continue;
-            destroy(child.getId());
+            destroy(child.getName());
         }
 
         entry.destroy();
@@ -100,7 +102,7 @@ public class Directory implements Cloneable {
     }
 
     public void addEntry(Entry entry) throws Exception {
-        entries.put(entry.getId(), entry);
+        entries.put(entry.getName(), entry);
     }
 
     public Entry removeEntry(String id) throws Exception {
@@ -129,11 +131,11 @@ public class Directory implements Cloneable {
 
         if (debug) log.debug("Searching parent of \""+entryConfig.getDn()+"\".");
 
-        String parentId = entryConfig.getParentName();
+        String parentName = entryConfig.getParentName();
 
-        if (parentId != null) {
-            if (debug) log.debug("Searching parent ID: "+parentId);
-            Entry parent = getEntry(parentId);
+        if (parentName != null) {
+            if (debug) log.debug("Searching parent: "+parentName);
+            Entry parent = getEntry(parentName);
 
             if (parent != null) {
                 if (debug) log.debug("Found parent \""+parent.getDn()+"\".");
@@ -200,13 +202,13 @@ public class Directory implements Cloneable {
         return results;
     }
     
-    public Collection<Entry> getEntries(Collection<String> ids) {
+    public Collection<Entry> getEntries(Collection<String> names) {
 
-        if (ids == null) return EMPTY_ENTRIES;
+        if (names == null) return EMPTY_ENTRIES;
 
         Collection<Entry> results = new ArrayList<Entry>();
-        for (String id : ids) {
-            Entry entry = entries.get(id);
+        for (String name : names) {
+            Entry entry = entries.get(name);
             results.add(entry);
         }
         return results;
@@ -216,7 +218,7 @@ public class Directory implements Cloneable {
 
         if (dn == null) return EMPTY_ENTRIES;
 
-        Collection<String> ids = directoryConfig.getEntryIdsByDn(dn);
+        Collection<String> ids = directoryConfig.getEntryNamesByDn(dn);
         return getEntries(ids);
     }
 
@@ -226,10 +228,14 @@ public class Directory implements Cloneable {
 
         Collection<Entry> results = new ArrayList<Entry>();
 
-        for (String id : getRootIds()) {
-            Entry entry = entries.get(id);
+        for (Entry entry : getRootEntries()) {
+            if (debug) log.debug(" - Suffix: "+entry.getDn());
+
             Collection<Entry> list = entry.findEntries(dn);
-            results.addAll(list);
+            for (Entry e : list) {
+                if (debug) log.debug("   - Found "+e.getName()+": "+e.getDn());
+                results.add(e);
+            }
         }
 
         return results;
@@ -314,20 +320,20 @@ public class Directory implements Cloneable {
         return partition;
     }
 
-    public String getRootId() {
-        return directoryConfig.getRootId();
+    public String getRootName() {
+        return directoryConfig.getRootName();
     }
 
-    public Collection<String> getRootIds() {
-        return directoryConfig.getRootIds();
+    public Collection<String> getRootNames() {
+        return directoryConfig.getRootNames();
     }
 
     public Entry getRootEntry() {
-        return getEntry(getRootId());
+        return getEntry(getRootName());
     }
 
     public Collection<Entry> getRootEntries() {
-        return getEntries(getRootIds());
+        return getEntries(getRootNames());
     }
 
     public DN getSuffix() {
@@ -338,8 +344,8 @@ public class Directory implements Cloneable {
         return directoryConfig.getSuffixes();
     }
 
-    public Collection<Entry> getEntriesBySourceName(String sourceName) {
-        Collection<String> ids = directoryConfig.getEntryIdsBySource(sourceName);
+    public Collection<Entry> getEntriesBySourceName(String sourceName) throws Exception {
+        Collection<String> ids = directoryConfig.getEntryNamesBySource(sourceName);
         return getEntries(ids);
     }
 }

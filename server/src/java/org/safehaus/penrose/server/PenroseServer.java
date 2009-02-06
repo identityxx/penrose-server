@@ -345,6 +345,10 @@ public class PenroseServer {
         return serviceConfigManager;
     }
 
+    public String getProductVendor() {
+        return VENDOR_NAME;
+    }
+
     public String getProductName() {
         return PRODUCT_NAME;
     }

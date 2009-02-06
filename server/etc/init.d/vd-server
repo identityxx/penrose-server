@@ -12,28 +12,31 @@
 
 # Source networking configuration and check that networking is up.
 if [ -r /etc/sysconfig/network ] ; then
-	. /etc/sysconfig/network
-	[ ${NETWORKING} = "no" ] && exit 0
+    . /etc/sysconfig/network
+    [ ${NETWORKING} = "no" ] && exit 0
 fi
 
 # Source an auxiliary options file if we have one.
-if [ -r /etc/sysconfig/vd-server ] ; then
-	. /etc/sysconfig/vd-server
+if [ -f "/etc/vd.conf" ] ; then
+    . /etc/vd.conf
 fi
 
 VD_SERVER_HOME=/opt/${product.name}-${product.version}
 VD_SERVER_SCRIPT=$VD_SERVER_HOME/bin/vd-server.sh
 
-VD_SERVER_PROG=vd-server
-VD_SERVER_USER=root
-
 [ -x $VD_SERVER_SCRIPT ] || exit 0
+
+if [ -z "VD_USER" ] ; then
+    VD_USER=root
+fi
+
+VD_SERVER_PROG=vd-server
 
 RETVAL=0
 
 function start() {
     echo -n $"Starting $VD_SERVER_PROG: "
-    daemon --user $VD_SERVER_USER $VD_SERVER_SCRIPT start
+    daemon --user $VD_USER $VD_SERVER_SCRIPT start
     RETVAL=$?
     echo
     [ $RETVAL -eq 0 ] && touch /var/lock/subsys/vd-server
@@ -42,7 +45,7 @@ function start() {
 
 function stop() {
     echo -n $"Stopping $VD_SERVER_PROG: "
-    daemon --user $VD_SERVER_USER $VD_SERVER_SCRIPT stop
+    daemon --user $VD_USER $VD_SERVER_SCRIPT stop
     RETVAL=$?
     echo
     [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/vd-server /var/run/vd-server.args
@@ -50,7 +53,7 @@ function stop() {
 }
 
 function status() {
-    su $VD_SERVER_USER -c "$VD_SERVER_SCRIPT status"
+    su $VD_USER -c "$VD_SERVER_SCRIPT status"
     RETVAL=$?
     return $RETVAL
 }
@@ -64,24 +67,24 @@ case "$1" in
         ;;
     status)
         status
-	;;
+        ;;
     restart)
-	stop
-	start
-	;;
+        stop
+        start
+        ;;
     reload)
-    	killproc $VD_SERVER_PROG -HUP
-	RETVAL=$?
-	;;
+        killproc $VD_SERVER_PROG -HUP
+        RETVAL=$?
+        ;;
     condrestart)
         if [ -f /var/lock/subsys/vd-server ] ; then
             stop
             start
         fi
-	;;
+        ;;
     *)
-	echo $"Usage: $0 {start|stop|restart|status|condrestart}"
-	RETVAL=1
+        echo $"Usage: $0 {start|stop|restart|status|condrestart}"
+        RETVAL=1
 esac
 
 exit $RETVAL

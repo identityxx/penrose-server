@@ -225,13 +225,12 @@ public class Entry implements Cloneable {
         return new EntrySource(this, sourceConfig, source);
     }
 
-    public String getId() {
+    public String getName() {
         return entryConfig.getName();
     }
 
-    public String getParentId() {
-
-        return parent == null ? null : parent.getId();
+    public String getParentName() {
+        return parent == null ? null : parent.getName();
     }
 
     public DN getDn() {
@@ -590,11 +589,11 @@ public class Entry implements Cloneable {
         DN dn = request.getDn();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("ADD", 80));
-            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("ADD", 70));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         String addScript = entryConfig.getAddScript();
@@ -622,11 +621,11 @@ public class Entry implements Cloneable {
         DN dn = request.getDn();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("BIND", 80));
-            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("BIND", 70));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         if (debug) log.debug("Searching for "+dn+".");
@@ -665,11 +664,11 @@ public class Entry implements Cloneable {
         DN dn = request.getDn();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("COMPARE", 80));
-            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("COMPARE", 70));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         validatePermission(session, request);
@@ -721,11 +720,11 @@ public class Entry implements Cloneable {
         DN dn = request.getDn();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("DELETE", 80));
-            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("DELETE", 70));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         validatePermission(session, request);
@@ -769,7 +768,7 @@ public class Entry implements Cloneable {
         if (dn == null) return EMPTY_ENTRIES;
 
         DN entryDn        = getDn();
-        if (debug) log.debug("Checking \""+entryDn+"\".");
+        //if (debug) log.debug("Checking \""+entryDn+"\".");
 
         int dnLength      = dn.getSize();
         int entryDnLength = entryDn.getSize();
@@ -799,7 +798,7 @@ public class Entry implements Cloneable {
 
         results.add(this);
         
-        if (debug) log.debug("Found entry \""+entryDn+"\".");
+        //if (debug) log.debug("Found entry \""+entryDn+"\".");
 
         return results;
     }
@@ -895,11 +894,11 @@ public class Entry implements Cloneable {
         DN dn = request.getDn();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("MODIFY", 80));
-            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("MODIFY", 70));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         validatePermission(session, request);
@@ -921,11 +920,11 @@ public class Entry implements Cloneable {
         DN dn = request.getDn();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("MODRDN", 80));
-            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("MODRDN", 70));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         validatePermission(session, request);
@@ -947,13 +946,13 @@ public class Entry implements Cloneable {
         int scope     = operation.getScope();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("SEARCH", 80));
-            log.debug(TextUtil.displayLine("Entry  : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("Base   : "+baseDn, 80));
-            log.debug(TextUtil.displayLine("Filter : "+filter, 80));
-            log.debug(TextUtil.displayLine("Scope  : "+ LDAP.getScope(scope), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("SEARCH", 70));
+            log.debug(TextUtil.displayLine("Entry  : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("Base   : "+baseDn, 70));
+            log.debug(TextUtil.displayLine("Filter : "+filter, 70));
+            log.debug(TextUtil.displayLine("Scope  : "+ LDAP.getScope(scope), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         EntrySearchOperation op = new EntrySearchOperation(operation, this);
@@ -1022,7 +1021,7 @@ public class Entry implements Cloneable {
         Attributes attributes = computeAttributes(interpreter);
 
         SearchResult result = new SearchResult(dn, attributes);
-        result.setEntryId(getId());
+        result.setEntryName(getName());
 
         operation.add(result);
     }
@@ -1040,11 +1039,11 @@ public class Entry implements Cloneable {
         DN dn = session.getBindDn();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("UNBIND", 80));
-            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("UNBIND", 70));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
     }
 
@@ -1057,7 +1056,7 @@ public class Entry implements Cloneable {
         Attributes attributes = computeAttributes(interpreter);
 
         SearchResult result = new SearchResult(dn, attributes);
-        result.setEntryId(entryConfig.getName());
+        result.setEntryName(entryConfig.getName());
         result.setSourceAttributes(sourceAttributes);
 
         return result;

@@ -75,21 +75,27 @@ public class SchemaManager {
     public void loadSchemas() throws Exception {
 
         log.debug("Built-in schema files:");
-        for (File schemaFile : getSchemaFiles(schemaDir)) {
-            log.debug(" - "+schemaFile);
+        File[] list = getSchemaFiles(schemaDir);
+        if (list != null) {
+            for (File schemaFile : list) {
+                log.debug(" - "+schemaFile);
 
-            Schema schema = loadSchema(schemaFile);
-            addSchema(schema);
-            builtInSchemas.put(schema.getName(), schema);
+                Schema schema = loadSchema(schemaFile);
+                addSchema(schema);
+                builtInSchemas.put(schema.getName(), schema);
+            }
         }
 
         log.debug("Custom schema files:");
-        for (File schemaFile : getSchemaFiles(extDir)) {
-            log.debug(" - "+schemaFile);
+        list = getSchemaFiles(extDir);
+        if (list != null) {
+            for (File schemaFile : list) {
+                log.debug(" - "+schemaFile);
 
-            Schema schema = loadSchema(schemaFile);
-            addSchema(schema);
-            customSchemas.put(schema.getName(), schema);
+                Schema schema = loadSchema(schemaFile);
+                addSchema(schema);
+                customSchemas.put(schema.getName(), schema);
+            }
         }
     }
 

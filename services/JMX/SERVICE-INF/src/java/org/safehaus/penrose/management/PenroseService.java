@@ -109,6 +109,10 @@ public class PenroseService extends StandardMBean implements PenroseServiceMBean
         penroseServer = new PenroseServer(home);
     }
 
+    public String getProductVendor() {
+        return penroseServer.getProductVendor();
+    }
+
     public String getProductName() {
         return penroseServer.getProductName();
     }

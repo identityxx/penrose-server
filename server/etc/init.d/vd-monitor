@@ -12,28 +12,31 @@
 
 # Source networking configuration and check that networking is up.
 if [ -r /etc/sysconfig/network ] ; then
-	. /etc/sysconfig/network
-	[ ${NETWORKING} = "no" ] && exit 0
+    . /etc/sysconfig/network
+    [ ${NETWORKING} = "no" ] && exit 0
 fi
 
 # Source an auxiliary options file if we have one.
-if [ -r /etc/sysconfig/vd-monitor ] ; then
-	. /etc/sysconfig/vd-monitor
+if [ -f "/etc/vd.conf" ] ; then
+    . /etc/vd.conf
 fi
 
 VD_SERVER_HOME=/opt/${product.name}-${product.version}
 VD_MONITOR_SCRIPT=$VD_SERVER_HOME/bin/vd-monitor.sh
 
-VD_MONITOR_PROG=vd-monitor
-VD_MONITOR_USER=root
-
 [ -x $VD_MONITOR_SCRIPT ] || exit 0
+
+if [ -z "VD_USER" ] ; then
+    VD_USER=root
+fi
+
+VD_MONITOR_PROG=vd-monitor
 
 RETVAL=0
 
 function start() {
     echo -n $"Starting $VD_MONITOR_PROG: "
-    daemon --user $VD_MONITOR_USER $VD_MONITOR_SCRIPT start
+    daemon --user $VD_USER $VD_MONITOR_SCRIPT start
     RETVAL=$?
     echo
     [ $RETVAL -eq 0 ] && touch /var/lock/subsys/vd-monitor
@@ -42,7 +45,7 @@ function start() {
 
 function stop() {
     echo -n $"Stopping $VD_MONITOR_PROG: "
-    daemon --user $VD_MONITOR_USER $VD_MONITOR_SCRIPT stop
+    daemon --user $VD_USER $VD_MONITOR_SCRIPT stop
     RETVAL=$?
     echo
     [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/vd-monitor /var/run/vd-monitor.args
@@ -50,7 +53,7 @@ function stop() {
 }
 
 function status() {
-    su $VD_MONITOR_USER -c "$VD_MONITOR_SCRIPT status"
+    su $VD_USER -c "$VD_MONITOR_SCRIPT status"
     RETVAL=$?
     return $RETVAL
 }
@@ -64,24 +67,24 @@ case "$1" in
         ;;
     status)
         status
-	;;
+        ;;
     restart)
-	stop
-	start
-	;;
+        stop
+        start
+        ;;
     reload)
-    	killproc $VD_MONITOR_PROG -HUP
-	RETVAL=$?
-	;;
+        killproc $VD_MONITOR_PROG -HUP
+        RETVAL=$?
+        ;;
     condrestart)
         if [ -f /var/lock/subsys/vd-monitor ] ; then
             stop
             start
         fi
-	;;
+        ;;
     *)
-	echo $"Usage: $0 {start|stop|restart|status|condrestart}"
-	RETVAL=1
+        echo $"Usage: $0 {start|stop|restart|status|condrestart}"
+        RETVAL=1
 esac
 
 exit $RETVAL

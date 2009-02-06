@@ -119,7 +119,7 @@ if [ "$1" = "start" ] ; then
     shift
     exec "$JAVACMD" $VD_SERVER_OPTS \
     -Dcom.sun.management.jmxremote \
-    -Djava.ext.dirs="$LOCALLIBPATH%" \
+    -Djava.ext.dirs="$LOCALLIBPATH" \
     -Djava.library.path="$LOCALLIBPATH" \
     -Dpenrose.home="$VD_SERVER_HOME" \
     org.safehaus.penrose.server.PenroseServer "$@" 2>&1 &

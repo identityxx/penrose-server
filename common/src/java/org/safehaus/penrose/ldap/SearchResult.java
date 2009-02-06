@@ -15,7 +15,7 @@ public class SearchResult implements Serializable, Cloneable {
 
     private DN dn;
     private Attributes attributes;
-    private String entryId;
+    private String entryName;
 
     private SourceAttributes sourceAttributes = new SourceAttributes();
 
@@ -123,12 +123,12 @@ public class SearchResult implements Serializable, Cloneable {
         this.controls = controls;
     }
 
-    public String getEntryId() {
-        return entryId;
+    public String getEntryName() {
+        return entryName;
     }
 
-    public void setEntryId(String entryId) {
-        this.entryId = entryId;
+    public void setEntryName(String entryName) {
+        this.entryName = entryName;
     }
 
     public SourceAttributes getSourceAttributes() {
@@ -184,7 +184,7 @@ public class SearchResult implements Serializable, Cloneable {
     public Object clone() throws CloneNotSupportedException {
         SearchResult sr = (SearchResult)super.clone();
 
-        sr.entryId = entryId;
+        sr.entryName = entryName;
         sr.dn = dn;
         sr.attributes = (Attributes)attributes.clone();
         sr.sourceAttributes = (SourceAttributes) sourceAttributes.clone();

@@ -31,12 +31,12 @@ public class EntryClient extends BaseClient implements EntryServiceMBean {
         return (EntryConfig)getAttribute("EntryConfig");
     }
 
-    public String getParentId() throws Exception {
-        return (String)getAttribute("ParentId");
+    public String getParentName() throws Exception {
+        return (String)getAttribute("ParentName");
     }
 
-    public Collection<String> getChildIds() throws Exception {
-        return (Collection<String>)getAttribute("ChildIds");
+    public Collection<String> getChildNames() throws Exception {
+        return (Collection<String>)getAttribute("ChildNames");
     }
 
     public static String getStringObjectName(String partitionName, String entryName) {

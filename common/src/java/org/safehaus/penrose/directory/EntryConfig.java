@@ -72,7 +72,8 @@ public class EntryConfig implements Serializable, Cloneable {
     public Map<String,EntrySearchConfig> searchConfigs = new LinkedHashMap<String,EntrySearchConfig>();
 
     public EntryConfig() {
-	}
+        dn = new DN();
+    }
 
     public EntryConfig(String dn) {
         this.dn = new DN(dn);
@@ -165,6 +166,14 @@ public class EntryConfig implements Serializable, Cloneable {
 
     public Collection<EntrySourceConfig> getSourceConfigs() {
         return sourceConfigs;
+    }
+
+    public Collection<String> getSourceNames() {
+        Collection<String> list = new ArrayList<String>();
+        for (EntrySourceConfig sourceConfig : sourceConfigs) {
+            list.add(sourceConfig.getSourceName());
+        }
+        return list;
     }
 
     public Collection<String> getObjectClasses() {
@@ -413,6 +422,10 @@ public class EntryConfig implements Serializable, Cloneable {
 
     public void removeParameter(String name) {
         parameters.remove(name);
+    }
+
+    public void removeParameters() {
+        parameters.clear();
     }
 
     public Collection<String> getParameterNames() {

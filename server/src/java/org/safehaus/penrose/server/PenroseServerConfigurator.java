@@ -27,6 +27,7 @@ public class PenroseServerConfigurator {
 
     BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
     PrintWriter out = new PrintWriter(System.out, true);
+    PrintWriter err = new PrintWriter(System.err, true);
 
     PenroseConfigReader penroseReader = new PenroseConfigReader();
     ServiceReader serviceReader = new ServiceReader();
@@ -94,6 +95,36 @@ public class PenroseServerConfigurator {
         }
 
         penroseConfig.setRootPassword(rootPassword);
+
+        String osName = System.getProperty("os.name");
+        if ("Linux".equalsIgnoreCase(osName)) {
+
+            String owner[] = getOwner();
+
+            String user = owner[0];
+            String group = owner[1];
+
+            out.print("User account ["+user+"]: ");
+            out.flush();
+
+            s = in.readLine();
+            if (s != null) {
+                s = s.trim();
+                if (!"".equals(s)) user = s;
+            }
+
+            out.print("Group account ["+group+"]: ");
+            out.flush();
+
+            s = in.readLine();
+            if (s != null) {
+                s = s.trim();
+                if (!"".equals(s)) group = s;
+            }
+
+            setOwner(user, group);
+            setPermission();
+        }
 
         PenroseConfigWriter penroseWriter = new PenroseConfigWriter();
         penroseWriter.write(serverXml, penroseConfig);
@@ -197,6 +228,113 @@ public class PenroseServerConfigurator {
 
         PenroseServerConfigurator app = new PenroseServerConfigurator(home);
         app.run();
+    }
+
+    public String[] getOwner() throws Exception {
+
+        Runtime rt = Runtime.getRuntime();
+        final Process p = rt.exec(new String[] {
+                "/bin/ls",
+                "-ld",
+                home.getAbsolutePath()
+        });
+
+        new Thread() {
+            public void run() {
+                BufferedReader error = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                String line;
+                try {
+                    while ((line = error.readLine()) != null) err.println(line);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+
+        BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
+        String line = input.readLine();
+
+        String s[] = line.split(" +");
+
+        String owner[] = new String[2];
+        owner[0] = s[2];
+        owner[1] = s[3];
+
+        return owner;
+    }
+
+    public void setOwner(String user, String group) throws Exception {
+
+        Runtime rt = Runtime.getRuntime();
+        final Process p = rt.exec(new String[] {
+                "/bin/chown",
+                "-R",
+                user+"."+group,
+                home.getAbsolutePath()
+        });
+
+        new Thread() {
+            public void run() {
+                BufferedReader error = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                String line;
+                try {
+                    while ((line = error.readLine()) != null) err.println(line);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+
+        new Thread() {
+            public void run() {
+                BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                String line;
+                try {
+                    while ((line = input.readLine()) != null) out.println(line);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+
+        p.waitFor();
+    }
+
+    public void setPermission() throws Exception {
+
+        Runtime rt = Runtime.getRuntime();
+        final Process p = rt.exec(new String[] {
+                "/bin/chmod",
+                "-R",
+                "o-rwx",
+                home.getAbsolutePath()
+        });
+
+        new Thread() {
+            public void run() {
+                BufferedReader error = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                String line;
+                try {
+                    while ((line = error.readLine()) != null) err.println(line);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+
+        new Thread() {
+            public void run() {
+                BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                String line;
+                try {
+                    while ((line = input.readLine()) != null) out.println(line);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+
+        p.waitFor();
     }
 
     public PenroseConfig getPenroseConfig() {
