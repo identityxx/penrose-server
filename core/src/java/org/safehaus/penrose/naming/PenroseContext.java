@@ -6,6 +6,7 @@ import org.safehaus.penrose.logger.LoggerManager;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.PartitionValidator;
 import org.safehaus.penrose.schema.SchemaManager;
+import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.session.SessionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,7 +94,7 @@ public class PenroseContext {
         schemaManager.loadSchemas();
 
         filterEvaluator = new FilterEvaluator();
-        filterEvaluator.setSchemaManager(schemaManager);
+        filterEvaluator.setSchema(schemaManager.getSchema());
 
         PartitionValidator partitionValidator = new PartitionValidator();
         partitionValidator.setPenroseConfig(penroseConfig);

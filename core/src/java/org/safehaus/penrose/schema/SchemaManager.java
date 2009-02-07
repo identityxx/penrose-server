@@ -55,7 +55,7 @@ public class SchemaManager {
     private Map<String,Schema> builtInSchemas = new TreeMap<String,Schema>();
     private Map<String,Schema> customSchemas = new TreeMap<String,Schema>();
 
-    private Schema mergedSchema = new Schema("merged");
+    private Schema schema = new Schema("DEFAULT");
 
     public SchemaManager(File home) throws Exception {
         this.home      = home;
@@ -105,7 +105,7 @@ public class SchemaManager {
 
     public void addSchema(Schema schema) {
         schemas.put(schema.getName(), schema);
-        mergedSchema.add(schema);
+        this.schema.add(schema);
     }
 
     public void createSchema(Schema schema) throws Exception {
@@ -144,9 +144,9 @@ public class SchemaManager {
         File newFile = new File(extDir, schema.getName()+".schema");
         writer.write(newFile, schema);
 
-        mergedSchema.clear();
+        this.schema.clear();
         for (Schema s : schemas.values()) {
-            mergedSchema.add(s);
+            this.schema.add(s);
         }
     }
 
@@ -159,9 +159,9 @@ public class SchemaManager {
         builtInSchemas.remove(schemaName);
         customSchemas.remove(schemaName);
 
-        mergedSchema.clear();
+        schema.clear();
         for (Schema s : schemas.values()) {
-            mergedSchema.add(s);
+            schema.add(s);
         }
     }
 
@@ -169,7 +169,7 @@ public class SchemaManager {
         schemas.clear();
         builtInSchemas.clear();
         customSchemas.clear();
-        mergedSchema.clear();
+        schema.clear();
     }
 
     public Collection<String> getSchemaNames() {
@@ -188,28 +188,28 @@ public class SchemaManager {
         return schemas.get(name);
     }
 
-    public Schema getMergedSchema() {
-        return mergedSchema;
+    public Schema getSchema() {
+        return schema;
     }
 
     public Collection<ObjectClass> getObjectClasses() {
-        return mergedSchema.getObjectClasses();
+        return schema.getObjectClasses();
     }
 
     public Collection<String> getObjectClassNames() {
-        return mergedSchema.getObjectClassNames();
+        return schema.getObjectClassNames();
     }
 
     public ObjectClass getObjectClass(String ocName) {
-        return mergedSchema.getObjectClass(ocName);
+        return schema.getObjectClass(ocName);
     }
 
     public Collection<ObjectClass> getAllObjectClasses(String ocName) {
-        return mergedSchema.getAllObjectClasses(ocName);
+        return schema.getAllObjectClasses(ocName);
     }
     
     public Collection<String> getAllObjectClassNames(String ocName) {
-        return mergedSchema.getAllObjectClassNames(ocName);
+        return schema.getAllObjectClassNames(ocName);
     }
 
     public Collection<ObjectClass> getObjectClasses(Entry entry) {
@@ -217,19 +217,19 @@ public class SchemaManager {
     }
 
     public Collection<ObjectClass> getObjectClasses(EntryConfig entryConfig) {
-        return mergedSchema.getObjectClasses(entryConfig);
+        return schema.getObjectClasses(entryConfig);
     }
 
     public Collection<AttributeType> getAttributeTypes() {
-        return mergedSchema.getAttributeTypes();
+        return schema.getAttributeTypes();
     }
 
     public Collection<String> getAttributeTypeNames() {
-        return mergedSchema.getAttributeTypeNames();
+        return schema.getAttributeTypeNames();
     }
 
     public AttributeType getAttributeType(String attributeName) {
-        return mergedSchema.getAttributeType(attributeName);
+        return schema.getAttributeType(attributeName);
     }
 
     public String normalizeAttributeName(String attributeName) {
