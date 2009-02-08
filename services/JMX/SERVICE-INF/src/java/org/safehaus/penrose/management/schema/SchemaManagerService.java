@@ -107,7 +107,7 @@ public class SchemaManagerService extends BaseService implements SchemaManagerSe
     }
 
     public Schema getMergedSchema() throws Exception {
-        return schemaManager.getMergedSchema();
+        return schemaManager.getSchema();
     }
 
     public SchemaService getSchemaService(String schemaName) throws Exception {

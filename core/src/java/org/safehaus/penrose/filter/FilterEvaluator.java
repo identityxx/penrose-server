@@ -1,12 +1,10 @@
 package org.safehaus.penrose.filter;
 
-import org.safehaus.penrose.directory.EntryAttributeConfig;
-import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.schema.AttributeType;
-import org.safehaus.penrose.schema.SchemaManager;
+import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.schema.matchingRule.OrderingMatchingRule;
 import org.safehaus.penrose.schema.matchingRule.SubstringsMatchingRule;
@@ -23,7 +21,7 @@ public class FilterEvaluator {
     public Logger log = LoggerFactory.getLogger(getClass());
     boolean debug = log.isDebugEnabled();
 
-    public SchemaManager schemaManager;
+    public Schema schema;
 
     public FilterEvaluator() throws Exception {
     }
@@ -68,7 +66,7 @@ public class FilterEvaluator {
 
         Collection<Object> set = attribute.getValues();
 
-        AttributeType attributeType = schemaManager.getAttributeType(attributeName);
+        AttributeType attributeType = schema == null ? null : schema.getAttributeType(attributeName);
 
         String substring = attributeType == null ? null : attributeType.getSubstring();
         SubstringsMatchingRule substringsMatchingRule = SubstringsMatchingRule.getInstance(substring);
@@ -106,7 +104,7 @@ public class FilterEvaluator {
         }
 
         Collection<Object> set = attribute.getValues();
-        AttributeType attributeType = schemaManager.getAttributeType(attributeName);
+        AttributeType attributeType = schema == null ? null : schema.getAttributeType(attributeName);
 
         if ("=".equals(operator)) {
             String equality = attributeType == null ? null : attributeType.getEquality();
@@ -250,11 +248,11 @@ public class FilterEvaluator {
         return result;
     }
 
-    public SchemaManager getSchemaManager() {
-        return schemaManager;
+    public Schema getSchema() {
+        return schema;
     }
 
-    public void setSchemaManager(SchemaManager schemaManager) {
-        this.schemaManager = schemaManager;
+    public void setSchema(Schema schema) {
+        this.schema = schema;
     }
 }
