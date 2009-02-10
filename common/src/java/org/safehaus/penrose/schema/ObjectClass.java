@@ -125,6 +125,8 @@ public class ObjectClass implements Serializable, Cloneable, Comparable {
     }
 
     public void setSuperClasses(Collection<String> superClasses) {
+        if (this.superClasses == superClasses) return;
+        this.superClasses.clear();
         this.superClasses.addAll(superClasses);
     }
 
@@ -157,7 +159,7 @@ public class ObjectClass implements Serializable, Cloneable, Comparable {
     }
 
     public void setRequiredAttributes(Collection<String> requiredAttributes) {
-        if (requiredAttributes == this.requiredAttributes) return;
+        if (this.requiredAttributes == requiredAttributes) return;
         removeRequiredAttributes();
         addRequiredAttributes(requiredAttributes);
     }
@@ -189,7 +191,7 @@ public class ObjectClass implements Serializable, Cloneable, Comparable {
     }
 
     public void setOptionalAttributes(Collection<String> optionalAttributes) {
-        if (optionalAttributes == this.optionalAttributes) return;
+        if (this.optionalAttributes == optionalAttributes) return;
         removeOptionalAttributes();
         addOptionalAttributes(optionalAttributes);
     }

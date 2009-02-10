@@ -19,8 +19,6 @@ package org.safehaus.penrose.schema;
 
 import org.safehaus.penrose.directory.EntryConfig;
 import org.safehaus.penrose.ldap.RDN;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.*;
@@ -32,13 +30,11 @@ public class Schema implements Serializable, Cloneable {
 
     private String name;
 
-    protected Map<String,AttributeType> attributeTypes = new TreeMap<String,AttributeType>();
-    protected Map<String,AttributeType> attributeTypesByName = new TreeMap<String,AttributeType>();
-    protected Map<String,AttributeType> attributeTypesByOid = new TreeMap<String,AttributeType>();
+    protected Set<AttributeType> attributeTypes = new LinkedHashSet<AttributeType>();
+    protected Map<String,AttributeType> attributeTypesByNameOrOid = new HashMap<String,AttributeType>();
 
-    protected Map<String,ObjectClass> objectClasses = new TreeMap<String,ObjectClass>();
-    protected Map<String,ObjectClass> objectClassesByName = new TreeMap<String,ObjectClass>();
-    protected Map<String,ObjectClass> objectClassesByOid = new TreeMap<String,ObjectClass>();
+    protected Set<ObjectClass> objectClasses = new LinkedHashSet<ObjectClass>();
+    protected Map<String,ObjectClass> objectClassesByNameOrOid = new TreeMap<String,ObjectClass>();
 
     public Schema(String name) {
         this.name = name;
@@ -53,29 +49,36 @@ public class Schema implements Serializable, Cloneable {
     }
 
     public Collection<AttributeType> getAttributeTypes() {
-        return attributeTypesByName.values();
+        return attributeTypes;
     }
 
     public Collection<String> getAttributeTypeNames() {
-        return attributeTypesByName.keySet();
+        Collection<String> list = new ArrayList<String>();
+        for (AttributeType at : attributeTypes) {
+            list.addAll(at.getNames());
+        }
+        return list;
+    }
+
+    public Collection<String> getAttributeTypeOids() {
+        Collection<String> list = new ArrayList<String>();
+        for (AttributeType at : attributeTypes) {
+            list.add(at.getOid());
+        }
+        return list;
     }
 
     public AttributeType getAttributeType(String name) {
-        return attributeTypes.get(name.toLowerCase());
+        return attributeTypesByNameOrOid.get(name.toLowerCase());
     }
 
     public void addAttributeType(AttributeType at) {
 
-        Logger log = LoggerFactory.getLogger(getClass());
+        attributeTypes.add(at);
 
-        if (log.isDebugEnabled()) log.debug("Adding attribute type "+at.getName()+" ("+at.getOid()+")");
-
-        attributeTypesByName.put(at.getName(), at);
-        attributeTypesByOid.put(at.getOid(), at);
-
-        attributeTypes.put(at.getOid(), at);
+        attributeTypesByNameOrOid.put(at.getOid(), at);
         for (String name : at.getNames()) {
-            attributeTypes.put(name.toLowerCase(), at);
+            attributeTypesByNameOrOid.put(name.toLowerCase(), at);
         }
     }
 
@@ -85,43 +88,54 @@ public class Schema implements Serializable, Cloneable {
     }
 
     public AttributeType removeAttributeType(String name) {
-        AttributeType at = attributeTypes.get(name.toLowerCase());
+        AttributeType at = getAttributeType(name.toLowerCase());
         if (at == null) return null;
 
-        attributeTypesByName.remove(at.getName());
-        attributeTypesByOid.remove(at.getOid());
-
-        attributeTypes.remove(at.getOid());
-        for (String atName : at.getNames()) {
-            attributeTypes.remove(atName.toLowerCase());
-        }
+        removeAttributeType(at);
         return at;
     }
 
+    public void removeAttributeType(AttributeType at) {
+
+        attributeTypes.remove(at);
+
+        attributeTypesByNameOrOid.remove(at.getOid());
+        for (String atName : at.getNames()) {
+            attributeTypesByNameOrOid.remove(atName.toLowerCase());
+        }
+    }
+
     public Collection<ObjectClass> getObjectClasses() {
-        return objectClassesByName.values();
+        return objectClasses;
     }
 
     public Collection<String> getObjectClassNames() {
-        return objectClassesByName.keySet();
+        Collection<String> list = new ArrayList<String>();
+        for (ObjectClass oc : objectClasses) {
+            list.addAll(oc.getNames());
+        }
+        return list;
+    }
+
+    public Collection<String> getObjectClassOids() {
+        Collection<String> list = new ArrayList<String>();
+        for (ObjectClass oc : objectClasses) {
+            list.add(oc.getOid());
+        }
+        return list;
     }
 
     public ObjectClass getObjectClass(String name) {
-        return objectClasses.get(name.toLowerCase());
+        return objectClassesByNameOrOid.get(name.toLowerCase());
     }
 
     public void addObjectClass(ObjectClass oc) {
 
-        Logger log = LoggerFactory.getLogger(getClass());
+        objectClasses.add(oc);
 
-        if (log.isDebugEnabled()) log.debug("Adding object class "+oc.getName()+" ("+oc.getOid()+")");
-
-        objectClassesByName.put(oc.getName(), oc);
-        objectClassesByOid.put(oc.getOid(), oc);
-
-        objectClasses.put(oc.getOid(), oc);
+        objectClassesByNameOrOid.put(oc.getOid(), oc);
         for (String name : oc.getNames()) {
-            objectClasses.put(name.toLowerCase(), oc);
+            objectClassesByNameOrOid.put(name.toLowerCase(), oc);
         }
     }
 
@@ -131,17 +145,21 @@ public class Schema implements Serializable, Cloneable {
     }
 
     public ObjectClass removeObjectClass(String name) {
-        ObjectClass oc = objectClasses.get(name.toLowerCase());
+        ObjectClass oc = getObjectClass(name.toLowerCase());
         if (oc == null) return null;
 
-        objectClassesByName.remove(oc.getName());
-        objectClassesByOid.remove(oc.getOid());
-
-        objectClasses.remove(oc.getOid());
-        for (String ocName : oc.getNames()) {
-            objectClasses.remove(ocName.toLowerCase());
-        }
+        removeObjectClass(oc);
         return oc;
+    }
+
+    public void removeObjectClass(ObjectClass oc) {
+
+        objectClasses.remove(oc);
+
+        objectClassesByNameOrOid.remove(oc.getOid());
+        for (String ocName : oc.getNames()) {
+            objectClassesByNameOrOid.remove(ocName.toLowerCase());
+        }
     }
 
     public Collection<String> getAllObjectClassNames(String ocName) {
@@ -221,45 +239,29 @@ public class Schema implements Serializable, Cloneable {
     }
 
     public void add(Schema schema) {
-        attributeTypesByName.putAll(schema.attributeTypesByName);
-        attributeTypesByOid.putAll(schema.attributeTypesByOid);
-        attributeTypes.putAll(schema.attributeTypes);
+        attributeTypes.addAll(schema.attributeTypes);
+        attributeTypesByNameOrOid.putAll(schema.attributeTypesByNameOrOid);
 
-        objectClassesByName.putAll(schema.objectClassesByName);
-        objectClassesByOid.putAll(schema.objectClassesByOid);
-        objectClasses.putAll(schema.objectClasses);
+        objectClasses.addAll(schema.objectClasses);
+        objectClassesByNameOrOid.putAll(schema.objectClassesByNameOrOid);
     }
 
     public void remove(Schema schema) {
-        for (AttributeType at : schema.attributeTypesByName.values()) {
-            attributeTypesByName.remove(at.getName());
-            attributeTypesByOid.remove(at.getOid());
-
-            attributeTypes.remove(at.getOid());
-            for (String name : at.getNames()) {
-                attributeTypes.remove(name.toLowerCase());
-            }
+        for (AttributeType at : schema.attributeTypes) {
+            removeAttributeType(at);
         }
 
-        for (ObjectClass oc : schema.objectClassesByName.values()) {
-            objectClassesByName.remove(oc.getName());
-            objectClassesByOid.remove(oc.getOid());
-
-            objectClasses.remove(oc.getOid());
-            for (String name : oc.getNames()) {
-                objectClasses.remove(name.toLowerCase());
-            }
+        for (ObjectClass oc : schema.objectClasses) {
+            removeObjectClass(oc);
         }
     }
 
     public void clear() {
-        attributeTypesByName.clear();
-        attributeTypesByOid.clear();
         attributeTypes.clear();
+        attributeTypesByNameOrOid.clear();
 
-        objectClassesByName.clear();
-        objectClassesByOid.clear();
         objectClasses.clear();
+        objectClassesByNameOrOid.clear();
     }
 
     public boolean partialMatch(RDN pk1, RDN pk2) throws Exception {
@@ -305,8 +307,8 @@ public class Schema implements Serializable, Cloneable {
 
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +
-                (attributeTypesByName == null ? 0 : attributeTypesByName.hashCode()) +
-                (objectClassesByName == null ? 0 : objectClassesByName.hashCode());
+                (attributeTypes == null ? 0 : attributeTypes.hashCode()) +
+                (objectClasses == null ? 0 : objectClasses.hashCode());
     }
 
     boolean equals(Object o1, Object o2) {
@@ -322,8 +324,8 @@ public class Schema implements Serializable, Cloneable {
 
         Schema schema = (Schema)object;
         if (!equals(name, schema.name)) return false;
-        if (!equals(attributeTypesByName, schema.attributeTypesByName)) return false;
-        if (!equals(objectClassesByName, schema.objectClassesByName)) return false;
+        if (!equals(attributeTypes, schema.attributeTypes)) return false;
+        if (!equals(objectClasses, schema.objectClasses)) return false;
 
         return true;
     }
@@ -332,16 +334,14 @@ public class Schema implements Serializable, Cloneable {
 
         name = schema.name;
 
-        attributeTypes = new TreeMap<String,AttributeType>();
-        attributeTypesByName = new TreeMap<String,AttributeType>();
-        attributeTypesByOid = new TreeMap<String,AttributeType>();
+        attributeTypes = new LinkedHashSet<AttributeType>();
+        attributeTypesByNameOrOid = new TreeMap<String,AttributeType>();
         for (AttributeType attributeType : schema.getAttributeTypes()) {
             addAttributeType((AttributeType)attributeType.clone());
         }
 
-        objectClasses = new TreeMap<String,ObjectClass>();
-        objectClassesByName = new TreeMap<String,ObjectClass>();
-        objectClassesByOid = new TreeMap<String,ObjectClass>();
+        objectClasses = new LinkedHashSet<ObjectClass>();
+        objectClassesByNameOrOid = new TreeMap<String,ObjectClass>();
         for (ObjectClass objectClass : schema.getObjectClasses()) {
             addObjectClass((ObjectClass)objectClass.clone());
         }
