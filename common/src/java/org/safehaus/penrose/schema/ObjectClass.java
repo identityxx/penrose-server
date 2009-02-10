@@ -162,6 +162,11 @@ public class ObjectClass implements Serializable, Cloneable, Comparable {
         addRequiredAttributes(requiredAttributes);
     }
 
+    public void removeRequiredAttribute(String requiredAttribute) {
+        requiredAttributes.remove(requiredAttribute);
+        normalizedRequiredAttributes.remove(requiredAttribute.toLowerCase());
+    }
+
     public void removeRequiredAttributes() {
         requiredAttributes.clear();
         normalizedRequiredAttributes.clear();
@@ -187,6 +192,11 @@ public class ObjectClass implements Serializable, Cloneable, Comparable {
         if (optionalAttributes == this.optionalAttributes) return;
         removeOptionalAttributes();
         addOptionalAttributes(optionalAttributes);
+    }
+
+    public void removeOptionalAttribute(String optionalAttribute) {
+        optionalAttributes.remove(optionalAttribute);
+        normalizedOptionalAttributes.remove(optionalAttribute.toLowerCase());
     }
 
     public void removeOptionalAttributes() {

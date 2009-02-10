@@ -79,10 +79,9 @@ public class Schema implements Serializable, Cloneable {
         }
     }
 
-    public void removeAttributeTypes(Collection<String> names) {
-        for (String name : names) {
-            removeAttributeType(name);
-        }
+    public void updateAttributeType(String name, AttributeType at) {
+        removeAttributeType(name);
+        addAttributeType(at);
     }
 
     public AttributeType removeAttributeType(String name) {
@@ -126,10 +125,9 @@ public class Schema implements Serializable, Cloneable {
         }
     }
 
-    public void removeObjectClasses(Collection<String> names) {
-        for (String name : names) {
-            removeObjectClass(name);
-        }
+    public void updateObjectClass(String name, ObjectClass objectClass) {
+        removeObjectClass(name);
+        addObjectClass(objectClass);
     }
 
     public ObjectClass removeObjectClass(String name) {
@@ -338,14 +336,14 @@ public class Schema implements Serializable, Cloneable {
         attributeTypesByName = new TreeMap<String,AttributeType>();
         attributeTypesByOid = new TreeMap<String,AttributeType>();
         for (AttributeType attributeType : schema.getAttributeTypes()) {
-            addAttributeType((AttributeType) attributeType.clone());
+            addAttributeType((AttributeType)attributeType.clone());
         }
 
         objectClasses = new TreeMap<String,ObjectClass>();
         objectClassesByName = new TreeMap<String,ObjectClass>();
         objectClassesByOid = new TreeMap<String,ObjectClass>();
         for (ObjectClass objectClass : schema.getObjectClasses()) {
-            addObjectClass((ObjectClass) objectClass.clone());
+            addObjectClass((ObjectClass)objectClass.clone());
         }
     }
 

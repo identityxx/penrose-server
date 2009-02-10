@@ -52,9 +52,24 @@ public class SchemaService extends BaseService implements SchemaServiceMBean {
         return list;
     }
 
+    public void addAttributeType(AttributeType attributeType) throws Exception {
+        Schema schema = getSchema();
+        schema.addAttributeType(attributeType);
+    }
+
     public AttributeType getAttributeType(String name) throws Exception {
         Schema schema = getSchema();
         return schema.getAttributeType(name);
+    }
+
+    public void updateAttributeType(String name, AttributeType attributeType) throws Exception {
+        Schema schema = getSchema();
+        schema.updateAttributeType(name, attributeType);
+    }
+
+    public void removeAttributeType(String name) throws Exception {
+        Schema schema = getSchema();
+        schema.removeAttributeType(name);
     }
 
     public Collection<ObjectClass> getObjectClasses() throws Exception {
@@ -71,8 +86,27 @@ public class SchemaService extends BaseService implements SchemaServiceMBean {
         return list;
     }
 
+    public void addObjectClass(ObjectClass objectClass) throws Exception {
+        Schema schema = getSchema();
+        schema.addObjectClass(objectClass);
+    }
+
     public ObjectClass getObjectClass(String name) throws Exception {
         Schema schema = getSchema();
         return schema.getObjectClass(name);
+    }
+
+    public void updateObjectClass(String name, ObjectClass objectClass) throws Exception {
+        Schema schema = getSchema();
+        schema.updateObjectClass(name, objectClass);
+    }
+
+    public void removeObjectClass(String name) throws Exception {
+        Schema schema = getSchema();
+        schema.removeObjectClass(name);
+    }
+
+    public void store() throws Exception {
+        schemaManager.storeSchema(schemaName);
     }
 }

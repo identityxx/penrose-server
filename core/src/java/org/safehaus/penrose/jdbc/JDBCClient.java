@@ -377,11 +377,13 @@ public class JDBCClient {
 
             long t1 = System.currentTimeMillis();
 
-            rs = ps.executeQuery();
+            try {
+                rs = ps.executeQuery();
 
-            long t2 = System.currentTimeMillis();
-
-            if (debug) log.debug("Execution completed. Elapsed time: "+(t2-t1)+" ms.");
+            } finally {
+                long t2 = System.currentTimeMillis();
+                if (debug) log.debug("Execution completed. Elapsed time: "+(t2-t1)+" ms.");
+            }
 
             while (rs.next()) {
                 if (response.isClosed()) return;

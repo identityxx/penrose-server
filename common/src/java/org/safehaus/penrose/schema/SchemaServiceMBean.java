@@ -1,8 +1,5 @@
 package org.safehaus.penrose.schema;
 
-import org.safehaus.penrose.schema.AttributeType;
-import org.safehaus.penrose.schema.ObjectClass;
-
 import java.util.Collection;
 
 /**
@@ -10,11 +7,17 @@ import java.util.Collection;
  */
 public interface SchemaServiceMBean {
 
+    public void addAttributeType(AttributeType attributeType) throws Exception;
     public Collection<AttributeType> getAttributeTypes() throws Exception;
     public Collection<String> getAttributeTypeNames() throws Exception;
     public AttributeType getAttributeType(String name) throws Exception;
+    public void removeAttributeType(String name) throws Exception;
 
+    public void addObjectClass(ObjectClass objectClass) throws Exception;
     public Collection<ObjectClass> getObjectClasses() throws Exception;
     public Collection<String> getObjectClassNames() throws Exception;
     public ObjectClass getObjectClass(String name) throws Exception;
+    public void removeObjectClass(String name) throws Exception;
+
+    public void store() throws Exception;
 }

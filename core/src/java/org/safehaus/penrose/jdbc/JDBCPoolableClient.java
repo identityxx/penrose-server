@@ -27,10 +27,10 @@ public class JDBCPoolableClient extends JDBCClient {
 
     public synchronized void connect() throws Exception {
 
-        if (connection != null) return;
-
-        log.debug("Getting JDBC connection from connection pool.");
-        connection = ds.getConnection();
+        if (connection == null || connection.isClosed()) {
+            log.debug("Getting JDBC connection from connection pool.");
+            connection = ds.getConnection();
+        }
     }
 
     public synchronized void close() throws Exception {
