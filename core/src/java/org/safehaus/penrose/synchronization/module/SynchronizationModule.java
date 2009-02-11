@@ -345,11 +345,16 @@ public class SynchronizationModule extends Module implements SynchronizationMBea
         };
 
         Source target = getTarget();
-        target.search(session, request, response);
+        try {
+            target.search(session, request, response);
 
-        //log.debug("Waiting for operation to complete.");
-        int rc = response.waitFor();
-        //log.debug("RC: "+rc);
+            //log.debug("Waiting for operation to complete.");
+            //int rc = response.waitFor();
+            //log.debug("RC: "+rc);
+
+        } catch (Exception e) {
+            log.debug(e.getMessage());
+        }
 
         //if (warn) log.warn("Found "+response.getTotalCount()+" entries.");
 

@@ -8,8 +8,8 @@
   <source name="users">
     <connection-name>PostgreSQL</connection-name>
     <field name="username" primaryKey="true"/>
-    <field name="firstName"/>
-    <field name="lastName"/>
+    <field name="firstname"/>
+    <field name="lastname"/>
     <field name="password"/>
     <parameter>
       <param-name>table</param-name>

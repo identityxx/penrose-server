@@ -115,6 +115,7 @@ public class SchemaManager {
         writer.write(file, schema);
 
         addSchema(schema);
+        customSchemas.put(schema.getName(), schema);
     }
 
     public void updateSchema(String schemaName, Schema schema) throws Exception {
@@ -148,6 +149,14 @@ public class SchemaManager {
         for (Schema s : schemas.values()) {
             this.schema.add(s);
         }
+    }
+
+    public void storeSchema(String schemaName) throws Exception {
+
+        Schema schema = schemas.get(schemaName);
+
+        File file = new File(extDir, schemaName+".schema");
+        writer.write(file, schema);
     }
 
     public void removeSchema(String schemaName) {
