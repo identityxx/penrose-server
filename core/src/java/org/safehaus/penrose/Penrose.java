@@ -19,12 +19,12 @@ package org.safehaus.penrose;
 
 import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.PenroseConfig;
+import org.safehaus.penrose.log.log4j.AppenderConfig;
 import org.safehaus.penrose.config.PenroseConfigReader;
 import org.safehaus.penrose.config.PenroseConfigWriter;
-import org.safehaus.penrose.logger.log4j.AppenderConfig;
-import org.safehaus.penrose.logger.log4j.Log4jConfig;
-import org.safehaus.penrose.logger.log4j.Log4jConfigReader;
-import org.safehaus.penrose.logger.log4j.LoggerConfig;
+import org.safehaus.penrose.log.log4j.Log4jConfig;
+import org.safehaus.penrose.log.log4j.Log4jConfigReader;
+import org.safehaus.penrose.log.log4j.LoggerConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.schema.SchemaManager;
@@ -166,8 +166,8 @@ public class Penrose {
         File log4jXml = new File(home, "conf"+File.separator+"log4j.xml");
 
         if (log4jXml.exists()) {
-            Log4jConfigReader configReader = new Log4jConfigReader(log4jXml);
-            Log4jConfig config = configReader.read();
+            Log4jConfigReader configReader = new Log4jConfigReader();
+            Log4jConfig config = configReader.read(log4jXml);
 
             log.debug("Appenders:");
             for (AppenderConfig appenderConfig : config.getAppenderConfigs()) {
@@ -176,7 +176,7 @@ public class Penrose {
 
             log.debug("Loggers:");
             for (LoggerConfig loggerConfig : config.getLoggerConfigs()) {
-                log.debug(" - " + loggerConfig.getName() + ": " + loggerConfig.getLevel() + " " + loggerConfig.getAppenders());
+                log.debug(" - " + loggerConfig.getName() + ": " + loggerConfig.getLevel() + " " + loggerConfig.getAppenderNames());
             }
         }
 

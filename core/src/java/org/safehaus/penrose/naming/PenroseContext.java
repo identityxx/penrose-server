@@ -1,12 +1,11 @@
 package org.safehaus.penrose.naming;
 
 import org.safehaus.penrose.PenroseConfig;
+import org.safehaus.penrose.log.LogManager;
 import org.safehaus.penrose.filter.FilterEvaluator;
-import org.safehaus.penrose.logger.LoggerManager;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.PartitionValidator;
 import org.safehaus.penrose.schema.SchemaManager;
-import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.session.SessionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +40,7 @@ public class PenroseContext {
     protected FilterEvaluator    filterEvaluator;
 
     protected PartitionManager   partitionManager;
-    protected LoggerManager      loggerManager = new LoggerManager();
+    protected LogManager         logManager;
 
     protected SessionContext     sessionContext;
 
@@ -99,6 +98,9 @@ public class PenroseContext {
         PartitionValidator partitionValidator = new PartitionValidator();
         partitionValidator.setPenroseConfig(penroseConfig);
         partitionValidator.setPenroseContext(this);
+
+        logManager = new LogManager(home);
+        logManager.load();
     }
 
     public void start() throws Exception {
@@ -133,5 +135,13 @@ public class PenroseContext {
 
     public void setHome(File home) {
         this.home = home;
+    }
+
+    public LogManager getLogManager() {
+        return logManager;
+    }
+
+    public void setLogManager(LogManager logManager) {
+        this.logManager = logManager;
     }
 }

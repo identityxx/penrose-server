@@ -20,7 +20,9 @@ package org.safehaus.penrose.management;
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.management.PenroseServiceMBean;
+import org.safehaus.penrose.management.log.LogManagerService;
 import org.safehaus.penrose.PenroseConfig;
+import org.safehaus.penrose.log.LogManager;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.client.PenroseClient;
 import org.safehaus.penrose.ldap.DN;
@@ -55,6 +57,7 @@ public class PenroseService extends StandardMBean implements PenroseServiceMBean
     protected PartitionManagerService partitionManagerService;
     protected ServiceManagerService serviceManagerService;
     protected SessionManagerService sessionManagerService;
+    protected LogManagerService logManagerService;
 
     public PenroseService(PenroseJMXService jmxService, PenroseServer penroseServer) throws Exception {
         super(PenroseServiceMBean.class);
@@ -92,10 +95,17 @@ public class PenroseService extends StandardMBean implements PenroseServiceMBean
         sessionManagerService = new SessionManagerService(jmxService, sessionManager);
         sessionManagerService.init();
         sessionManagerService.register();
+
+        LogManager logManager = penrose.getPenroseContext().getLogManager();
+
+        logManagerService = new LogManagerService(jmxService, logManager);
+        logManagerService.init();
+        logManagerService.register();
     }
 
     public void destroy() throws Exception {
 
+        logManagerService.unregister();
         sessionManagerService.unregister();
         serviceManagerService.unregister();
         partitionManagerService.unregister();

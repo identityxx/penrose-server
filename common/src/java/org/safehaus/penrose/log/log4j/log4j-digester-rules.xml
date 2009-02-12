@@ -30,14 +30,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
         <pattern value="appender">
 
-            <object-create-rule classname="org.safehaus.penrose.logger.log4j.AppenderConfig" />
+            <object-create-rule classname="org.safehaus.penrose.log.log4j.AppenderConfig" />
             <set-properties-rule>
                 <alias attr-name="class" prop-name="appenderClass" />
             </set-properties-rule>
 
             <pattern value="layout">
 
-                <object-create-rule classname="org.safehaus.penrose.logger.log4j.LayoutConfig" />
+                <object-create-rule classname="org.safehaus.penrose.log.log4j.LayoutConfig" />
                 <set-properties-rule>
                     <alias attr-name="class" prop-name="layoutClass" />
                 </set-properties-rule>
@@ -58,7 +58,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
         <pattern value="logger">
 
-            <object-create-rule classname="org.safehaus.penrose.logger.log4j.LoggerConfig" />
+            <object-create-rule classname="org.safehaus.penrose.log.log4j.LoggerConfig" />
             <set-properties-rule/>
 
             <pattern value="level">
@@ -67,7 +67,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
             </pattern>
 
             <pattern value="appender-ref">
-                <call-method-rule methodname="addAppender" paramcount="1" />
+                <call-method-rule methodname="addAppenderName" paramcount="1" />
                 <call-param-rule attrname="ref" paramnumber="0"/>
             </pattern>
 
@@ -77,7 +77,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
         <pattern value="root">
 
-            <object-create-rule classname="org.safehaus.penrose.logger.log4j.RootConfig" />
+            <object-create-rule classname="org.safehaus.penrose.log.log4j.RootConfig" />
             <set-properties-rule/>
 
             <pattern value="level">

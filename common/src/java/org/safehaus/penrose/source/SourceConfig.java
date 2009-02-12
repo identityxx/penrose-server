@@ -35,8 +35,6 @@ public class SourceConfig implements Serializable, Cloneable {
     public static transient Logger log;
     public static boolean debug = log.isDebugEnabled();
 
-    //public final static String AUTO_REFRESH            = "autoRefresh";
-
     public final static String REFRESH_METHOD          = "refreshMethod";
     public final static String RELOAD_EXPIRED          = "reloadExpired";
     public final static String POLL_CHANGES            = "pollChanges";
@@ -77,7 +75,7 @@ public class SourceConfig implements Serializable, Cloneable {
     public String adapterName;
     public String connectionName;
 
-    public Map<String,String> parameters = new HashMap<String,String>();
+    public Map<String,String> parameters = new LinkedHashMap<String,String>();
 
     public Map<String,FieldConfig> fieldConfigs = new LinkedHashMap<String,FieldConfig>();
     public Map<String,FieldConfig> fieldConfigsByOriginalName = new LinkedHashMap<String,FieldConfig>();
@@ -372,7 +370,7 @@ public class SourceConfig implements Serializable, Cloneable {
             addFieldConfig((FieldConfig) fieldConfig.clone());
         }
 
-        parameters = new HashMap<String,String>();
+        parameters = new LinkedHashMap<String,String>();
         parameters.putAll(sourceConfig.parameters);
 
         indexConfigs = new LinkedHashMap<String,IndexConfig>();
