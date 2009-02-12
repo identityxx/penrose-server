@@ -19,6 +19,7 @@ package org.safehaus.penrose.client;
 
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.PenroseConfig;
+import org.safehaus.penrose.log.LogManagerClient;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.partition.PartitionManagerClient;
 import org.safehaus.penrose.schema.SchemaManagerClient;
@@ -299,6 +300,14 @@ public class PenroseClient implements PenroseServiceMBean {
     }
 
     ////////////////////////////////////////////////////////////////////////////////
+    // Logs
+    ////////////////////////////////////////////////////////////////////////////////
+
+    public LogManagerClient getLogManagerClient() throws Exception {
+        return new LogManagerClient(this);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
     // Files
     ////////////////////////////////////////////////////////////////////////////////
 
@@ -401,7 +410,10 @@ public class PenroseClient implements PenroseServiceMBean {
     public void uploadFile(File file, String path) throws Exception {
         FileInputStream in = new FileInputStream(file);
         byte content[] = new byte[(int)file.length()];
-        in.read(content);
+
+        int length = in.read(content);
+        if (length != file.length()) throw new Exception("Error reading "+file+".");
+
         in.close();
 
         upload(path, content);

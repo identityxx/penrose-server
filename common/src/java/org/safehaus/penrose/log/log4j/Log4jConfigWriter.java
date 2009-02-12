@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.logger.log4j;
+package org.safehaus.penrose.log.log4j;
 
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
@@ -163,7 +163,7 @@ public class Log4jConfigWriter {
             element.add(levelElement);
         }
 
-        for (Iterator i=loggerConfig.getAppenders().iterator(); i.hasNext(); ) {
+        for (Iterator i=loggerConfig.getAppenderNames().iterator(); i.hasNext(); ) {
             String appenderName = (String)i.next();
 
             Element appenderRefElement = new DefaultElement("appender-ref");
@@ -185,7 +185,7 @@ public class Log4jConfigWriter {
             element.add(levelElement);
         }
 
-        for (Iterator i=rootConfig.getAppenders().iterator(); i.hasNext(); ) {
+        for (Iterator i=rootConfig.getAppenderNames().iterator(); i.hasNext(); ) {
             String appenderName = (String)i.next();
 
             Element appenderRefElement = new DefaultElement("appender-ref");

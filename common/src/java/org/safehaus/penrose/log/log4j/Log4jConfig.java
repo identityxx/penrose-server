@@ -15,17 +15,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.logger.log4j;
+package org.safehaus.penrose.log.log4j;
 
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.Collection;
-import java.io.File;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class Log4jConfig {
+public class Log4jConfig implements Serializable, Cloneable {
 
     boolean debug;
 
@@ -40,6 +40,14 @@ public class Log4jConfig {
 
     public Collection<String> getAppenderConfigNames() {
         return appenderConfigs.keySet();
+    }
+
+    public void setAppenderConfigs(Collection<AppenderConfig> appenderConfigs) {
+        this.appenderConfigs.clear();
+        if (appenderConfigs == null) return;
+        for (AppenderConfig appenderConfig : appenderConfigs) {
+            addAppenderConfig(appenderConfig);
+        }
     }
 
     public void addAppenderConfig(AppenderConfig appenderConfig) {
@@ -60,6 +68,14 @@ public class Log4jConfig {
 
     public Collection<String> getLoggerConfigNames() {
         return loggerConfigs.keySet();
+    }
+
+    public void setLoggerConfigs(Collection<LoggerConfig> loggerConfigs) {
+        this.loggerConfigs.clear();
+        if (loggerConfigs == null) return;
+        for (LoggerConfig loggerConfig : loggerConfigs) {
+            addLoggerConfig(loggerConfig);
+        }
     }
 
     public void addLoggerConfig(LoggerConfig loggerConfig) {
@@ -90,12 +106,48 @@ public class Log4jConfig {
         this.debug = debug;
     }
 
-    public static void main(String args[]) throws Exception {
+    public int hashCode() {
+        return (debug ? 0 : 1)
+                + appenderConfigs.hashCode()
+                + loggerConfigs.hashCode()
+                + (rootConfig == null ? 0 : rootConfig.hashCode());
+    }
 
-        Log4jConfigReader configReader = new Log4jConfigReader(new File(args[0]));
-        Log4jConfig config = configReader.read();
+    boolean equals(Object o1, Object o2) {
+        if (o1 == null && o2 == null) return true;
+        if (o1 != null) return o1.equals(o2);
+        return o2.equals(o1);
+    }
 
-        Log4jConfigWriter configWriter = new Log4jConfigWriter();
-        configWriter.write(config);
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null) return false;
+        if (object.getClass() != this.getClass()) return false;
+
+        Log4jConfig log4jConfig = (Log4jConfig)object;
+        if (debug != log4jConfig.debug) return false;
+        if (!equals(appenderConfigs, log4jConfig.appenderConfigs)) return false;
+        if (!equals(loggerConfigs, log4jConfig.loggerConfigs)) return false;
+        if (!equals(rootConfig, log4jConfig.rootConfig)) return false;
+
+        return true;
+    }
+
+    public void copy(Log4jConfig log4jConfig) throws CloneNotSupportedException {
+        debug = log4jConfig.debug;
+
+        appenderConfigs = new LinkedHashMap<String,AppenderConfig>();
+        appenderConfigs.putAll(log4jConfig.appenderConfigs);
+
+        loggerConfigs = new LinkedHashMap<String,LoggerConfig>();
+        loggerConfigs.putAll(log4jConfig.loggerConfigs);
+
+        rootConfig = log4jConfig.rootConfig == null ? null : (RootConfig)log4jConfig.rootConfig.clone();
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        Log4jConfig log4jConfig = (Log4jConfig)super.clone();
+        log4jConfig.copy(this);
+        return log4jConfig;
     }
 }
