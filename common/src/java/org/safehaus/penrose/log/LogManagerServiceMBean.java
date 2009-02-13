@@ -2,6 +2,7 @@ package org.safehaus.penrose.log;
 
 import org.safehaus.penrose.log.log4j.AppenderConfig;
 import org.safehaus.penrose.log.log4j.LoggerConfig;
+import org.safehaus.penrose.log.log4j.RootLoggerConfig;
 
 import java.util.Collection;
 
@@ -23,4 +24,9 @@ public interface LogManagerServiceMBean {
     public void addLoggerConfig(LoggerConfig loggerConfig) throws Exception;
     public void updateLoggerConfig(String loggerName, LoggerConfig loggerConfig) throws Exception;
     public LoggerConfig removeLoggerConfig(String loggerName) throws Exception;
+
+    public RootLoggerConfig getRootLoggerConfig() throws Exception;
+    public void setRootLoggerConfig(RootLoggerConfig rootLoggerConfig) throws Exception;
+
+    public void store() throws Exception;
 }

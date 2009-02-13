@@ -32,7 +32,7 @@ public class Log4jConfig implements Serializable, Cloneable {
     Map<String,AppenderConfig> appenderConfigs = new LinkedHashMap<String,AppenderConfig>();
     Map<String,LoggerConfig> loggerConfigs = new LinkedHashMap<String,LoggerConfig>();
 
-    RootConfig rootConfig;
+    RootLoggerConfig rootLoggerConfig;
 
     public Collection<AppenderConfig> getAppenderConfigs() {
         return appenderConfigs.values();
@@ -90,12 +90,12 @@ public class Log4jConfig implements Serializable, Cloneable {
         return loggerConfigs.remove(name);
     }
 
-    public RootConfig getRootConfig() {
-        return rootConfig;
+    public RootLoggerConfig getRootLoggerConfig() {
+        return rootLoggerConfig;
     }
 
-    public void setRootConfig(RootConfig rootConfig) {
-        this.rootConfig = rootConfig;
+    public void setRootLoggerConfig(RootLoggerConfig rootLoggerConfig) {
+        this.rootLoggerConfig = rootLoggerConfig;
     }
 
     public boolean isDebug() {
@@ -110,7 +110,7 @@ public class Log4jConfig implements Serializable, Cloneable {
         return (debug ? 0 : 1)
                 + appenderConfigs.hashCode()
                 + loggerConfigs.hashCode()
-                + (rootConfig == null ? 0 : rootConfig.hashCode());
+                + (rootLoggerConfig == null ? 0 : rootLoggerConfig.hashCode());
     }
 
     boolean equals(Object o1, Object o2) {
@@ -128,7 +128,7 @@ public class Log4jConfig implements Serializable, Cloneable {
         if (debug != log4jConfig.debug) return false;
         if (!equals(appenderConfigs, log4jConfig.appenderConfigs)) return false;
         if (!equals(loggerConfigs, log4jConfig.loggerConfigs)) return false;
-        if (!equals(rootConfig, log4jConfig.rootConfig)) return false;
+        if (!equals(rootLoggerConfig, log4jConfig.rootLoggerConfig)) return false;
 
         return true;
     }
@@ -142,7 +142,7 @@ public class Log4jConfig implements Serializable, Cloneable {
         loggerConfigs = new LinkedHashMap<String,LoggerConfig>();
         loggerConfigs.putAll(log4jConfig.loggerConfigs);
 
-        rootConfig = log4jConfig.rootConfig == null ? null : (RootConfig)log4jConfig.rootConfig.clone();
+        rootLoggerConfig = log4jConfig.rootLoggerConfig == null ? null : (RootLoggerConfig)log4jConfig.rootLoggerConfig.clone();
     }
 
     public Object clone() throws CloneNotSupportedException {

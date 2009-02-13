@@ -79,6 +79,25 @@
         />
     </target>
 
+    <target name="dist" depends="init">
+        <mkdir dir="../../server/target/dist/samples/lockout"/>
+        <copy todir="../../server/target/dist/samples/lockout">
+            <fileset dir=".">
+                <exclude name="build.xml"/>
+                <exclude name="**/*.jar"/>
+                <exclude name="**/DIR-INF/target/**"/>
+            </fileset>
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+        <mkdir dir="../../server/target/dist/samples/lockout/DIR-INF/lib"/>
+        <copy
+            todir="../../server/target/dist/samples/lockout/DIR-INF/lib"
+            file="DIR-INF/target/${project.name}-lockout-module-${product.version}.jar"
+        />
+    </target>
+
     <target name="clean">
         <delete dir="DIR-INF/target" failonerror="false"/>
     </target>

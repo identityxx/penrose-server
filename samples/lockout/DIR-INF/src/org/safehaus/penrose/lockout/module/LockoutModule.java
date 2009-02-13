@@ -121,6 +121,7 @@ public class LockoutModule extends Module {
                 chain.bind(session, request, response);
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
+                response.setException(e);
             }
 
             if (response.getReturnCode() == LDAP.SUCCESS) {

@@ -100,8 +100,8 @@ public class Log4jConfigReader implements EntityResolver {
 
         if (roots.getLength() > 0) {
             Element rootElement = (Element)roots.item(0);
-            RootConfig rootConfig = createRootConfig(rootElement);
-            config.setRootConfig(rootConfig);
+            RootLoggerConfig rootConfig = createRootConfig(rootElement);
+            config.setRootLoggerConfig(rootConfig);
         }
 
         return config;
@@ -179,9 +179,9 @@ public class Log4jConfigReader implements EntityResolver {
         return loggerConfig;
     }
 
-    public RootConfig createRootConfig(Element element) {
+    public RootLoggerConfig createRootConfig(Element element) {
 
-        RootConfig rootConfig = new RootConfig();
+        RootLoggerConfig rootConfig = new RootLoggerConfig();
 
         NodeList levels = element.getElementsByTagName("level");
 

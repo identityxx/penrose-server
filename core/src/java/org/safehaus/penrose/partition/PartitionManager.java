@@ -23,8 +23,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.*;
-import java.net.URL;
-import java.net.URLClassLoader;
 
 /**
  * @author Endi S. Dewata

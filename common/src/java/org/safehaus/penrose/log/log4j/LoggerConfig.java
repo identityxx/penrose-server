@@ -40,7 +40,7 @@ public class LoggerConfig implements Serializable, Cloneable {
         this.name = name;
     }
 
-    public boolean isAdditivity() {
+    public boolean getAdditivity() {
         return additivity;
     }
 

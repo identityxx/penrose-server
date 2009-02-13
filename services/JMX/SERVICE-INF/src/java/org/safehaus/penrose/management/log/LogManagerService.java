@@ -7,6 +7,7 @@ import org.safehaus.penrose.log.LogManagerClient;
 import org.safehaus.penrose.log.LogManagerServiceMBean;
 import org.safehaus.penrose.log.log4j.AppenderConfig;
 import org.safehaus.penrose.log.log4j.LoggerConfig;
+import org.safehaus.penrose.log.log4j.RootLoggerConfig;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -85,5 +86,17 @@ public class LogManagerService extends BaseService implements LogManagerServiceM
 
     public LoggerConfig removeLoggerConfig(String loggerName) throws Exception {
         return logManager.removeLoggerConfig(loggerName);
+    }
+
+    public RootLoggerConfig getRootLoggerConfig() throws Exception {
+        return logManager.getRootLoggerConfig();
+    }
+
+    public void setRootLoggerConfig(RootLoggerConfig rootLoggerConfig) throws Exception {
+        logManager.setRootLoggerConfig(rootLoggerConfig);
+    }
+
+    public void store() throws Exception {
+        logManager.store();
     }
 }

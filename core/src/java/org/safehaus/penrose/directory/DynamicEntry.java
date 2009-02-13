@@ -30,6 +30,7 @@ import org.safehaus.penrose.pipeline.SOPipeline;
 import org.safehaus.penrose.mapping.Mapping;
 import org.safehaus.penrose.mapping.MappingRule;
 import org.safehaus.penrose.password.Password;
+import org.ietf.ldap.LDAPException;
 
 import java.util.*;
 
@@ -240,6 +241,18 @@ public class DynamicEntry extends Entry implements Cloneable {
                 if (flag == null || EntrySourceConfig.SUFFICIENT.equals(flag)) {
                     if (debug) log.debug("Bind is sufficient.");
                     return;
+                }
+
+            } catch (LDAPException e) {
+
+                log.debug(e.getMessage());
+
+                if (EntrySourceConfig.REQUISITE.equals(flag)) {
+                    if (debug) log.debug("Bind is requisite.");
+                    throw e;
+
+                } else {
+                    success = false;
                 }
 
             } catch (Exception e) {
