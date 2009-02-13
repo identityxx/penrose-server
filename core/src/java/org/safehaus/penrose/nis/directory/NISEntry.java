@@ -110,8 +110,13 @@ public class NISEntry extends DynamicEntry {
             }
         };
 
-        Source source = primarySourceRef.getSource();
-        source.search(session, newRequest, newResponse);
+        try {
+            Source source = primarySourceRef.getSource();
+            source.search(session, newRequest, newResponse);
+            
+        } catch (Exception e) {
+            response.setException(e);
+        }
     }
 
     public SearchRequest createSearchRequest(
