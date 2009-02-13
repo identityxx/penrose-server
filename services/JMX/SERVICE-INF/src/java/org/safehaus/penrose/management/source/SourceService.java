@@ -15,6 +15,7 @@ import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.SourceClient;
 import org.safehaus.penrose.source.SourceServiceMBean;
+import org.ietf.ldap.LDAPException;
 
 import javax.management.MBeanException;
 import java.util.Collection;
@@ -350,6 +351,10 @@ public class SourceService extends BaseService implements SourceServiceMBean {
             Source source = getSource();
             if (source == null) throw new Exception("Source "+sourceName+" not found.");
             return source.find(session, dn);
+
+        } catch (LDAPException e) {
+            log.debug(e.getMessage());
+            return null;
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
