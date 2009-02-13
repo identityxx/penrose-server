@@ -9,6 +9,7 @@ import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.synchronization.SynchronizationResult;
+import org.ietf.ldap.LDAPException;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -592,6 +593,10 @@ public class SynchronizationModule extends Module implements SynchronizationMBea
             if (rc != LDAP.SUCCESS) throw response.getException();
 
             return response.getTotalCount();
+
+        } catch (LDAPException e) {
+            log.debug(e.getMessage());
+            return 0L;
 
         } finally {
             session.close();

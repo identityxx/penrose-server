@@ -1340,9 +1340,9 @@ public class DynamicEntry extends Entry implements Cloneable {
             try {
                 source.search(session, request, searchResponse);
 
-            } catch (Exception e) {
+            } catch (LDAPException e) {
 
-                log.error(e.getMessage(), e);
+                log.debug(e.getMessage());
 
                 if (index == 0 || EntrySourceConfig.REQUIRED.equals(search)) {
                     if (debug) log.debug("Source "+alias+" is required and error occured.");
