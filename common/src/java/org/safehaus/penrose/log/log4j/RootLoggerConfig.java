@@ -24,7 +24,7 @@ import java.io.Serializable;
 /**
  * @author Endi S. Dewata
  */
-public class RootConfig implements Serializable, Cloneable {
+public class RootLoggerConfig implements Serializable, Cloneable {
 
     String level;
     Collection<String> appenderNames = new LinkedList<String>();
@@ -71,14 +71,14 @@ public class RootConfig implements Serializable, Cloneable {
         if (object == null) return false;
         if (object.getClass() != this.getClass()) return false;
 
-        RootConfig rootConfig = (RootConfig)object;
+        RootLoggerConfig rootConfig = (RootLoggerConfig)object;
         if (!equals(level, rootConfig.level)) return false;
         if (!equals(appenderNames, rootConfig.appenderNames)) return false;
 
         return true;
     }
 
-    public void copy(RootConfig rootConfig) throws CloneNotSupportedException {
+    public void copy(RootLoggerConfig rootConfig) throws CloneNotSupportedException {
         level = rootConfig.level;
 
         appenderNames = new LinkedList<String>();
@@ -86,7 +86,7 @@ public class RootConfig implements Serializable, Cloneable {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        RootConfig rootConfig = (RootConfig)super.clone();
+        RootLoggerConfig rootConfig = (RootLoggerConfig)super.clone();
         rootConfig.copy(this);
         return rootConfig;
     }

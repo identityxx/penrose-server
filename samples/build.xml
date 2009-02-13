@@ -55,6 +55,7 @@
                 <exclude name="**/build.xml"/>
                 <exclude name="**/*.jar"/>
                 <exclude name="**/DIR-INF/target/**"/>
+                <exclude name="lockout/**/*"/>
             </fileset>
             <filterchain>
                 <expandproperties/>
@@ -64,8 +65,10 @@
             <fileset dir=".">
                 <include name="*/**/build.xml"/>
                 <include name="**/*.jar"/>
+                <exclude name="lockout/**/*"/>
             </fileset>
         </copy>
+        <ant dir="lockout" target="dist"/>
     </target>
 
     <target name="install" depends="init">

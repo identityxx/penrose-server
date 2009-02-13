@@ -31,8 +31,8 @@ public class LogManager {
     }
 
     public void store() throws Exception {
-        Log4jConfigWriter writer = new Log4jConfigWriter(new File(confDir, "/conf/log4j.xml"));
-        writer.write(log4jConfig);
+        Log4jConfigWriter writer = new Log4jConfigWriter();
+        writer.write(new File(confDir, "log4j.xml"), log4jConfig);
     }
 
     public Collection<AppenderConfig> getAppenderConfigs() {
@@ -83,6 +83,14 @@ public class LogManager {
 
     public LoggerConfig removeLoggerConfig(String loggerName) {
         return log4jConfig.removeLoggerConfig(loggerName);
+    }
+
+    public RootLoggerConfig getRootLoggerConfig() throws Exception {
+        return log4jConfig.getRootLoggerConfig();
+    }
+
+    public void setRootLoggerConfig(RootLoggerConfig rootLoggerConfig) throws Exception {
+        log4jConfig.setRootLoggerConfig(rootLoggerConfig);
     }
 
     public void addLogger(String name) {

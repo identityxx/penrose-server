@@ -32,21 +32,21 @@ EXAMPLE
 
 Attempt bind operation with the correct password, this should work:
 
-ldapsearch -h localhost -p 10389 -D "uid=alange,ou=Users,dc=my-domain,dc=com" -w 4l4ng3 -x -b "" -s base
+ldapsearch -h localhost -p 10389 -D "uid=alange,ou=Users,dc=Lockout,dc=Example,dc=com" -w 4l4ng3 -x -b "" -s base
 
 Attempt 3 bind operations with a wrong password:
 
-ldapsearch -h localhost -p 10389 -D "uid=alange,ou=Users,dc=my-domain,dc=com" -w wrong -x -b "" -s base
-ldapsearch -h localhost -p 10389 -D "uid=alange,ou=Users,dc=my-domain,dc=com" -w wrong -x -b "" -s base
-ldapsearch -h localhost -p 10389 -D "uid=alange,ou=Users,dc=my-domain,dc=com" -w wrong -x -b "" -s base
+ldapsearch -h localhost -p 10389 -D "uid=alange,ou=Users,dc=Lockout,dc=Example,dc=com" -w wrong -x -b "" -s base
+ldapsearch -h localhost -p 10389 -D "uid=alange,ou=Users,dc=Lockout,dc=Example,dc=com" -w wrong -x -b "" -s base
+ldapsearch -h localhost -p 10389 -D "uid=alange,ou=Users,dc=Lockout,dc=Example,dc=com" -w wrong -x -b "" -s base
 
 Attempt bind operation with the correct password again, this should fail:
 
-ldapsearch -h localhost -p 10389 -D "uid=alange,ou=Users,dc=my-domain,dc=com" -w 4l4ng3 -x -b "" -s base
+ldapsearch -h localhost -p 10389 -D "uid=alange,ou=Users,dc=Lockout,dc=Example,dc=com" -w 4l4ng3 -x -b "" -s base
 
 Attempt bind operation with the correct password again, this should fail:
 
-ldapsearch -h localhost -p 10389 -D "uid=alange,ou=Users,dc=my-domain,dc=com" -w 4l4ng3 -x -b "" -s base
+ldapsearch -h localhost -p 10389 -D "uid=alange,ou=Users,dc=Lockout,dc=Example,dc=com" -w 4l4ng3 -x -b "" -s base
 
 LOCK MANAGEMENT VIA SCRIPT
 --------------------------
@@ -57,13 +57,13 @@ To view locked accounts:
 
 ./lockout.sh -D uid=admin,ou=system -w secret list lockout
 
-Account: uid=alange,ou=users,dc=my-domain,dc=com
-Counter: 1
+Account: uid=alange,ou=users,dc=lockout,dc=example,dc=com
+Counter: 3
 Timestamp: 2007-09-26 18:13:58
 
 To reset the account:
 
-./lockout.sh -D uid=admin,ou=system -w secret reset lockout "uid=alange,ou=users,dc=my-domain,dc=com"
+./lockout.sh -D uid=admin,ou=system -w secret reset lockout "uid=alange,ou=users,dc=lockout,dc=example,dc=com"
 
 LOCK MANAGEMENT VIA LDAP
 ------------------------
@@ -74,12 +74,12 @@ To view locked accounts:
 
 ldapsearch -h localhost -p 10389 -D uid=admin,ou=system -w -x -b "cn=lockout" -s one
 
-dn: account=uid=\alange\,ou=users\,dc=my-domain\,dc=com,cn=lockout
+dn: account=uid=\alange\,ou=users\,dc=lockout\,dc=example\,dc=com,cn=lockout
 objectClass: extensibleObject
-account: uid=alange,ou=users,dc=my-domain,dc=com
-counter: 1
+account: uid=alange,ou=users,dc=lockout,dc=example,dc=com
+counter: 3
 timestamp: 2007-09-26 18:13:58
 
 To reset the account:
 
-ldapdelete -h localhost -p 10389 -D uid=admin,ou=system -w -x "account=uid\=alange\,ou=users\,dc=my-domain\,dc=com,cn=lockout"
+ldapdelete -h localhost -p 10389 -D uid=admin,ou=system -w -x "account=uid\=alange\,ou=users\,dc=lockout\,dc=example\,dc=com,cn=lockout"

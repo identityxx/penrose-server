@@ -5,11 +5,15 @@
 
 <sources>
 
-  <source name="LDAP">
+  <source name="users">
     <connection-name>LDAP</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>dc=my-domain,dc=com</param-value>
+      <param-value>ou=Users,dc=my-domain,dc=com</param-value>
+    </parameter>
+    <parameter>
+      <param-name>newBaseDn</param-name>
+      <param-value>ou=Users,dc=Lockout,dc=Example,dc=com</param-value>
     </parameter>
   </source>
 

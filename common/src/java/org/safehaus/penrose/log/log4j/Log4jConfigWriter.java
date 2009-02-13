@@ -26,28 +26,16 @@ import java.io.Writer;
 import java.io.PrintWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
  */
 public class Log4jConfigWriter {
 
-
-    File file;
-
     public Log4jConfigWriter() {
     }
 
-    public Log4jConfigWriter(String filename) throws Exception {
-        this(new File(filename));
-    }
-
-    public Log4jConfigWriter(File file) throws Exception {
-        this.file = file;
-    }
-
-    public void write(Log4jConfig config) throws Exception {
+    public void write(File file, Log4jConfig config) throws Exception {
 
         Element element = createConfigElement(config);
         
@@ -64,9 +52,7 @@ public class Log4jConfigWriter {
 
         XMLWriter writer = new XMLWriter(out, format);
         writer.startDocument();
-/*
-        writer.startDTD("log4j:configuration", null, "log4j.dtd");
-*/
+
         writer.startDTD(
                 "log4j:configuration",
                 "-//Apache//DTD Log4j 1.2//EN",
@@ -88,20 +74,18 @@ public class Log4jConfigWriter {
         element.addAttribute("xmlns:log4j", "http://jakarta.apache.org/log4j/");
         if (config.isDebug()) element.addAttribute("debug", "true");
 
-        for (Iterator i=config.getAppenderConfigs().iterator(); i.hasNext(); ) {
-            AppenderConfig appenderConfig = (AppenderConfig)i.next();
+        for (AppenderConfig appenderConfig : config.getAppenderConfigs()) {
             Element appenderElement = createAppenderElement(appenderConfig);
             element.add(appenderElement);
         }
 
-        for (Iterator i=config.getLoggerConfigs().iterator(); i.hasNext(); ) {
-            LoggerConfig loggerConfig = (LoggerConfig)i.next();
+        for (LoggerConfig loggerConfig : config.getLoggerConfigs()) {
             Element loggerElement = createLoggerElement(loggerConfig);
             element.add(loggerElement);
         }
 
-        if (config.getRootConfig() != null) {
-            Element rootElement = createRootElement(config.getRootConfig());
+        if (config.getRootLoggerConfig() != null) {
+            Element rootElement = createRootElement(config.getRootLoggerConfig());
             element.add(rootElement);
         }
 
@@ -114,6 +98,13 @@ public class Log4jConfigWriter {
 
         element.addAttribute("name", appenderConfig.getName());
         element.addAttribute("class", appenderConfig.getAppenderClass());
+
+        for (String name : appenderConfig.getParameterNames()) {
+            String value = appenderConfig.getParameter(name);
+
+            Element parameterElement = createParameterElement(name, value);
+            element.add(parameterElement);
+        }
 
         if (appenderConfig.getLayoutConfig() != null) {
             Element layoutElement = createLayoutElement(appenderConfig.getLayoutConfig());
@@ -129,10 +120,9 @@ public class Log4jConfigWriter {
 
         element.addAttribute("class", layoutConfig.getLayoutClass());
 
-        for (Iterator i=layoutConfig.getParameterNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : layoutConfig.getParameterNames()) {
             String value = layoutConfig.getParameter(name);
-            
+
             Element parameterElement = createParameterElement(name, value);
             element.add(parameterElement);
         }
@@ -155,7 +145,7 @@ public class Log4jConfigWriter {
         Element element = new DefaultElement("logger");
 
         element.addAttribute("name", loggerConfig.getName());
-        if (!loggerConfig.isAdditivity()) element.addAttribute("additivity", "false");
+        if (!loggerConfig.getAdditivity()) element.addAttribute("additivity", "false");
 
         if (loggerConfig.getLevel() != null) {
             Element levelElement = new DefaultElement("level");
@@ -163,9 +153,7 @@ public class Log4jConfigWriter {
             element.add(levelElement);
         }
 
-        for (Iterator i=loggerConfig.getAppenderNames().iterator(); i.hasNext(); ) {
-            String appenderName = (String)i.next();
-
+        for (String appenderName : loggerConfig.getAppenderNames()) {
             Element appenderRefElement = new DefaultElement("appender-ref");
             appenderRefElement.addAttribute("ref", appenderName);
 
@@ -175,7 +163,7 @@ public class Log4jConfigWriter {
         return element;
     }
 
-    public Element createRootElement(RootConfig rootConfig) {
+    public Element createRootElement(RootLoggerConfig rootConfig) {
 
         Element element = new DefaultElement("root");
 
@@ -185,9 +173,7 @@ public class Log4jConfigWriter {
             element.add(levelElement);
         }
 
-        for (Iterator i=rootConfig.getAppenderNames().iterator(); i.hasNext(); ) {
-            String appenderName = (String)i.next();
-
+        for (String appenderName : rootConfig.getAppenderNames()) {
             Element appenderRefElement = new DefaultElement("appender-ref");
             appenderRefElement.addAttribute("ref", appenderName);
 
