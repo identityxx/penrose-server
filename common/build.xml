@@ -75,9 +75,15 @@
     <target name="javacc" depends="init">
         <attrib file="src/java/org/safehaus/penrose/filter/*.java" readonly="false"/>
         <javacc
-            target="../common/src/java/org/safehaus/penrose/filter/FilterParser.jj"
+            target="src/java/org/safehaus/penrose/filter/FilterParser.jj"
             javacchome="../lib/javacc"
             outputdirectory="src/java/org/safehaus/penrose/filter"
+        />
+        <attrib file="src/java/org/safehaus/penrose/schema/*.java" readonly="false"/>
+        <javacc
+            target="src/java/org/safehaus/penrose/schema/LDAPv3Schema.jj"
+            javacchome="../lib/javacc"
+            outputdirectory="src/java/org/safehaus/penrose/schema"
         />
     </target>
 

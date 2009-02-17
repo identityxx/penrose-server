@@ -26,23 +26,6 @@ import java.util.*;
  */
 public class LDAPSource extends Source {
 
-    public final static String BASE_DN           = "baseDn";
-    public final static String NEW_BASE_DN       = "newBaseDn";
-    
-    public final static String SCOPE             = "scope";
-    public final static String FILTER            = "filter";
-    public final static String OBJECT_CLASSES    = "objectClasses";
-
-    public final static String SIZE_LIMIT        = "sizeLimit";
-    public final static String TIME_LIMIT        = "timeLimit";
-
-    public final static String ATTRIBUTES        = "attributes";
-
-    public final static String AUTHENTICATION          = "authentication";
-    public final static String AUTHENTICATION_DEFAULT  = "default";
-    public final static String AUTHENTICATION_FULL     = "full";
-    public final static String AUTHENTICATION_DISABLED = "disabled";
-
     LDAPConnection connection;
 
     DN sourceBaseDn;
@@ -63,36 +46,36 @@ public class LDAPSource extends Source {
     public void init() throws Exception {
         connection = (LDAPConnection)getConnection();
 
-        String value = getParameter(BASE_DN);
+        String value = getParameter(LDAP.BASE_DN);
         sourceBaseDn = new DN(value);
         if (debug) log.debug("Base DN: "+sourceBaseDn);
 
-        value = getParameter(NEW_BASE_DN);
+        value = getParameter(LDAP.NEW_BASE_DN);
         newSourceBaseDn = value == null ? null : new DN(value);
         if (debug) log.debug("New Base DN: "+newSourceBaseDn);
 
-        sourceScope = getScope(getParameter(SCOPE));
+        sourceScope = getScope(getParameter(LDAP.SCOPE));
         if (debug) log.debug("Scope: "+sourceScope);
 
-        sourceFilter = FilterTool.parseFilter(getParameter(FILTER));
+        sourceFilter = FilterTool.parseFilter(getParameter(LDAP.FILTER));
         if (debug) log.debug("Filter: "+sourceFilter);
 
-        objectClasses = getParameter(OBJECT_CLASSES);
+        objectClasses = getParameter(LDAP.OBJECT_CLASSES);
         if (debug) log.debug("Object classes: "+objectClasses);
 
-        String s = getParameter(SIZE_LIMIT);
+        String s = getParameter(LDAP.SIZE_LIMIT);
         if (s != null) {
             sourceSizeLimit = Long.parseLong(s);
             if (debug) log.debug("Size Limit: "+sourceSizeLimit);
         }
 
-        s = getParameter(TIME_LIMIT);
+        s = getParameter(LDAP.TIME_LIMIT);
         if (s != null) {
             sourceTimeLimit = Long.parseLong(s);
             if (debug) log.debug("Time Limit: "+sourceTimeLimit);
         }
 
-        s = getParameter(ATTRIBUTES);
+        s = getParameter(LDAP.ATTRIBUTES);
         if (s != null) {
             StringTokenizer st = new StringTokenizer(s, ", ");
             while (st.hasMoreTokens()) {
@@ -239,10 +222,10 @@ public class LDAPSource extends Source {
 
         if (debug) log.debug("Binding as "+bindDn+".");
 
-        String authentication = getParameter(AUTHENTICATION);
+        String authentication = getParameter(LDAP.AUTHENTICATION);
         //if (debug) log.debug("Authentication: "+authentication);
 
-        if (AUTHENTICATION_DISABLED.equals(authentication)) {
+        if (LDAP.AUTHENTICATION_DISABLED.equals(authentication)) {
             if (debug) log.debug("Pass-Through Authentication is disabled.");
             throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
         }
@@ -1061,8 +1044,8 @@ public class LDAPSource extends Source {
 
         Source source = sourceRef.getSource();
 
-        DN sourceBaseDn = new DN(source.getParameter(BASE_DN));
-        String scope = source.getParameter(SCOPE);
+        DN sourceBaseDn = new DN(source.getParameter(LDAP.BASE_DN));
+        String scope = source.getParameter(LDAP.SCOPE);
 
         SearchRequest newRequest = (SearchRequest)request.clone();
 
@@ -1274,13 +1257,13 @@ public class LDAPSource extends Source {
 
         SearchRequest request = new SearchRequest();
 
-        String baseDn = getParameter(BASE_DN);
+        String baseDn = getParameter(LDAP.BASE_DN);
         request.setDn(baseDn);
 
-        String scope = getParameter(SCOPE);
+        String scope = getParameter(LDAP.SCOPE);
         request.setScope(getScope(scope));
 
-        String filter = getParameter(FILTER);
+        String filter = getParameter(LDAP.FILTER);
         request.setFilter(filter);
 
         request.setAttributes(new String[] { "dn" });

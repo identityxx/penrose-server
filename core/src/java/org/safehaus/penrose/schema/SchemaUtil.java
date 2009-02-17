@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.StringReader;
-import java.util.Collection;
 
 /**
  * @author Endi Sukma Dewata
@@ -93,8 +92,8 @@ public class SchemaUtil {
         try {
             line = "attributetype "+line;
             SchemaParser parser = new SchemaParser(new StringReader(line));
-            Collection schema = parser.parse();
-            return (AttributeType)schema.iterator().next();
+            Schema schema = parser.parse();
+            return schema.getAttributeTypes().iterator().next();
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -106,8 +105,8 @@ public class SchemaUtil {
         try {
             line = "objectclass "+line;
             SchemaParser parser = new SchemaParser(new StringReader(line));
-            Collection schema = parser.parse();
-            return (ObjectClass)schema.iterator().next();
+            Schema schema = parser.parse();
+            return schema.getObjectClasses().iterator().next();
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);

@@ -2,7 +2,6 @@ package org.safehaus.penrose.jdbc.connection;
 
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.jdbc.*;
-import org.safehaus.penrose.jdbc.source.JDBCSource;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.source.SourceConfig;
@@ -350,7 +349,7 @@ public class JDBCStatementBuilder {
 
         StringBuilder sb = new StringBuilder();
 
-        String catalog = sourceConfig.getParameter(JDBCSource.CATALOG);
+        String catalog = sourceConfig.getParameter(JDBC.CATALOG);
         if (catalog != null) {
             if (quote != null) sb.append(quote);
             sb.append(catalog);
@@ -358,7 +357,7 @@ public class JDBCStatementBuilder {
             sb.append(".");
         }
 
-        String schema = sourceConfig.getParameter(JDBCSource.SCHEMA);
+        String schema = sourceConfig.getParameter(JDBC.SCHEMA);
         if (schema != null) {
             if (quote != null) sb.append(quote);
             sb.append(schema);
@@ -366,7 +365,7 @@ public class JDBCStatementBuilder {
             sb.append(".");
         }
 
-        String table = sourceConfig.getParameter(JDBCSource.TABLE);
+        String table = sourceConfig.getParameter(JDBC.TABLE);
         if (quote != null) sb.append(quote);
         sb.append(table);
         if (quote != null) sb.append(quote);

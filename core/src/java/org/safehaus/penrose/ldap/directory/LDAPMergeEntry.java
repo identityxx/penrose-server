@@ -6,7 +6,6 @@ import org.safehaus.penrose.directory.EntrySearchOperation;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.ldap.source.LDAPSource;
 import org.safehaus.penrose.pipeline.Pipeline;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.operation.SearchOperation;
@@ -78,7 +77,7 @@ public class LDAPMergeEntry extends DynamicEntry {
         DN origDn = new DN(dn);
         log.debug("Orig DN: "+origDn);
 
-        DN sourceBaseDn = new DN(sourceRef.getSource().getParameter(LDAPSource.BASE_DN));
+        DN sourceBaseDn = new DN(sourceRef.getSource().getParameter(LDAP.BASE_DN));
         log.debug("Source Base DN: "+sourceBaseDn);
 
         DN newBindDn = origDn.getPrefix(sourceBaseDn);

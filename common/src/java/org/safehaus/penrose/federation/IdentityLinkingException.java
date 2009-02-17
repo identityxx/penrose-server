@@ -1,4 +1,4 @@
-package org.safehaus.penrose.federation.module;
+package org.safehaus.penrose.federation;
 
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.DN;

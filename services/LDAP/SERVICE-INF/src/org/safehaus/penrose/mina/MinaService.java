@@ -7,6 +7,7 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.attributeSyntax.AttributeSyntax;
+import org.safehaus.penrose.schema.attributeSyntax.AttributeSyntaxUtil;
 import org.safehaus.penrose.ldap.LDAPService;
 import org.safehaus.penrose.ldapbackend.mina.MinaHandler;
 import org.apache.mina.transport.socket.nio.SocketAcceptor;
@@ -70,7 +71,7 @@ public class MinaService extends LDAPService {
             }
             //log.debug("OID: "+oid);
 
-            AttributeSyntax as = AttributeSyntax.getAttributeSyntax(oid);
+            AttributeSyntax as = schemaManager.getAttributeSyntax(oid);
             if (as == null) {
                 //log.debug("Attribute syntax "+oid+" not found.");
                 continue;

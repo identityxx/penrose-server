@@ -19,7 +19,6 @@
 package org.safehaus.penrose.schema;
 
 import java.util.*;
-import org.safehaus.penrose.config.*;
 
 /**
  * LDAP Schema Parser.
@@ -83,14 +82,14 @@ import org.safehaus.penrose.config.*;
  */
 public class SchemaParser implements SchemaParserConstants {
 
-  List schema = new ArrayList();
+  Schema schema = new Schema();
   List errors = new ArrayList();
 
   /**
    * Start parsing
    * @return the list of schema
    */
-  public List parse() throws ParseException {
+  public Schema parse() throws ParseException {
     try {
       Schema();
     } catch (ParseException ex) {
@@ -101,7 +100,7 @@ public class SchemaParser implements SchemaParserConstants {
   /**
    * Get the list of schema from parsing
    */
-  public List getSchema() {
+  public Schema getSchema() {
     return this.schema;
   }
 
@@ -120,10 +119,10 @@ public class SchemaParser implements SchemaParserConstants {
       ;
       if (jj_2_1(2147483647)) {
         at = AttributeType();
-                                       schema.add(at);
+                                       schema.addAttributeType(at);
       } else if (jj_2_2(2147483647)) {
         oc = ObjectClass();
-                                     schema.add(oc);
+                                     schema.addObjectClass(oc);
       } else {
         jj_consume_token(-1);
         throw new ParseException();
@@ -813,6 +812,11 @@ public class SchemaParser implements SchemaParserConstants {
     finally { jj_save(46, xla); }
   }
 
+  final private boolean jj_3_25() {
+    if (jj_scan_token(AUXILIARY)) return true;
+    return false;
+  }
+
   final private boolean jj_3_24() {
     if (jj_scan_token(STRUCTURAL)) return true;
     return false;
@@ -1241,11 +1245,6 @@ public class SchemaParser implements SchemaParserConstants {
   final private boolean jj_3_26() {
     if (jj_scan_token(MUST)) return true;
     if (jj_3R_13()) return true;
-    return false;
-  }
-
-  final private boolean jj_3_25() {
-    if (jj_scan_token(AUXILIARY)) return true;
     return false;
   }
 

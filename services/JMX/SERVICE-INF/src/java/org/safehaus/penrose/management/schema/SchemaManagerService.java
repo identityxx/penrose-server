@@ -3,6 +3,7 @@ package org.safehaus.penrose.management.schema;
 import org.safehaus.penrose.management.BaseService;
 import org.safehaus.penrose.management.PenroseJMXService;
 import org.safehaus.penrose.schema.*;
+import org.safehaus.penrose.schema.attributeSyntax.AttributeSyntax;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -108,6 +109,10 @@ public class SchemaManagerService extends BaseService implements SchemaManagerSe
 
     public Schema getMergedSchema() throws Exception {
         return schemaManager.getSchema();
+    }
+
+    public AttributeSyntax getAttributeSyntax(String oid) {
+        return schemaManager.getAttributeSyntax(oid);
     }
 
     public SchemaService getSchemaService(String schemaName) throws Exception {

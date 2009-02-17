@@ -21,29 +21,6 @@ import java.sql.ResultSet;
  */
 public class JDBCSource extends Source {
 
-    public final static String BASE_DN      = "baseDn";
-    public final static String CATALOG      = "catalog";
-    public final static String SCHEMA       = "schema";
-    public final static String TABLE        = "table";
-    public final static String FILTER       = "filter";
-
-    public final static String SIZE_LIMIT   = "sizeLimit";
-    public final static String CREATE       = "create";
-
-    public final static String AUTHENTICATION          = "authentication";
-    public final static String AUTHENTICATION_DEFAULT  = "default";
-    public final static String AUTHENTICATION_FULL     = "full";
-    public final static String AUTHENTICATION_DISABLED = "disabled";
-
-    public final static String ADD          = "add";
-    public final static String BIND         = "bind";
-    public final static String COMPARE      = "compare";
-    public final static String DELETE       = "delete";
-    public final static String MODIFY       = "modify";
-    public final static String MODRDN       = "modrdn";
-    public final static String SEARCH       = "search";
-    public final static String UNBIND       = "unbind";
-
     JDBCConnection connection;
 
     String table;
@@ -59,10 +36,10 @@ public class JDBCSource extends Source {
     public void init() throws Exception {
         connection = (JDBCConnection)getConnection();
 
-        table = getParameter(TABLE);
-        filter = getParameter(FILTER);
+        table = getParameter(JDBC.TABLE);
+        filter = getParameter(JDBC.FILTER);
         
-        sourceBaseDn = getParameter(BASE_DN);
+        sourceBaseDn = getParameter(JDBC.BASE_DN);
 
         for (String name : getParameterNames()) {
             int i = name.indexOf('(');
@@ -100,7 +77,7 @@ public class JDBCSource extends Source {
             stmts.put(parameters, stmt);
         }
 
-        boolean create = Boolean.parseBoolean(getParameter(CREATE));
+        boolean create = Boolean.parseBoolean(getParameter(JDBC.CREATE));
         if (create) {
             try {
                 create();
@@ -678,7 +655,7 @@ public class JDBCSource extends Source {
         //statement.addSource(entrySource.getAlias(), entrySource.getSource().getPartition().getName(), entrySource.getSource().getName());
         statement.setFilter(filter);
 
-        String where = getParameter(FILTER);
+        String where = getParameter(JDBC.FILTER);
         if (where != null) {
             statement.setWhereClause(where);
         }
@@ -705,7 +682,7 @@ public class JDBCSource extends Source {
             }
         };
 
-        String sizeLimit = getParameter(SIZE_LIMIT);
+        String sizeLimit = getParameter(JDBC.SIZE_LIMIT);
         if (sizeLimit != null) {
             queryResponse.setSizeLimit(Long.parseLong(sizeLimit));
         }
@@ -868,7 +845,7 @@ public class JDBCSource extends Source {
             }
         };
 
-        String sizeLimit = getParameter(SIZE_LIMIT);
+        String sizeLimit = getParameter(JDBC.SIZE_LIMIT);
 
         if (sizeLimit != null) {
             queryResponse.setSizeLimit(Long.parseLong(sizeLimit));

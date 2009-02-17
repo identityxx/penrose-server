@@ -8,6 +8,7 @@ import org.safehaus.penrose.partition.PartitionClient;
 import org.safehaus.penrose.partition.PartitionManagerClient;
 import org.safehaus.penrose.client.PenroseClient;
 import org.safehaus.penrose.client.BaseClient;
+import org.safehaus.penrose.ldap.DN;
 import org.apache.log4j.Level;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.PatternLayout;
@@ -65,6 +66,14 @@ public class ConnectionManagerClient extends BaseClient implements ConnectionMan
     public void validateConnection(ConnectionConfig connectionConfig) throws Exception {
         invoke(
                 "validateConnection",
+                new Object[] { connectionConfig },
+                new String[] { ConnectionConfig.class.getName() }
+        );
+    }
+
+    public Collection<DN> getNamingContexts(ConnectionConfig connectionConfig) throws Exception {
+        return (Collection<DN>)invoke(
+                "getNamingContexts",
                 new Object[] { connectionConfig },
                 new String[] { ConnectionConfig.class.getName() }
         );

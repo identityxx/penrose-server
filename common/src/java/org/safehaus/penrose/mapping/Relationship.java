@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose.mapping;
 
-import java.io.ByteArrayInputStream;
 import java.util.*;
 
 import org.slf4j.LoggerFactory;

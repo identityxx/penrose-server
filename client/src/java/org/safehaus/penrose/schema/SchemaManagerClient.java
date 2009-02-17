@@ -6,6 +6,7 @@ import org.safehaus.penrose.schema.SchemaManagerServiceMBean;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.AttributeType;
+import org.safehaus.penrose.schema.attributeSyntax.AttributeSyntax;
 
 import java.util.Collection;
 
@@ -120,5 +121,13 @@ public class SchemaManagerClient extends BaseClient implements SchemaManagerServ
 
     public Schema getMergedSchema() throws Exception {
         return (Schema)getAttribute("MergedSchema");
+    }
+
+    public AttributeSyntax getAttributeSyntax(String oid) throws Exception {
+        return (AttributeSyntax) invoke(
+                "getAttributeSyntax",
+                new Object[] { oid },
+                new String[] { String.class.getName() }
+        );
     }
 }

@@ -27,9 +27,9 @@ import java.io.InputStreamReader;
 /**
  * @author Endi S. Dewata
  */
-public class AttributeSyntax {
+public class AttributeSyntaxUtil {
 
-    public static Logger log = LoggerFactory.getLogger(AttributeSyntax.class);
+    public static Logger log = LoggerFactory.getLogger(AttributeSyntaxUtil.class);
     public static boolean debug = log.isDebugEnabled();
 
     public static Map<String,AttributeSyntax> attributeSyntaxes = new TreeMap<String,AttributeSyntax>();
@@ -42,7 +42,7 @@ public class AttributeSyntax {
                 //log.debug("Attribute syntaxes:");
             //}
 
-            ClassLoader cl = AttributeSyntax.class.getClassLoader();
+            ClassLoader cl = AttributeSyntaxUtil.class.getClassLoader();
             BufferedReader in = new BufferedReader(
                     new InputStreamReader(
                         cl.getResourceAsStream(
@@ -86,42 +86,8 @@ public class AttributeSyntax {
     public static Collection getAttributeSyntaxes() {
         return attributeSyntaxes.values();
     }
-    
+
     public static AttributeSyntax getAttributeSyntax(String oid) {
         return attributeSyntaxes.get(oid);
-    }
-
-    public String oid;
-    public String description;
-    public boolean humanReadable;
-
-    public AttributeSyntax(String oid, String description, boolean humanReadable) {
-        this.oid = oid;
-        this.description = description;
-        this.humanReadable = humanReadable;
-    }
-
-    public String getOid() {
-        return oid;
-    }
-
-    public void setOid(String oid) {
-        this.oid = oid;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public boolean isHumanReadable() {
-        return humanReadable;
-    }
-
-    public void setHumanReadable(boolean humanReadable) {
-        this.humanReadable = humanReadable;
     }
 }

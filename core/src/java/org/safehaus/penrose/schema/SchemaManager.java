@@ -18,6 +18,8 @@
 package org.safehaus.penrose.schema;
 
 import org.safehaus.penrose.PenroseConfig;
+import org.safehaus.penrose.schema.attributeSyntax.AttributeSyntax;
+import org.safehaus.penrose.schema.attributeSyntax.AttributeSyntaxUtil;
 import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.directory.EntryConfig;
 import org.safehaus.penrose.ldap.*;
@@ -367,5 +369,9 @@ public class SchemaManager {
     public boolean isOperational(String attributeName) {
         AttributeType attributeType = getAttributeType(attributeName);
         return attributeType != null && attributeType.isOperational();
+    }
+
+    public AttributeSyntax getAttributeSyntax(String oid) {
+        return AttributeSyntaxUtil.getAttributeSyntax(oid);
     }
 }

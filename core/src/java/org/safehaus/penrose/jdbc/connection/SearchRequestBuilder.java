@@ -7,7 +7,7 @@ import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.ldap.SourceAttributes;
 import org.safehaus.penrose.jdbc.SelectStatement;
 import org.safehaus.penrose.jdbc.JoinClause;
-import org.safehaus.penrose.jdbc.source.JDBCSource;
+import org.safehaus.penrose.jdbc.JDBC;
 import org.safehaus.penrose.directory.EntryField;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.filter.Filter;
@@ -172,10 +172,10 @@ public class SearchRequestBuilder extends RequestBuilder {
 
         if (debug) log.debug(" - Join filter:");
 
-        String table = sourceRef.getSource().getParameter(JDBCSource.TABLE);
+        String table = sourceRef.getSource().getParameter(JDBC.TABLE);
 
-        String sourceFilter = sourceRef.getSource().getParameter(JDBCSource.FILTER);
-        String sourceMappingFilter = sourceRef.getParameter(JDBCSource.FILTER);
+        String sourceFilter = sourceRef.getSource().getParameter(JDBC.FILTER);
+        String sourceMappingFilter = sourceRef.getParameter(JDBC.FILTER);
 
         if (sourceFilter == null && sourceMappingFilter == null) {
             return null;
@@ -229,11 +229,11 @@ public class SearchRequestBuilder extends RequestBuilder {
             statement.addSource(sourceRef.getAlias(), sourceRef.getSource().getPartition().getName(), sourceRef.getSource().getName());
 
             if (sourceCounter == 0) { // join previous source
-                String where = sourceRef.getParameter(JDBCSource.FILTER);
+                String where = sourceRef.getParameter(JDBC.FILTER);
                 if (where != null) filters.add(where);
 
                 Source source = sourceRef.getSource();
-                where = source.getParameter(JDBCSource.FILTER);
+                where = source.getParameter(JDBC.FILTER);
                 if (where != null) {
                     where = where.replaceAll(source.getName()+".", alias+".");
                     filters.add(where);

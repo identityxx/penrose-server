@@ -36,6 +36,9 @@ public class Schema implements Serializable, Cloneable {
     protected Set<ObjectClass> objectClasses = new LinkedHashSet<ObjectClass>();
     protected Map<String,ObjectClass> objectClassesByNameOrOid = new TreeMap<String,ObjectClass>();
 
+    public Schema() {
+    }
+
     public Schema(String name) {
         this.name = name;
     }

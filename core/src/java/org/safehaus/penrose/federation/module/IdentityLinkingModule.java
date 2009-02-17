@@ -30,6 +30,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.federation.IdentityLinkingResult;
 import org.safehaus.penrose.federation.IdentityLinkingMBean;
+import org.safehaus.penrose.federation.IdentityLinkingException;
 import org.safehaus.penrose.source.Source;
 
 import java.util.ArrayList;

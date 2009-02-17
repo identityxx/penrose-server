@@ -31,11 +31,6 @@ public class JDBCClient {
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
 
-    public final static String DRIVER       = "driver";
-    public final static String URL          = "url";
-    public final static String USER         = "user";
-    public final static String PASSWORD     = "password";
-
     public JDBCConnectionFactory connectionFactory;
     public Connection connection;
 

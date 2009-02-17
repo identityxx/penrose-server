@@ -10,6 +10,7 @@ import org.safehaus.penrose.partition.PartitionContext;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.nis.connection.NISConnection;
 import org.safehaus.penrose.nis.NISClient;
+import org.safehaus.penrose.nis.NIS;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -20,12 +21,6 @@ import java.util.StringTokenizer;
  */
 public class NISSource extends Source {
 
-    public final static String BASE           = "base";
-    public final static String SCOPE          = "scope";
-    public final static String FILTER         = "filter";
-    public final static String OBJECT_CLASSES = "objectClasses";
-    public final static String PAM            = "pam";
-
     public NISConnection connection;
 
     public String base;
@@ -34,8 +29,8 @@ public class NISSource extends Source {
     public void init() throws Exception {
         connection = (NISConnection)getConnection();
 
-        base = getParameter(BASE);
-        type = getParameter(OBJECT_CLASSES);
+        base = getParameter(NIS.BASE);
+        type = getParameter(NIS.OBJECT_CLASSES);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -48,7 +43,7 @@ public class NISSource extends Source {
             BindResponse response
     ) throws Exception {
 
-        String serviceName = getParameter(PAM);
+        String serviceName = getParameter(NIS.PAM);
 
         if (serviceName == null || serviceName.equals("")) {
             log.error("Missing PAM service name.");
@@ -166,7 +161,7 @@ public class NISSource extends Source {
 
         if (automountMapName == null) {
 
-            String base = getParameter(BASE);
+            String base = getParameter(NIS.BASE);
 
             Collection<String> names = getAutomountMapNames(base);
 /*
@@ -303,7 +298,7 @@ public class NISSource extends Source {
 
         if (automountMapName == null) {
 
-            String base = getParameter(BASE);
+            String base = getParameter(NIS.BASE);
             getAutomountEntries(base, null, response);
 /*
             Collection<SearchResult> results = getAutomountMapNames(base);

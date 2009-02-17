@@ -6,7 +6,7 @@ import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.directory.EntrySource;
 import org.safehaus.penrose.directory.Directory;
 import org.safehaus.penrose.directory.Entry;
-import org.safehaus.penrose.jdbc.source.JDBCSource;
+import org.safehaus.penrose.jdbc.JDBC;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.operation.SearchOperation;
@@ -76,7 +76,7 @@ public class JDBCSyncJob extends Job {
                 Source tmp = createTmpTarget(target);
                 tmpTargets.put(tmp.getName(), tmp);
 
-                log.debug(" - "+sourceName+": "+target.getParameter(JDBCSource.TABLE)+" => "+tmp.getParameter(JDBCSource.TABLE));
+                log.debug(" - "+sourceName+": "+target.getParameter(JDBC.TABLE)+" => "+tmp.getParameter(JDBC.TABLE));
             }
         }
 
@@ -107,10 +107,10 @@ public class JDBCSyncJob extends Job {
     }
 
     public Source createTmpTarget(Source target) throws Exception {
-        String tableName = target.getParameter(JDBCSource.TABLE);
+        String tableName = target.getParameter(JDBC.TABLE);
 
         Source tmp = (Source)target.clone();
-        tmp.setParameter(JDBCSource.TABLE, tableName+"_tmp");
+        tmp.setParameter(JDBC.TABLE, tableName+"_tmp");
 
         return tmp;
     }
@@ -132,14 +132,14 @@ public class JDBCSyncJob extends Job {
 
         for (EntrySource sourceRef : entry.getLocalSources()) {
             Source source = sourceRef.getSource();
-            log.debug(" - "+sourceRef.getAlias()+": "+source.getParameter(JDBCSource.TABLE));
+            log.debug(" - "+sourceRef.getAlias()+": "+source.getParameter(JDBC.TABLE));
         }
 
         log.debug("New entry "+tmpEntry.getDn());
 
         for (EntrySource sourceRef : tmpEntry.getLocalSources()) {
             Source source = sourceRef.getSource();
-            log.debug(" - "+sourceRef.getAlias()+": "+source.getParameter(JDBCSource.TABLE));
+            log.debug(" - "+sourceRef.getAlias()+": "+source.getParameter(JDBC.TABLE));
         }
 
         tmpEntry.removeChildren();
