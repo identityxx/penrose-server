@@ -137,7 +137,11 @@ public class SchemaUtil {
 
         SearchResponse response = new SearchResponse();
 
-        client.search(request, response);
+        try {
+            client.search(request, response);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
 
         while (response.hasNext()) {
             SearchResult sr = response.next();
@@ -168,7 +172,11 @@ public class SchemaUtil {
 
         SearchResponse response = new SearchResponse();
 
-        client.search(request, response);
+        try {
+            client.search(request, response);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
 
         while (response.hasNext()) {
             SearchResult sr = response.next();
@@ -198,5 +206,4 @@ public class SchemaUtil {
             schema.addObjectClass(oc);
         }
     }
-
 }

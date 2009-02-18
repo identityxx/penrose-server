@@ -1,6 +1,5 @@
 package org.safehaus.penrose.management.ldap;
 
-import org.safehaus.penrose.connection.*;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.management.PenroseJMXService;
 import org.safehaus.penrose.management.connection.ConnectionService;
@@ -62,12 +61,19 @@ public class LDAPConnectionService extends ConnectionService implements LDAPConn
             LDAPConnection connection = (LDAPConnection)getConnection();
             client = connection.getClient(session);
             client.search(request, response);
-            return response;
 
+            int rc = response.waitFor();
+            log.debug("RC: "+rc);
+
+        } catch (Exception e) {
+            response.setException(e);
+            
         } finally {
             if (client != null) try { client.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
             if (session != null) try { session.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
         }
+
+        return response;
     }
 
     public Schema getSchema() throws Exception {
