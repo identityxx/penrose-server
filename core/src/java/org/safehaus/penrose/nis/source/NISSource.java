@@ -12,9 +12,7 @@ import org.safehaus.penrose.nis.connection.NISConnection;
 import org.safehaus.penrose.nis.NISClient;
 import org.safehaus.penrose.nis.NIS;
 
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * @author Endi Sukma Dewata
@@ -84,16 +82,19 @@ public class NISSource extends Source {
             log.debug(TextUtil.displaySeparator(80));
         }
 
-        PartitionContext partitionContext = partition.getPartitionContext();
-        PenroseContext penroseContext = partitionContext.getPenroseContext();
-
-        final FilterEvaluator filterEvaluator = penroseContext.getFilterEvaluator();
+        final Map<DN,SearchResult> entries = new LinkedHashMap<DN,SearchResult>();
 
         SearchResponse newResponse = new SearchResponse() {
             public void add(SearchResult result) throws Exception {
-                Attributes attributes = result.getAttributes();
-                if (!filterEvaluator.eval(attributes, filter)) return;
-                response.add(result);
+                SearchResult sr = entries.get(result.getDn()); // merge
+                if (sr == null) {
+                    entries.put(result.getDn(), result);
+                } else {
+                    sr.getAttributes().add(result.getAttributes());
+                }
+            }
+            public void close() throws Exception {
+                // ignore
             }
         };
 
@@ -132,6 +133,17 @@ public class NISSource extends Source {
                 if (debug) log.debug("Searching all entries.");
 
                 client.list(base, type, newResponse);
+            }
+
+            PartitionContext partitionContext = partition.getPartitionContext();
+            PenroseContext penroseContext = partitionContext.getPenroseContext();
+
+            final FilterEvaluator filterEvaluator = penroseContext.getFilterEvaluator();
+            for (SearchResult result : entries.values()) {
+                Attributes attributes = result.getAttributes();
+                if (!filterEvaluator.eval(attributes, filter)) return;
+
+                response.add(result);
             }
 
         } finally {
