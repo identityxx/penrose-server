@@ -349,11 +349,13 @@ public abstract class NISClient {
         attributes.setValue("ipServicePort", tokens[0]);
         attributes.setValue("ipServiceProtocol", tokens[1]);
 
-        attributes.setValue("primaryKey.ipServicePort", tokens[0]);
-        attributes.setValue("primaryKey.ipServiceProtocol", tokens[1]);
+        //attributes.setValue("primaryKey.ipServicePort", tokens[0]);
+        //attributes.setValue("primaryKey.ipServiceProtocol", tokens[1]);
+        attributes.setValue("primaryKey.name", name);
 
-        rb.set("ipServicePort", tokens[0]);
-        rb.set("ipServiceProtocol", tokens[1]);
+        //rb.set("ipServicePort", tokens[0]);
+        //rb.set("ipServiceProtocol", tokens[1]);
+        rb.set("name", name);
 
         while (st.hasMoreTokens()) {
             cn = st.nextToken();

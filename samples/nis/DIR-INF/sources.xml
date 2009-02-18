@@ -106,7 +106,7 @@
     </parameter>
     <parameter>
       <param-name>base</param-name>
-      <param-value>rpc</param-value>
+      <param-value>rpc.byname</param-value>
     </parameter>
   </source>
 
@@ -137,7 +137,7 @@
     </parameter>
     <parameter>
       <param-name>base</param-name>
-      <param-value>protocols.bynumber</param-value>
+      <param-value>protocols.byname</param-value>
     </parameter>
   </source>
 
