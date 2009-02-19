@@ -58,10 +58,9 @@
 
   <source name="services">
     <connection-name>NIS</connection-name>
-    <field name="name" primaryKey="true"/>
     <field name="cn"/>
-    <field name="ipServicePort"/>
-    <field name="ipServiceProtocol"/>
+    <field name="ipServicePort" primaryKey="true"/>
+    <field name="ipServiceProtocol" primaryKey="true"/>
     <field name="description"/>
     <parameter>
       <param-name>objectClasses</param-name>

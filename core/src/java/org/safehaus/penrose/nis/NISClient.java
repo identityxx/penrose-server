@@ -340,8 +340,6 @@ public abstract class NISClient {
 
         StringTokenizer st = new StringTokenizer(line, "\t ");
 
-        attributes.setValue("name", name);
-
         String cn = st.nextToken();
         attributes.setValue("cn", cn);
 
@@ -351,11 +349,9 @@ public abstract class NISClient {
 
         attributes.setValue("primaryKey.ipServicePort", tokens[0]);
         attributes.setValue("primaryKey.ipServiceProtocol", tokens[1]);
-        //attributes.setValue("primaryKey.name", name);
 
         rb.set("ipServicePort", tokens[0]);
         rb.set("ipServiceProtocol", tokens[1]);
-        //rb.set("name", name);
 
         while (st.hasMoreTokens()) {
             cn = st.nextToken();
