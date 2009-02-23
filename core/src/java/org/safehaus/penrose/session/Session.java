@@ -28,6 +28,7 @@ import org.safehaus.penrose.log.Access;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.ldap.LDAPPassword;
 import org.safehaus.penrose.util.TextUtil;
 import org.safehaus.penrose.Penrose;
@@ -932,7 +933,7 @@ public class Session {
                 partition = partitionManager.getPartition(bindDn);
 
             } else {
-                partition = partitionManager.getPartition("DEFAULT");
+                partition = partitionManager.getPartition(PartitionConfig.ROOT);
             }
 
             if (eventsEnabled) {

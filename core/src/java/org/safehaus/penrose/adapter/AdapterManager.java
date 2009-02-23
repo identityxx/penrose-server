@@ -68,8 +68,8 @@ public class AdapterManager {
         Adapter adapter = adapters.get(name);
         if (adapter != null) return adapter;
 
-        if (partition.getName().equals("DEFAULT")) return null;
-        Partition defaultPartition = partition.getPartitionContext().getPartition("DEFAULT");
+        if (partition.getName().equals(PartitionConfig.ROOT)) return null;
+        Partition defaultPartition = partition.getPartitionContext().getPartition(PartitionConfig.ROOT);
 
         AdapterManager adapterManager = defaultPartition.getAdapterManager();
         return adapterManager.getAdapter(name);

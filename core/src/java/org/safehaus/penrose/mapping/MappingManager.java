@@ -108,8 +108,8 @@ public class MappingManager {
         Mapping mapping = mappings.get(mappingName);
         if (mapping != null) return mapping;
 
-        if (partition.getName().equals("DEFAULT")) return null;
-        Partition defaultPartition = partition.getPartitionContext().getPartition("DEFAULT");
+        if (partition.getName().equals(PartitionConfig.ROOT)) return null;
+        Partition defaultPartition = partition.getPartitionContext().getPartition(PartitionConfig.ROOT);
 
         MappingManager mappingManager = defaultPartition.getMappingManager();
         return mappingManager.getMapping(mappingName);
