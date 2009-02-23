@@ -34,11 +34,13 @@ public class LDAPConnectionClient extends ConnectionClient implements LDAPConnec
     }
 
     public SearchResponse search(SearchRequest request, SearchResponse response) throws Exception {
-        return (SearchResponse)invoke(
+        SearchResponse newResponse = (SearchResponse)invoke(
                 "search",
                 new Object[] { request, response },
                 new String[] { SearchRequest.class.getName(), SearchResponse.class.getName() }
         );
+        response.copy(newResponse);
+        return response;
     }
 
     public Schema getSchema() throws Exception {

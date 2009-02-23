@@ -188,6 +188,7 @@
                 <expandproperties/>
             </filterchain>
         </copy>
+        <fixcrlf srcdir="target/dist/etc" includes="vd.conf" eol="unix" />
         <chmod file="target/dist/etc/init.d/${project.name}" perm="ugo+rx"/>
 
         <mkdir dir="target/dist/db"/>
@@ -234,11 +235,7 @@
             <fileset dir="target" includes="${product.name}-${product.version}.jar"/>
         </copy>
 
-        <fixcrlf
-            srcdir="target/dist"
-            includes="**/*.sh"
-            eol="unix"
-        />
+        <fixcrlf srcdir="target/dist" includes="**/*.sh" eol="unix" />
         <chmod dir="target/dist" perm="ugo+rx" includes="**/*.sh"/>
 
         <ant dir="../monitors" target="dist"/>
