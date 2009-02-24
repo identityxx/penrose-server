@@ -1052,7 +1052,11 @@ public class Entry implements Cloneable {
         Interpreter interpreter = partition.newInterpreter();
         interpreter.set(sourceAttributes);
 
+        if (debug) log.debug("Generating DN:");
         DN dn = computeDn(interpreter);
+        if (debug) log.debug(" - "+dn);
+
+        if (debug) log.debug("Generating attributes:");
         Attributes attributes = computeAttributes(interpreter);
 
         SearchResult result = new SearchResult(dn, attributes);
@@ -1088,7 +1092,7 @@ public class Entry implements Cloneable {
         }
 
         DN dn = db.toDn();
-        if (debug) log.debug("DN: "+dn);
+        //if (debug) log.debug("DN: "+dn);
 
         return dn;
     }
@@ -1123,13 +1127,17 @@ public class Entry implements Cloneable {
             return attributes;
         }
 
+        for (String objectClass : entryConfig.getObjectClasses()) {
+            if (debug) log.debug(" - objectClass: "+objectClass);
+            attributes.addValue("objectClass", objectClass);
+        }
+
         for (EntryAttributeConfig attributeConfig : getAttributeConfigs()) {
 
             String name = attributeConfig.getName();
             if ("dn".equals(name)) continue;
 
             Object value = interpreter.eval(attributeConfig);
-            //if (debug) log.debug("Attribute "+name+": "+value);
             if (value == null || value.toString().trim().equals("")) continue;
 
             String encryption = attributeConfig.getEncryption();
@@ -1137,16 +1145,13 @@ public class Entry implements Cloneable {
                 value = "{"+encryption+"}"+value;
             }
 
+            if (debug) log.debug(" - "+name+": "+value);
+
             if (value instanceof Collection) {
                 attributes.addValues(name, (Collection<Object>) value);
             } else {
                 attributes.addValue(name, value);
             }
-        }
-
-        for (String objectClass : entryConfig.getObjectClasses()) {
-            //if (debug) log.debug("Object class: "+objectClass);
-            attributes.addValue("objectClass", objectClass);
         }
 
         return attributes;

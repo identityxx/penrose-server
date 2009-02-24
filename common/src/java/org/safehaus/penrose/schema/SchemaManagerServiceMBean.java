@@ -15,8 +15,9 @@ public interface SchemaManagerServiceMBean {
     public Collection<String> getSchemaNames() throws Exception;
     public Collection<String> getBuiltInSchemaNames() throws Exception;
     public Collection<String> getCustomSchemaNames() throws Exception;
-    public Schema getSchema(String schemaName) throws Exception;
 
+    public Schema getSchema() throws Exception;
+    public Schema getSchema(String schemaName) throws Exception;
     public void createSchema(Schema schema) throws Exception;
     public void updateSchema(String schemaName, Schema schema) throws Exception;
     public void removeSchema(String schemaName) throws Exception;

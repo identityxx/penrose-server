@@ -47,6 +47,10 @@ public class SchemaManagerService extends BaseService implements SchemaManagerSe
         return list;
     }
 
+    public Schema getSchema() throws Exception {
+        return schemaManager.getSchema();
+    }
+
     public Schema getSchema(String schemaName) throws Exception {
         return schemaManager.getSchema(schemaName);
     }

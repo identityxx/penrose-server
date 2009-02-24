@@ -1,13 +1,9 @@
 package org.safehaus.penrose.ldap.source;
 
-import org.safehaus.penrose.adapter.FilterBuilder;
-import org.safehaus.penrose.directory.EntryField;
-import org.safehaus.penrose.directory.EntrySource;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.FilterProcessor;
 import org.safehaus.penrose.filter.SimpleFilter;
-import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.connection.LDAPConnection;
 import org.safehaus.penrose.session.Session;
@@ -1027,98 +1023,6 @@ public class LDAPSource extends Source {
 
     public Collection<Control> createControls(SearchRequest operation) {
         return operation.getControls();
-    }
-
-    public void search(
-            final Session session,
-            //final Collection<SourceRef> primarySourceRefs,
-            final Collection<EntrySource> localSourceRefs,
-            final Collection<EntrySource> sourceRefs,
-            final SourceAttributes sourceValues,
-            final SearchRequest request,
-            final SearchResponse response
-    ) throws Exception {
-
-        final EntrySource sourceRef = sourceRefs.iterator().next();
-        final String alias = sourceRef.getAlias();
-
-        Source source = sourceRef.getSource();
-
-        DN sourceBaseDn = new DN(source.getParameter(LDAP.BASE_DN));
-        String scope = source.getParameter(LDAP.SCOPE);
-
-        SearchRequest newRequest = (SearchRequest)request.clone();
-
-        EntryField fieldRef = sourceRef.getField("dn");
-
-        if (fieldRef == null) {
-            Interpreter interpreter = partition.newInterpreter();
-
-            FilterBuilder filterBuilder = new FilterBuilder(
-                    partition,
-                    sourceRefs,
-                    sourceValues,
-                    interpreter
-            );
-
-            Filter filter = filterBuilder.getFilter();
-            if (debug) log.debug("Base filter: "+filter);
-
-            filterBuilder.append(request.getFilter());
-            filter = filterBuilder.getFilter();
-            if (debug) log.debug("Added search filter: "+filter);
-
-            newRequest.setFilter(filter);
-
-            if ("ONELEVEL".equals(scope)) {
-                if (request.getDn() != null) newRequest.setDn(request.getDn().getRdn());
-            }
-
-        } else {
-            Interpreter interpreter = partition.newInterpreter();
-            interpreter.set(sourceValues);
-
-            if (debug) log.debug("Reference: "+fieldRef.getVariable());
-
-            DN baseDn = new DN((String)interpreter.eval(fieldRef));
-            if (debug) log.debug("Base DN: "+baseDn);
-
-            if (baseDn.isEmpty()) {
-                response.close();
-                return;
-            }
-
-            newRequest.setDn(baseDn.getPrefix(sourceBaseDn));
-            newRequest.setScope(SearchRequest.SCOPE_BASE);
-        }
-
-        SearchResponse newResponse = new SearchResponse() {
-            public void add(SearchResult result) throws Exception {
-
-                DN dn = result.getDn();
-                RDN rdn = dn.getRdn();
-                Attributes attributes = result.getAttributes();
-                
-                SearchResult searchResult = new SearchResult();
-                searchResult.setDn(dn);
-
-                SourceAttributes sourceValues = new SourceAttributes();
-
-                Attributes sv = sourceValues.get(alias);
-                sv.add(attributes);
-                sv.add("primaryKey", rdn);
-
-                searchResult.setSourceAttributes(sourceValues);
-
-                response.add(searchResult);
-            }
-            public void close() throws Exception {
-                response.close();
-            }
-        };
-
-        if (debug) log.debug("Searching "+newRequest.getDn());
-        search(session, newRequest, newResponse);
     }
 
     public SearchResult createSearchResult(

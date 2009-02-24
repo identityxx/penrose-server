@@ -51,12 +51,16 @@ public class Schema implements Serializable, Cloneable {
         this.name = name;
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Attribute Types
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     public Collection<AttributeType> getAttributeTypes() {
         return attributeTypes;
     }
 
     public Collection<String> getAttributeTypeNames() {
-        Collection<String> list = new ArrayList<String>();
+        Collection<String> list = new TreeSet<String>();
         for (AttributeType at : attributeTypes) {
             list.addAll(at.getNames());
         }
@@ -108,12 +112,16 @@ public class Schema implements Serializable, Cloneable {
         }
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Object Classes
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     public Collection<ObjectClass> getObjectClasses() {
         return objectClasses;
     }
 
     public Collection<String> getObjectClassNames() {
-        Collection<String> list = new ArrayList<String>();
+        Collection<String> list = new TreeSet<String>();
         for (ObjectClass oc : objectClasses) {
             list.addAll(oc.getNames());
         }
@@ -241,6 +249,54 @@ public class Schema implements Serializable, Cloneable {
         }
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Matching
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public boolean partialMatch(RDN rdn1, RDN rdn2) throws Exception {
+
+        for (String name : rdn2.getNames()) {
+            Object v1 = rdn1.get(name);
+            Object v2 = rdn2.get(name);
+
+            if (v1 == null && v2 == null) {
+
+            } else if (v1 == null || v2 == null) {
+                return false;
+
+            } else if (!(v1.toString()).equalsIgnoreCase(v2.toString())) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public boolean match(RDN rdn1, RDN rdn2) throws Exception {
+
+        if (!rdn1.getNames().equals(rdn2.getNames())) return false;
+
+        for (String name : rdn2.getNames()) {
+            Object v1 = rdn1.get(name);
+            Object v2 = rdn2.get(name);
+
+            if (v1 == null && v2 == null) {
+
+            } else if (v1 == null || v2 == null) {
+                return false;
+
+            } else if (!(v1.toString()).equalsIgnoreCase(v2.toString())) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Schema
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     public void add(Schema schema) {
         attributeTypes.addAll(schema.attributeTypes);
         attributeTypesByNameOrOid.putAll(schema.attributeTypesByNameOrOid);
@@ -265,47 +321,6 @@ public class Schema implements Serializable, Cloneable {
 
         objectClasses.clear();
         objectClassesByNameOrOid.clear();
-    }
-
-    public boolean partialMatch(RDN pk1, RDN pk2) throws Exception {
-
-        for (String name : pk2.getNames()) {
-            Object v1 = pk1.get(name);
-            Object v2 = pk2.get(name);
-            //log.debug("   - comparing "+name+": ["+v1+"] ["+v2+"]");
-
-            if (v1 == null && v2 == null) {
-
-            } else if (v1 == null || v2 == null) {
-                return false;
-
-            } else if (!(v1.toString()).equalsIgnoreCase(v2.toString())) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public boolean match(RDN pk1, RDN pk2) throws Exception {
-
-        if (!pk1.getNames().equals(pk2.getNames())) return false;
-
-        for (String name : pk2.getNames()) {
-            Object v1 = pk1.get(name);
-            Object v2 = pk2.get(name);
-
-            if (v1 == null && v2 == null) {
-
-            } else if (v1 == null || v2 == null) {
-                return false;
-
-            } else if (!(v1.toString()).equalsIgnoreCase(v2.toString())) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     public int hashCode() {
