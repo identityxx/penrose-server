@@ -170,7 +170,7 @@ public class JDBCJoinSource extends Source {
             for (JDBCSource source : sources) {
                 if (debug) log.debug("Adding into table "+source.getName()+".");
 
-                SQLOperation operation = source.getOperation(JDBCSource.ADD, parameterNames);
+                SQLOperation operation = source.getOperation(JDBC.ADD, parameterNames);
                 if (operation == null) continue;
 
                 Collection<Object> parameters = source.getParameters(operation, values);
@@ -252,7 +252,7 @@ public class JDBCJoinSource extends Source {
                 JDBCSource source = sources.get(i);
                 if (debug) log.debug("Deleting from "+source.getName()+".");
 
-                SQLOperation operation = source.getOperation(JDBCSource.DELETE, parameterNames);
+                SQLOperation operation = source.getOperation(JDBC.DELETE, parameterNames);
                 if (operation == null) continue;
 
                 Collection<Object> parameters = source.getParameters(operation, values);

@@ -13,7 +13,6 @@ import org.opends.server.util.ServerConstants;
 import org.opends.messages.MessageBuilder;
 
 import java.io.File;
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**

@@ -61,7 +61,7 @@
     </parameter>
     <parameter>
       <param-name>base</param-name>
-      <param-value>hosts.byaddr</param-value>
+      <param-value>hosts</param-value>
     </parameter>
   </source>
 
@@ -84,10 +84,9 @@
 
   <source name="services">
     <connection-name>NIS</connection-name>
-    <field name="name" primaryKey="true"/>
     <field name="cn"/>
-    <field name="ipServicePort"/>
-    <field name="ipServiceProtocol"/>
+    <field name="ipServicePort" primaryKey="true"/>
+    <field name="ipServiceProtocol" primaryKey="true"/>
     <field name="description"/>
     <parameter>
       <param-name>objectClasses</param-name>
@@ -110,7 +109,7 @@
     </parameter>
     <parameter>
       <param-name>base</param-name>
-      <param-value>rpc.bynumber</param-value>
+      <param-value>rpc.byname</param-value>
     </parameter>
   </source>
 
@@ -141,7 +140,7 @@
     </parameter>
     <parameter>
       <param-name>base</param-name>
-      <param-value>protocols.bynumber</param-value>
+      <param-value>protocols.byname</param-value>
     </parameter>
   </source>
 
@@ -215,7 +214,7 @@
     </parameter>
     <parameter>
       <param-name>base</param-name>
-      <param-value>networks.byaddr</param-value>
+      <param-value>networks.byname</param-value>
     </parameter>
   </source>
 

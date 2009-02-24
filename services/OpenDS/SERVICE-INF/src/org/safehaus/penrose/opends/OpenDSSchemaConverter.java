@@ -1,11 +1,10 @@
 package org.safehaus.penrose.opends;
 
-import org.safehaus.penrose.schema.SchemaParser;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;
+import org.safehaus.penrose.schema.Schema;
+import org.safehaus.penrose.schema.SchemaParser;
 
-import java.util.Collection;
-import java.util.Iterator;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.PrintWriter;
@@ -20,7 +19,7 @@ public class OpenDSSchemaConverter {
         FileReader in = new FileReader(input);
 
         SchemaParser parser = new SchemaParser(in);
-        Collection c = parser.parse();
+        Schema schema = parser.parse();
 
         PrintWriter out = new PrintWriter(new FileWriter(output), true);
         out.println("dn: cn=schema");
@@ -28,16 +27,12 @@ public class OpenDSSchemaConverter {
         out.println("objectClass: ldapSubentry");
         out.println("objectClass: subschema");
 
-        for (Iterator i = c.iterator(); i.hasNext();) {
-            Object o = i.next();
-            if (o instanceof AttributeType) {
-                AttributeType at = (AttributeType) o;
-                out.println("attributeTypes: ( "+at+" )");
+        for (AttributeType at : schema.getAttributeTypes()) {
+            out.println("attributeTypes: ( "+at+" )");
+        }
 
-            } else if (o instanceof ObjectClass) {
-                ObjectClass oc = (ObjectClass) o;
-                out.println("objectClasses: ( "+oc+" )");
-            }
+        for (ObjectClass oc : schema.getObjectClasses()) {
+            out.println("objectClasses: ( "+oc+" )");
         }
 
         out.close();

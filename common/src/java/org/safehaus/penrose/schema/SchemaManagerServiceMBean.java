@@ -3,6 +3,7 @@ package org.safehaus.penrose.schema;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.AttributeType;
+import org.safehaus.penrose.schema.attributeSyntax.AttributeSyntax;
 
 import java.util.Collection;
 
@@ -31,4 +32,6 @@ public interface SchemaManagerServiceMBean {
     public Collection<ObjectClass> getAllObjectClasses(String ocName) throws Exception;
     public Collection<String> getAllObjectClassNames(String ocName) throws Exception;
     public Schema getMergedSchema() throws Exception;
+
+    public AttributeSyntax getAttributeSyntax(String oid) throws Exception;
 }

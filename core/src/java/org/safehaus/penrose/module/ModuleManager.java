@@ -99,8 +99,8 @@ public class ModuleManager {
         Module module = modules.get(moduleName);
         if (module != null) return module;
 
-        if (partition.getName().equals("DEFAULT")) return null;
-        Partition defaultPartition = partition.getPartitionContext().getPartition("DEFAULT");
+        if (partition.getName().equals(PartitionConfig.ROOT)) return null;
+        Partition defaultPartition = partition.getPartitionContext().getPartition(PartitionConfig.ROOT);
 
         ModuleManager moduleManager = defaultPartition.getModuleManager();
         return moduleManager.getModule(moduleName);

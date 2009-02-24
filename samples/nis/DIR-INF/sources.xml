@@ -80,7 +80,6 @@
 
   <source name="services">
     <connection-name>NIS</connection-name>
-    <field name="name"/>
     <field name="cn"/>
     <field name="ipServicePort" primaryKey="true"/>
     <field name="ipServiceProtocol" primaryKey="true"/>
@@ -106,7 +105,7 @@
     </parameter>
     <parameter>
       <param-name>base</param-name>
-      <param-value>rpc</param-value>
+      <param-value>rpc.byname</param-value>
     </parameter>
   </source>
 
@@ -137,7 +136,7 @@
     </parameter>
     <parameter>
       <param-name>base</param-name>
-      <param-value>protocols.bynumber</param-value>
+      <param-value>protocols.byname</param-value>
     </parameter>
   </source>
 

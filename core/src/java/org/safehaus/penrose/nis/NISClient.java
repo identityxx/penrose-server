@@ -340,8 +340,6 @@ public abstract class NISClient {
 
         StringTokenizer st = new StringTokenizer(line, "\t ");
 
-        attributes.setValue("name", name);
-
         String cn = st.nextToken();
         attributes.setValue("cn", cn);
 

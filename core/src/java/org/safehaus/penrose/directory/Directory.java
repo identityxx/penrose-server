@@ -171,7 +171,7 @@ public class Directory implements Cloneable {
                 return parent;
             }
 
-            Partition p = partitionManager.getPartition("DEFAULT");
+            Partition p = partitionManager.getPartition(PartitionConfig.ROOT);
             if (p != partition) {
                 Collection<Entry> parents = p.findEntries(parentDn);
                 if (!parents.isEmpty()) {

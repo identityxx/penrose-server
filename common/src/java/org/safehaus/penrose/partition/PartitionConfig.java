@@ -42,6 +42,8 @@ import java.util.*;
  */
 public class PartitionConfig implements Serializable, Cloneable {
 
+    public final static String ROOT = "ROOT";
+
     protected boolean enabled = true;
 
     protected String name;

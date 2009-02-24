@@ -135,8 +135,8 @@ public class ConnectionManager {
         Connection connection = connections.get(name);
         if (connection != null) return connection;
 
-        if (partition.getName().equals("DEFAULT")) return null;
-        Partition defaultPartition = partition.getPartitionContext().getPartition("DEFAULT");
+        if (partition.getName().equals(PartitionConfig.ROOT)) return null;
+        Partition defaultPartition = partition.getPartitionContext().getPartition(PartitionConfig.ROOT);
 
         ConnectionManager connectionManager = defaultPartition.getConnectionManager();
         return connectionManager.getConnection(name);

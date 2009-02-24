@@ -2,6 +2,7 @@ package org.safehaus.penrose.management.connection;
 
 import org.safehaus.penrose.management.BaseService;
 import org.safehaus.penrose.management.PenroseJMXService;
+import org.safehaus.penrose.management.ldap.LDAPConnectionService;
 import org.safehaus.penrose.connection.*;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
@@ -9,6 +10,10 @@ import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.source.SourceConfigManager;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.util.TextUtil;
+import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.ldap.connection.LDAPConnection;
+import org.safehaus.penrose.session.SessionManager;
+import org.safehaus.penrose.session.Session;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -58,7 +63,18 @@ public class ConnectionManagerService extends BaseService implements ConnectionM
 
     public ConnectionService getConnectionService(String connectionName) throws Exception {
 
-        ConnectionService connectionService = new ConnectionService(jmxService, partitionManager, partitionName, connectionName);
+        ConnectionConfigManager connectionConfigManager = getConnectionConfigManager();
+        ConnectionConfig connectionConfig = connectionConfigManager.getConnectionConfig(connectionName);
+
+        ConnectionService connectionService;
+
+        if ("LDAP".equals(connectionConfig.getAdapterName())) {
+            connectionService = new LDAPConnectionService(jmxService, partitionManager, partitionName, connectionName);
+
+        } else {
+            connectionService = new ConnectionService(jmxService, partitionManager, partitionName, connectionName);
+        }
+        
         connectionService.init();
 
         return connectionService;
@@ -137,6 +153,64 @@ public class ConnectionManagerService extends BaseService implements ConnectionM
         Connection connection = connectionManager.createConnection(connectionConfig);
         connection.validate();
         connection.destroy();
+    }
+
+    public Collection<DN> getNamingContexts(ConnectionConfig connectionConfig) throws Exception {
+
+        String connectionName = connectionConfig.getName();
+
+        if (debug) {
+            log.debug(TextUtil.repeat("-", 70));
+            log.debug("Getting naming contexts from "+connectionName+".");
+        }
+
+        Partition partition = getPartition();
+        if (partition == null) {
+            throw new Exception("Partition is stopped.");
+        }
+
+        Collection<DN> list = new ArrayList<DN>();
+
+        Session session = null;
+        LDAPConnection connection = null;
+        LDAPClient client = null;
+
+        try {
+            SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+            session = sessionManager.createAdminSession();
+
+            ConnectionManager connectionManager = partition.getConnectionManager();
+            connection = (LDAPConnection)connectionManager.createConnection(connectionConfig);
+
+            client = connection.getClient(session);
+
+            SearchRequest request = new SearchRequest();
+            request.setScope(SearchRequest.SCOPE_BASE);
+            request.setAttributes(new String[] { "*", "+" });
+
+            SearchResponse response = new SearchResponse();
+
+            client.search(request, response);
+
+            if (response.hasNext()) {
+                SearchResult result = response.next();
+                Attribute namingContexts = result.getAttributes().get("namingContexts");
+                if (namingContexts != null) {
+                    for (Object value : namingContexts.getValues()) {
+                        DN dn = new DN(value.toString());
+                        if (debug) log.debug(" - "+dn);
+                        list.add(dn);
+                    }
+                }
+            }
+
+        } finally {
+            if (client != null) try { client.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+            if (connection != null) try { connection.destroy(); } catch (Exception e) { log.error(e.getMessage(), e); }
+            if (session != null) try { session.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+        }
+
+        return list;
     }
 
     public void createConnection(ConnectionConfig connectionConfig) throws Exception {

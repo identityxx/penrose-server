@@ -45,8 +45,17 @@ public class NISYPClient extends NISClient {
 
         boolean debug = log.isDebugEnabled();
 
-        String attrName = rdn.getNames().iterator().next();
-        String name = (String)rdn.get(attrName);
+        String name;
+
+        if ("ipService".equals(type)) {
+            Object ipServicePort = rdn.get("ipServicePort");
+            Object ipServiceProtocol = rdn.get("ipServiceProtocol");
+            name = ipServicePort+"/"+ipServiceProtocol;
+
+        } else {
+            String attrName = rdn.getNames().iterator().next();
+            name = rdn.get(attrName).toString();
+        }
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));

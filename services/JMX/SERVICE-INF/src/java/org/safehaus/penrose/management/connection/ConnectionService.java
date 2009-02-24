@@ -6,15 +6,17 @@ import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.management.BaseService;
 import org.safehaus.penrose.management.PenroseJMXService;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SessionManager;
 
 /**
  * @author Endi Sukma Dewata
  */
 public class ConnectionService extends BaseService implements ConnectionServiceMBean {
 
-    private PartitionManager partitionManager;
-    private String partitionName;
-    private String connectionName;
+    protected PartitionManager partitionManager;
+    protected String partitionName;
+    protected String connectionName;
 
     public ConnectionService(
             PenroseJMXService jmxService,
@@ -103,5 +105,11 @@ public class ConnectionService extends BaseService implements ConnectionServiceM
     public String getStatus() throws Exception {
         Connection connection = getConnection();
         return connection == null ? ConnectionServiceMBean.STOPPED : ConnectionServiceMBean.STARTED;
+    }
+
+    public Session createAdminSession() throws Exception {
+        Partition partition = getPartition();
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        return sessionManager.createAdminSession();
     }
 }

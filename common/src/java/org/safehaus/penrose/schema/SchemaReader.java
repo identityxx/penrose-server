@@ -20,7 +20,6 @@ package org.safehaus.penrose.schema;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import java.util.Collection;
 import java.io.FileReader;
 import java.io.File;
 
@@ -49,21 +48,8 @@ public class SchemaReader {
         FileReader in = new FileReader(path);
         
         SchemaParser parser = new SchemaParser(in);
-        Collection c = parser.parse();
-
-        for (Object o : c) {
-            if (o instanceof AttributeType) {
-                AttributeType at = (AttributeType) o;
-                schema.addAttributeType(at);
-
-            } else if (o instanceof ObjectClass) {
-                ObjectClass oc = (ObjectClass) o;
-                schema.addObjectClass(oc);
-
-            } else {
-                //log.debug(" - ERROR");
-            }
-        }
+        Schema s = parser.parse();
+        schema.add(s);
 
         return schema;
     }

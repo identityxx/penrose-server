@@ -1,7 +1,7 @@
 package org.safehaus.penrose.nis.scheduler;
 
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.jdbc.source.JDBCSource;
+import org.safehaus.penrose.jdbc.JDBC;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.naming.PenroseContext;
@@ -60,11 +60,11 @@ public class NISSyncJob extends Job {
         Collection<Source> tmps = new ArrayList<Source>();
 
         for (Source target : targets) {
-            String tableName = target.getParameter(JDBCSource.TABLE);
+            String tableName = target.getParameter(JDBC.TABLE);
 
             Source tmp = (Source)target.clone();
             tmp.setName(target.getName()+"_tmp");
-            tmp.setParameter(JDBCSource.TABLE, tableName+"_tmp");
+            tmp.setParameter(JDBC.TABLE, tableName+"_tmp");
 
             tmps.add(tmp);
 

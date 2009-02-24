@@ -1,7 +1,5 @@
 package org.safehaus.penrose.connection;
 
-import org.safehaus.penrose.connection.ConnectionConfig;
-
 /**
  * @author Endi Sukma Dewata
  */

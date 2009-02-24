@@ -75,12 +75,6 @@
     </target>
 
     <target name="javacc" depends="init">
-        <attrib file="src/java/org/safehaus/penrose/schema/*.java" readonly="false"/>
-        <javacc
-            target="src/java/org/safehaus/penrose/schema/LDAPv3Schema.jj"
-            javacchome="../lib/javacc"
-            outputdirectory="src/java/org/safehaus/penrose/schema"
-        />
         <attrib file="src/java/org/safehaus/penrose/filter/item/*.java" readonly="false"/>
         <javacc
             target="src/java/org/safehaus/penrose/filter/item/ItemParser.jj"

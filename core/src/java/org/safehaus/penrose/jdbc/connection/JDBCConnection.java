@@ -4,7 +4,6 @@ import org.apache.commons.dbcp.PoolableConnectionFactory;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.jdbc.*;
-import org.safehaus.penrose.jdbc.source.JDBCSource;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionListener;
 import org.safehaus.penrose.source.SourceConfig;
@@ -316,9 +315,9 @@ public class JDBCConnection extends Connection {
 
     public String getTableName(SourceConfig sourceConfig) throws Exception {
 
-        String catalog = sourceConfig.getParameter(JDBCSource.CATALOG);
-        String schema = sourceConfig.getParameter(JDBCSource.SCHEMA);
-        String table = sourceConfig.getParameter(JDBCSource.TABLE);
+        String catalog = sourceConfig.getParameter(JDBC.CATALOG);
+        String schema = sourceConfig.getParameter(JDBC.SCHEMA);
+        String table = sourceConfig.getParameter(JDBC.TABLE);
 
         StringBuilder sb = new StringBuilder();
 

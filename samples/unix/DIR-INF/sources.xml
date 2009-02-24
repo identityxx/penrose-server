@@ -58,7 +58,6 @@
 
   <source name="services">
     <connection-name>NIS</connection-name>
-    <field name="name"/>
     <field name="cn"/>
     <field name="ipServicePort" primaryKey="true"/>
     <field name="ipServiceProtocol" primaryKey="true"/>

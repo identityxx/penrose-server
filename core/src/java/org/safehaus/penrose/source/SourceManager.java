@@ -179,8 +179,8 @@ public class SourceManager {
         Source source = sources.get(name);
         if (source != null) return source;
 
-        if (partition.getName().equals("DEFAULT")) return null;
-        Partition defaultPartition = partition.getPartitionContext().getPartition("DEFAULT");
+        if (partition.getName().equals(PartitionConfig.ROOT)) return null;
+        Partition defaultPartition = partition.getPartitionContext().getPartition(PartitionConfig.ROOT);
 
         SourceManager sourceManager = defaultPartition.getSourceManager();
         return sourceManager.getSource(name);

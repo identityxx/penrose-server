@@ -5,9 +5,9 @@ import junit.framework.TestCase;
 import java.io.StringReader;
 import java.util.Collection;
 
-import org.safehaus.penrose.schema.SchemaParser;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.AttributeType;
+import org.safehaus.penrose.schema.Schema;
 
 /**
  * @author Endi S. Dewata
@@ -24,11 +24,12 @@ public class SchemaParserTest extends TestCase {
         StringReader sr = new StringReader(line);
         SchemaParser parser = new SchemaParser(sr);
 
-        Collection list = parser.parse();
+        Schema schema = parser.parse();
 
+        Collection<ObjectClass> list = schema.getObjectClasses();
         assertEquals(list.size(), 1);
 
-        ObjectClass oc = (ObjectClass)list.iterator().next();
+        ObjectClass oc = list.iterator().next();
         assertEquals(oc.getOid(), "1.2.3.4.5.6.7");
         assertEquals(oc.getName(), "myObjectClass");
         assertEquals(oc.getDescription(), "This is a description");
@@ -52,11 +53,12 @@ public class SchemaParserTest extends TestCase {
         StringReader sr = new StringReader(line);
         SchemaParser parser = new SchemaParser(sr);
 
-        Collection list = parser.parse();
+        Schema schema = parser.parse();
 
+        Collection<AttributeType> list = schema.getAttributeTypes();
         assertEquals(list.size(), 1);
 
-        AttributeType at = (AttributeType)list.iterator().next();
+        AttributeType at = list.iterator().next();
         assertEquals(at.getOid(), "1.2.3.4.5.6.7");
         assertEquals(at.getName(), "myAttributeType");
         assertEquals(at.getDescription(), "This is a description");

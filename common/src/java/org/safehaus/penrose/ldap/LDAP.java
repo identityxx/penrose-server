@@ -34,6 +34,21 @@ public class LDAP {
 
     public static Logger log = LoggerFactory.getLogger(LDAP.class);
 
+    public final static String BASE_DN           = "baseDn";
+    public final static String NEW_BASE_DN       = "newBaseDn";
+    public final static String SCOPE             = "scope";
+    public final static String FILTER            = "filter";
+    public final static String OBJECT_CLASSES    = "objectClasses";
+
+    public final static String SIZE_LIMIT        = "sizeLimit";
+    public final static String TIME_LIMIT        = "timeLimit";
+    public final static String ATTRIBUTES        = "attributes";
+    
+    public final static String AUTHENTICATION          = "authentication";
+    public final static String AUTHENTICATION_DEFAULT  = "default";
+    public final static String AUTHENTICATION_FULL     = "full";
+    public final static String AUTHENTICATION_DISABLED = "disabled";
+
     public final static DN ROOT_DSE_DN = new DN("");
     public final static DN SCHEMA_DN   = new DN("cn=Subschema");
 

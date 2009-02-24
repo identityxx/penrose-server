@@ -85,7 +85,7 @@ public class PartitionManager {
         
         loadDefaultPartition();
 
-        startPartition("DEFAULT");
+        startPartition(PartitionConfig.ROOT);
 
         for (String partitionName : getAvailablePartitionNames()) {
             try {
@@ -100,7 +100,7 @@ public class PartitionManager {
         partitionNames.addAll(partitionConfigManager.getPartitionNames());
 
         for (String partitionName : partitionNames) {
-            if ("DEFAULT".equals(partitionName)) continue;
+            if (PartitionConfig.ROOT.equals(partitionName)) continue;
             
             try {
                 startPartition(partitionName);
@@ -135,7 +135,7 @@ public class PartitionManager {
 
         if (debug) {
             log.debug(TextUtil.repeat("-", 70));
-            log.debug("Loading default partition.");
+            log.debug("Loading root partition.");
         }
 
         DefaultPartitionConfig partitionConfig = new DefaultPartitionConfig();
@@ -433,7 +433,7 @@ public class PartitionManager {
 
         File baseDir;
 
-        if ("DEFAULT".equals(name)) {
+        if (PartitionConfig.ROOT.equals(name)) {
             baseDir = home;
 
         } else {
@@ -499,8 +499,8 @@ public class PartitionManager {
         Collection<Partition> results = getPartitions(dn);
 
         if (results.isEmpty()) {
-            if (debug) log.debug("Returning default partition.");
-            return getPartition("DEFAULT");
+            if (debug) log.debug("Returning root partition.");
+            return getPartition(PartitionConfig.ROOT);
         }
 
         Partition partition = results.iterator().next();
@@ -544,11 +544,11 @@ public class PartitionManager {
 
         if (dn == null) {
             log.debug("DN is null.");
-            //results.add(getPartition("DEFAULT"));
+            //results.add(getPartition(PartitionConfig.ROOT));
             return results;
         }
 
-        Partition p = getPartition("DEFAULT");
+        Partition p = getPartition(PartitionConfig.ROOT);
 
         if (dn.isEmpty()) {
             log.debug("Root DSE.");

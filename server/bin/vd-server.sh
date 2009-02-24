@@ -1,6 +1,5 @@
 #!/bin/sh
 
-# load system-wide configuration
 if [ -f "/etc/vd.conf" ] ; then
   . /etc/vd.conf
 fi
@@ -10,7 +9,6 @@ if [ -z "$JAVA_HOME" ] ; then
   exit 1
 fi
 
-# OS specific support.  $var _must_ be set to either true or false.
 cygwin=false;
 darwin=false;
 case "`uname`" in
@@ -28,7 +26,6 @@ if [ -z "$VD_SERVER_HOME" ] ; then
   progname=`basename "$0"`
   saveddir=`pwd`
 
-  # need this for relative symlinks
   dirname_prg=`dirname "$PRG"`
   cd "$dirname_prg"
 
@@ -46,11 +43,9 @@ if [ -z "$VD_SERVER_HOME" ] ; then
 
   cd "$saveddir"
 
-  # make it fully qualified
   VD_SERVER_HOME=`cd "$VD_SERVER_HOME" && pwd`
 fi
 
-# For Cygwin, ensure paths are in UNIX format before anything is touched
 if $cygwin ; then
   [ -n "$VD_SERVER_HOME" ] &&
     VD_SERVER_HOME=`cygpath --unix "$VD_SERVER_HOME"`
@@ -61,7 +56,6 @@ fi
 if [ -z "$JAVACMD" ] ; then
   if [ -n "$JAVA_HOME"  ] ; then
     if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
-      # IBM's JDK on AIX uses strange locations for the executables
       JAVACMD="$JAVA_HOME/jre/sh/java"
     else
       JAVACMD="$JAVA_HOME/bin/java"
@@ -85,7 +79,6 @@ LOCALLIBPATH="$LOCALLIBPATH:$VD_SERVER_HOME/lib"
 LOCALLIBPATH="$LOCALLIBPATH:$VD_SERVER_HOME/lib/ext"
 LOCALLIBPATH="$LOCALLIBPATH:$VD_SERVER_HOME/server/lib"
 
-# For Cygwin, switch paths to Windows format before running java
 if $cygwin; then
   VD_SERVER_HOME=`cygpath --windows "$VD_SERVER_HOME"`
   JAVA_HOME=`cygpath --windows "$JAVA_HOME"`

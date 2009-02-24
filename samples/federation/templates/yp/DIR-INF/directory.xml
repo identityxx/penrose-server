@@ -273,9 +273,6 @@ return s.cn;
     </at>
     <source alias="s">
       <source-name>services</source-name>
-      <field name="name">
-        <expression>ipServicePort+"/"+ipServiceProtocol</expression>
-      </field>
       <field name="cn">
         <variable>cn</variable>
       </field>

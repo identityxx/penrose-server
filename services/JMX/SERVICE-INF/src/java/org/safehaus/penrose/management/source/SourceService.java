@@ -252,7 +252,8 @@ public class SourceService extends BaseService implements SourceServiceMBean {
             int rc = response.getReturnCode();
             log.debug("RC: "+rc);
 
-            return response;
+        } catch (LDAPException e) {
+            response.setException(e);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -261,6 +262,8 @@ public class SourceService extends BaseService implements SourceServiceMBean {
         } finally {
             session.close();
         }
+
+        return response;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -318,7 +321,8 @@ public class SourceService extends BaseService implements SourceServiceMBean {
             int rc = response.getReturnCode();
             log.debug("RC: "+rc);
 
-            return response;
+        } catch (LDAPException e) {
+            response.setException(e);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -327,6 +331,8 @@ public class SourceService extends BaseService implements SourceServiceMBean {
         } finally {
             session.close();
         }
+
+        return response;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -426,7 +432,8 @@ public class SourceService extends BaseService implements SourceServiceMBean {
             int rc = response.getReturnCode();
             log.debug("RC: "+rc);
 
-            return response;
+        } catch (LDAPException e) {
+            response.setException(e);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -435,6 +442,8 @@ public class SourceService extends BaseService implements SourceServiceMBean {
         } finally {
             session.close();
         }
+
+        return response;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -504,7 +513,8 @@ public class SourceService extends BaseService implements SourceServiceMBean {
             int rc = response.getReturnCode();
             log.debug("RC: "+rc);
 
-            return response;
+        } catch (LDAPException e) {
+            response.setException(e);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -513,6 +523,8 @@ public class SourceService extends BaseService implements SourceServiceMBean {
         } finally {
             session.close();
         }
+
+        return response;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -582,7 +594,8 @@ public class SourceService extends BaseService implements SourceServiceMBean {
             int rc = response.waitFor();
             log.debug("RC: "+rc);
 
-            return response;
+        } catch (LDAPException e) {
+            response.setException(e);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -591,5 +604,7 @@ public class SourceService extends BaseService implements SourceServiceMBean {
         } finally {
             session.close();
         }
+
+        return response;
     }
 }

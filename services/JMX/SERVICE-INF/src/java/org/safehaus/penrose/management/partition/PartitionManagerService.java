@@ -127,7 +127,7 @@ public class PartitionManagerService extends BaseService implements PartitionMan
     public void register() throws Exception {
         super.register();
 
-        PartitionService defaultPartitionService = getPartitionService("DEFAULT");
+        PartitionService defaultPartitionService = getPartitionService(PartitionConfig.ROOT);
         defaultPartitionService.register();
 
         for (PartitionConfig partitionConfig : partitionManager.getPartitionConfigs()) {
@@ -145,7 +145,7 @@ public class PartitionManagerService extends BaseService implements PartitionMan
             partitionService.unregister();
         }
 
-        PartitionService defaultPartitionService = getPartitionService("DEFAULT");
+        PartitionService defaultPartitionService = getPartitionService(PartitionConfig.ROOT);
         defaultPartitionService.unregister();
 
         super.unregister();

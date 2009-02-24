@@ -26,8 +26,8 @@ import javax.naming.ldap.*;
 
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;
-import org.safehaus.penrose.schema.SchemaParser;
 import org.safehaus.penrose.schema.Schema;
+import org.safehaus.penrose.schema.SchemaParser;
 import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.util.TextUtil;
 
@@ -1238,8 +1238,8 @@ public class JNDIClient implements Cloneable {
         try {
             line = "attributetype "+line;
             SchemaParser parser = new SchemaParser(new StringReader(line));
-            Collection schema = parser.parse();
-            return (AttributeType)schema.iterator().next();
+            Schema schema = parser.parse();
+            return schema.getAttributeTypes().iterator().next();
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -1251,8 +1251,8 @@ public class JNDIClient implements Cloneable {
         try {
             line = "objectclass "+line;
             SchemaParser parser = new SchemaParser(new StringReader(line));
-            Collection schema = parser.parse();
-            return (ObjectClass)schema.iterator().next();
+            Schema schema = parser.parse();
+            return schema.getObjectClasses().iterator().next();
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);

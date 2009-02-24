@@ -63,7 +63,7 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
     public void store() throws Exception {
         File baseDir;
 
-        if (partitionName.equals("DEFAULT")) {
+        if (partitionName.equals(PartitionConfig.ROOT)) {
             baseDir = partitionManager.getHome();
 
         } else {
