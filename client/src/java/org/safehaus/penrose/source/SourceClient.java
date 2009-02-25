@@ -74,6 +74,14 @@ public class SourceClient extends BaseClient implements SourceServiceMBean {
         return (String)getAttribute("ConnectionName");
     }
 
+    public Collection<String> getFieldNames() throws Exception {
+        return (Collection<String>)getAttribute("FieldNames");
+    }
+
+    public Collection<FieldConfig> getFieldConfigs() throws Exception {
+        return (Collection<FieldConfig>)getAttribute("FieldConfigs");
+    }
+
     public String getParameter(String name) throws Exception {
         return (String)invoke(
                 "getParameter",

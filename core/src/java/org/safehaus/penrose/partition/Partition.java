@@ -1177,24 +1177,6 @@ public class Partition implements Cloneable {
         this.threadManager = threadManager;
     }
 
-    public void store() throws Exception {
-
-        String partitionName = getName();
-
-        File baseDir;
-
-        File path = partitionContext.getPath();
-        if (path == null) {
-            baseDir = partitionContext.getPenroseContext().getHome();
-
-        } else {
-            File partitionsDir = partitionContext.getPartitionManager().getPartitionsDir();
-            baseDir = new File(partitionsDir, partitionName);
-        }
-
-        partitionConfig.store(baseDir);
-    }
-
     public Collection<String> getDepends() {
         return partitionConfig.getDepends();
     }

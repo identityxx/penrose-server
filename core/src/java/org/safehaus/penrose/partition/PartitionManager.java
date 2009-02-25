@@ -3,19 +3,20 @@ package org.safehaus.penrose.partition;
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.PenroseConfig;
 import org.safehaus.penrose.module.ModuleReader;
+import org.safehaus.penrose.module.ModuleWriter;
 import org.safehaus.penrose.mapping.MappingReader;
+import org.safehaus.penrose.mapping.MappingWriter;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.connection.ConnectionReader;
-import org.safehaus.penrose.directory.Directory;
-import org.safehaus.penrose.directory.Entry;
-import org.safehaus.penrose.directory.EntrySourceConfig;
-import org.safehaus.penrose.directory.DirectoryReader;
+import org.safehaus.penrose.connection.ConnectionWriter;
+import org.safehaus.penrose.directory.*;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.event.PartitionEvent;
 import org.safehaus.penrose.partition.event.PartitionListener;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.SourceReader;
+import org.safehaus.penrose.source.SourceWriter;
 import org.safehaus.penrose.util.TextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,7 +84,7 @@ public class PartitionManager {
 
     public void startPartitions() throws Exception {
         
-        loadDefaultPartition();
+        loadRootPartition();
 
         startPartition(PartitionConfig.ROOT);
 
@@ -131,46 +132,77 @@ public class PartitionManager {
         }
     }
 
-    public void loadDefaultPartition() throws Exception {
+    public PartitionConfig loadRootPartition() throws Exception {
 
         if (debug) {
             log.debug(TextUtil.repeat("-", 70));
             log.debug("Loading root partition.");
         }
 
-        DefaultPartitionConfig partitionConfig = new DefaultPartitionConfig();
+        PartitionConfig partitionConfig = new PartitionConfig();
+        partitionConfig.setName(PartitionConfig.ROOT);
 
         for (AdapterConfig adapterConfig : penroseConfig.getAdapterConfigs()) {
             partitionConfig.addAdapterConfig(adapterConfig);
         }
 
-        //partitionConfig.load(home);
-
-        File baseDir = new File(home, "conf");
-
-        File connectionsXml = new File(baseDir, "connections.xml");
+        File connectionsXml = new File(confDir, "connections.xml");
         ConnectionReader connectionReader = new ConnectionReader();
         connectionReader.read(connectionsXml, partitionConfig.getConnectionConfigManager());
 
-        File sourcesXml = new File(baseDir, "sources.xml");
+        File sourcesXml = new File(confDir, "sources.xml");
         SourceReader sourceReader = new SourceReader();
         sourceReader.read(sourcesXml, partitionConfig.getSourceConfigManager());
 
-        File mappingsXml = new File(baseDir, "mappings.xml");
+        File mappingsXml = new File(confDir, "mappings.xml");
         MappingReader mappingReader = new MappingReader();
         mappingReader.read(mappingsXml, partitionConfig.getMappingConfigManager());
 
-        File directoryXml = new File(baseDir, "directory.xml");
+        File directoryXml = new File(confDir, "directory.xml");
         DirectoryReader directoryReader = new DirectoryReader();
         directoryReader.read(directoryXml, partitionConfig.getDirectoryConfig());
 
-        File modulesXml = new File(baseDir, "modules.xml");
+        File modulesXml = new File(confDir, "modules.xml");
         ModuleReader moduleReader = new ModuleReader();
         moduleReader.read(modulesXml, partitionConfig.getModuleConfigManager());
 
-        partitionConfigManager.addPartitionConfig(partitionConfig);
+        addPartitionConfig(partitionConfig);
 
-        if (debug) log.debug("Default partition loaded.");
+        if (debug) log.debug("Root partition loaded.");
+
+        return partitionConfig;
+    }
+
+    public void storeRootPartition() throws Exception {
+
+        if (debug) {
+            log.debug(TextUtil.repeat("-", 70));
+            log.debug("Storing root partition.");
+        }
+
+        PartitionConfig partitionConfig = partitionConfigManager.getPartitionConfig(PartitionConfig.ROOT);
+
+        File connectionsXml = new File(confDir, "connections.xml");
+        ConnectionWriter connectionWriter = new ConnectionWriter();
+        connectionWriter.write(connectionsXml, partitionConfig.getConnectionConfigManager());
+
+        File sourcesXml = new File(confDir, "sources.xml");
+        SourceWriter sourceWriter = new SourceWriter();
+        sourceWriter.write(sourcesXml, partitionConfig.getSourceConfigManager());
+
+        File mappingsXml = new File(confDir, "mappings.xml");
+        MappingWriter mappingWriter = new MappingWriter();
+        mappingWriter.write(mappingsXml, partitionConfig.getMappingConfigManager());
+
+        File directoryXml = new File(confDir, "directory.xml");
+        DirectoryWriter directoryWriter = new DirectoryWriter();
+        directoryWriter.write(directoryXml, partitionConfig.getDirectoryConfig());
+
+        File modulesXml = new File(confDir, "modules.xml");
+        ModuleWriter moduleWriter = new ModuleWriter();
+        moduleWriter.write(modulesXml, partitionConfig.getModuleConfigManager());
+
+        if (debug) log.debug("Root partition stored.");
     }
 
     public PartitionConfig loadPartition(String partitionName) throws Exception {
@@ -186,12 +218,10 @@ public class PartitionManager {
             log.debug("Loading partition "+partitionName+".");
         }
 
-        File partitionDir = new File(partitionsDir, partitionName);
-
         partitionConfig = new PartitionConfig();
         partitionConfig.setName(partitionName);
-        //partitionConfig.load(partitionDir);
 
+        File partitionDir = new File(partitionsDir, partitionName);
         File baseDir = new File(partitionDir, "DIR-INF");
 
         PartitionReader reader = new PartitionReader();
@@ -222,6 +252,49 @@ public class PartitionManager {
         if (debug) log.debug("Partition "+partitionName+" loaded.");
 
         return partitionConfig;
+    }
+
+    public void storePartition(String partitionName) throws Exception {
+
+        if (PartitionConfig.ROOT.equals(partitionName)) {
+            storeRootPartition();
+            return;
+        }
+
+        if (debug) {
+            log.debug(TextUtil.repeat("-", 70));
+            log.debug("Storing partition "+partitionName+".");
+        }
+
+        PartitionConfig partitionConfig = partitionConfigManager.getPartitionConfig(partitionName);
+
+        File partitionDir = new File(partitionsDir, partitionName);
+        File dirInfDir = new File(partitionDir, "DIR-INF");
+
+        PartitionWriter partitionWriter = new PartitionWriter();
+        partitionWriter.write(dirInfDir, partitionConfig);
+
+        File connectionsXml = new File(dirInfDir, "connections.xml");
+        ConnectionWriter connectionWriter = new ConnectionWriter();
+        connectionWriter.write(connectionsXml, partitionConfig.getConnectionConfigManager());
+
+        File sourcesXml = new File(dirInfDir, "sources.xml");
+        SourceWriter sourceWriter = new SourceWriter();
+        sourceWriter.write(sourcesXml, partitionConfig.getSourceConfigManager());
+
+        File mappingsXml = new File(dirInfDir, "mappings.xml");
+        MappingWriter mappingWriter = new MappingWriter();
+        mappingWriter.write(mappingsXml, partitionConfig.getMappingConfigManager());
+
+        File directoryXml = new File(dirInfDir, "directory.xml");
+        DirectoryWriter directoryWriter = new DirectoryWriter();
+        directoryWriter.write(directoryXml, partitionConfig.getDirectoryConfig());
+
+        File modulesXml = new File(dirInfDir, "modules.xml");
+        ModuleWriter moduleWriter = new ModuleWriter();
+        moduleWriter.write(modulesXml, partitionConfig.getModuleConfigManager());
+
+        if (debug) log.debug("Partition "+partitionName+" stored.");
     }
 
     public void startPartition(String name) throws Exception {
@@ -274,9 +347,10 @@ public class PartitionManager {
 
     public PartitionContext createPartitionContext(PartitionConfig partitionConfig) throws Exception {
 
+        String partitionName = partitionConfig.getName();
         PartitionContext partitionContext = new PartitionContext();
 
-        if (partitionConfig instanceof DefaultPartitionConfig) {
+        if (PartitionConfig.ROOT.equals(partitionName)) {
             partitionContext.setPath(null);
 
             partitionContext.setClassLoader(getClass().getClassLoader());
@@ -427,21 +501,6 @@ public class PartitionManager {
     public void clear() throws Exception {
         partitionConfigManager.clear();
         partitions.clear();
-    }
-
-    public void storePartition(String name) throws Exception {
-
-        File baseDir;
-
-        if (PartitionConfig.ROOT.equals(name)) {
-            baseDir = home;
-
-        } else {
-            baseDir = new File(partitionsDir, name);
-        }
-
-        PartitionConfig partitionConfig = partitionConfigManager.getPartitionConfig(name);
-        partitionConfig.store(baseDir);
     }
 
     public Partition getPartition(String name) {

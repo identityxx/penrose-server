@@ -14,7 +14,6 @@ import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionManager;
 
-import java.io.File;
 import java.util.Collection;
 
 /**
@@ -61,18 +60,7 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
     }
 
     public void store() throws Exception {
-        File baseDir;
-
-        if (partitionName.equals(PartitionConfig.ROOT)) {
-            baseDir = partitionManager.getHome();
-
-        } else {
-            File partitionsDir = partitionManager.getPartitionsDir();
-            baseDir = new File(partitionsDir, partitionName);
-        }
-
-        PartitionConfig partitionConfig = getPartitionConfig();
-        partitionConfig.store(baseDir);
+        partitionManager.storePartition(partitionName);
     }
 
     ////////////////////////////////////////////////////////////////////////////////

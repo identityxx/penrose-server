@@ -23,6 +23,10 @@ public interface SourceServiceMBean {
 
     public String getAdapterName() throws Exception;
     public String getConnectionName() throws Exception;
+
+    public Collection<String> getFieldNames() throws Exception;
+    public Collection<FieldConfig> getFieldConfigs() throws Exception;
+
     public SourceConfig getSourceConfig() throws Exception;
     public void setSourceConfig(SourceConfig sourceConfig) throws Exception;
 

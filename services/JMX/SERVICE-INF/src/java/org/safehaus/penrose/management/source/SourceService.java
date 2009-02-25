@@ -11,14 +11,12 @@ import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionManager;
-import org.safehaus.penrose.source.Source;
-import org.safehaus.penrose.source.SourceConfig;
-import org.safehaus.penrose.source.SourceClient;
-import org.safehaus.penrose.source.SourceServiceMBean;
+import org.safehaus.penrose.source.*;
 import org.ietf.ldap.LDAPException;
 
 import javax.management.MBeanException;
 import java.util.Collection;
+import java.util.ArrayList;
 
 /**
  * @author Endi Sukma Dewata
@@ -181,14 +179,30 @@ public class SourceService extends BaseService implements SourceServiceMBean {
         return sourceConfig.getConnectionName();
     }
 
+    public Collection<String> getFieldNames() throws Exception {
+        Collection<String> list = new ArrayList<String>();
+        SourceConfig sourceConfig = getSourceConfig();
+        list.addAll(sourceConfig.getFieldNames());
+        return list;
+    }
+
+    public Collection<FieldConfig> getFieldConfigs() throws Exception {
+        Collection<FieldConfig> list = new ArrayList<FieldConfig>();
+        SourceConfig sourceConfig = getSourceConfig();
+        list.addAll(sourceConfig.getFieldConfigs());
+        return list;
+    }
+
     public String getParameter(String name) throws Exception {
         SourceConfig sourceConfig = getSourceConfig();
         return sourceConfig.getParameter(name);
     }
 
     public Collection<String> getParameterNames() throws Exception {
+        Collection<String> list = new ArrayList<String>();
         SourceConfig sourceConfig = getSourceConfig();
-        return sourceConfig.getParameterNames();
+        list.addAll(sourceConfig.getParameterNames());
+        return list;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
