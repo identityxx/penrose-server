@@ -2,7 +2,6 @@ package org.safehaus.penrose.client;
 
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.util.ClassUtil;
-import org.safehaus.penrose.client.PenroseClient;
 
 import javax.management.*;
 
@@ -47,16 +46,20 @@ public class BaseClient {
     }
     
     public Object invoke(String method, Object[] paramValues, String[] paramTypes) throws Exception {
+        try {
+            if (debug) {
+                String signature = ClassUtil.getSignature(method, paramTypes);
+                log.debug("Invoking method "+signature+" on "+objectName+".");
+            }
 
-        if (debug) {
-            String signature = ClassUtil.getSignature(method, paramTypes);
-            log.debug("Invoking method "+signature+" on "+objectName+".");
+            Object object = connection.invoke(objectName, method, paramValues, paramTypes);
+            if (debug) log.debug("Invoke method completed.");
+
+            return object;
+
+        } catch (MBeanException e) {
+            throw (Exception)e.getCause();
         }
-
-        Object object = connection.invoke(objectName, method, paramValues, paramTypes);
-        if (debug) log.debug("Invoke method completed.");
-
-        return object;
     }
 
     public Object getAttribute(String attributeName) throws Exception {

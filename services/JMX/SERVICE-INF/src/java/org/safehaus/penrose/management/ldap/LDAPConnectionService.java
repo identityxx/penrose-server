@@ -71,6 +71,7 @@ public class LDAPConnectionService extends ConnectionService implements LDAPConn
         } finally {
             if (client != null) try { client.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
             if (session != null) try { session.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+            response.close();
         }
 
         return response;

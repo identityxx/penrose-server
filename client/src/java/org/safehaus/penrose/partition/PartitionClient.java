@@ -6,7 +6,6 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.client.BaseClient;
 import org.safehaus.penrose.client.PenroseClient;
 import org.safehaus.penrose.connection.ConnectionManagerClient;
-import org.safehaus.penrose.mapping.MappingClient;
 import org.safehaus.penrose.scheduler.SchedulerClient;
 import org.safehaus.penrose.mapping.MappingManagerClient;
 import org.safehaus.penrose.module.ModuleManagerClient;
@@ -83,10 +82,6 @@ public class PartitionClient extends BaseClient implements PartitionServiceMBean
 
     public MappingManagerClient getMappingManagerClient() throws Exception {
         return new MappingManagerClient(client, name);
-    }
-
-    public MappingClient getMappingClient(String mappingName) throws Exception {
-        return new MappingClient(client, name, mappingName);
     }
 
     ////////////////////////////////////////////////////////////////////////////////

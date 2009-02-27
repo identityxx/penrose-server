@@ -14,7 +14,6 @@ import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.source.*;
 import org.ietf.ldap.LDAPException;
 
-import javax.management.MBeanException;
 import java.util.Collection;
 import java.util.ArrayList;
 
@@ -99,15 +98,9 @@ public class SourceService extends BaseService implements SourceServiceMBean {
 
         log.debug("Creating source "+partitionName+"/"+sourceName+"...");
 
-        try {
-            Source source = getSource();
-            if (source == null) throw new Exception("Source "+sourceName+" not found.");
-            source.create();
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new MBeanException(e);
-        }
+        Source source = getSource();
+        if (source == null) throw new Exception("Source "+sourceName+" not found.");
+        source.create();
 
         log.debug("Source created.");
     }
@@ -123,10 +116,6 @@ public class SourceService extends BaseService implements SourceServiceMBean {
             if (source == null) throw new Exception("Source "+sourceName+" not found.");
             source.clear(session);
             
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new MBeanException(e);
-
         } finally {
             session.close();
         }
@@ -138,15 +127,9 @@ public class SourceService extends BaseService implements SourceServiceMBean {
 
         log.debug("Dropping source "+partitionName+"/"+sourceName+"...");
 
-        try {
-            Source source = getSource();
-            if (source == null) throw new Exception("Source "+sourceName+" not found.");
-            source.drop();
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new MBeanException(e);
-        }
+        Source source = getSource();
+        if (source == null) throw new Exception("Source "+sourceName+" not found.");
+        source.drop();
 
         log.debug("Source dropped.");
     }
@@ -269,10 +252,6 @@ public class SourceService extends BaseService implements SourceServiceMBean {
         } catch (LDAPException e) {
             response.setException(e);
 
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new MBeanException(e);
-
         } finally {
             session.close();
         }
@@ -338,10 +317,6 @@ public class SourceService extends BaseService implements SourceServiceMBean {
         } catch (LDAPException e) {
             response.setException(e);
 
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new MBeanException(e);
-
         } finally {
             session.close();
         }
@@ -371,14 +346,6 @@ public class SourceService extends BaseService implements SourceServiceMBean {
             Source source = getSource();
             if (source == null) throw new Exception("Source "+sourceName+" not found.");
             return source.find(session, dn);
-
-        } catch (LDAPException e) {
-            log.debug(e.getMessage());
-            return null;
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new MBeanException(e);
 
         } finally {
             session.close();
@@ -448,10 +415,6 @@ public class SourceService extends BaseService implements SourceServiceMBean {
 
         } catch (LDAPException e) {
             response.setException(e);
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new MBeanException(e);
 
         } finally {
             session.close();
@@ -530,10 +493,6 @@ public class SourceService extends BaseService implements SourceServiceMBean {
         } catch (LDAPException e) {
             response.setException(e);
 
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new MBeanException(e);
-
         } finally {
             session.close();
         }
@@ -610,10 +569,6 @@ public class SourceService extends BaseService implements SourceServiceMBean {
 
         } catch (LDAPException e) {
             response.setException(e);
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new MBeanException(e);
 
         } finally {
             session.close();

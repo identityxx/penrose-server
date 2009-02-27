@@ -83,8 +83,8 @@ public class DirectoryClient extends BaseClient implements DirectoryServiceMBean
         );
     }
 
-    public EntryClient getEntryClient(String entryId) throws Exception {
-        return new EntryClient(client, partitionName, entryId);
+    public EntryClient getEntryClient(String entryName) throws Exception {
+        return new EntryClient(client, partitionName, entryName);
     }
 
     public String createEntry(EntryConfig entryConfig) throws Exception {

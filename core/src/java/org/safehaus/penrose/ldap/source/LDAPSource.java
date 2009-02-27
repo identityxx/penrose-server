@@ -494,19 +494,19 @@ public class LDAPSource extends Source {
             final SearchResponse response
     ) throws Exception {
 
-        DN baseDn = request.getDn();
-        int scope = request.getScope();
-
-        final Filter filter = createFilter(request);
-        long sizeLimit = createSizeLimit(request);
-        long timeLimit = createTimeLimit(request);
-
-        Collection<String> attributes = createAttributes(request);
-        Collection<Control> controls = createControls(request);
-
-        LDAPClient client = connection.getClient(session);
-
         try {
+
+            DN baseDn = request.getDn();
+            int scope = request.getScope();
+
+            final Filter filter = createFilter(request);
+            long sizeLimit = createSizeLimit(request);
+            long timeLimit = createTimeLimit(request);
+
+            Collection<String> attributes = createAttributes(request);
+            Collection<Control> controls = createControls(request);
+
+            LDAPClient client = connection.getClient(session);
 
             if (baseDn != null && baseDn.isEmpty()) {
 
@@ -624,50 +624,50 @@ public class LDAPSource extends Source {
             final SearchResponse response
     ) throws Exception {
 
-        if (debug) log.debug("Source "+getName()+" is an LDAP subtree.");
-
-        DN baseDn = request.getDn();
-
-        if (baseDn != null && !baseDn.isEmpty() && newSourceBaseDn != null) {
-            baseDn = baseDn.getPrefix(newSourceBaseDn).append(sourceBaseDn);
-        }
-
-        int scope = request.getScope();
-
-        final Filter filter = createFilter(request);
-
-        if (newSourceBaseDn != null && !attributeNames.isEmpty()) {
-            FilterProcessor fp = new FilterProcessor() {
-                public Filter process(Stack<Filter> path, Filter filter) throws Exception {
-                    if (!(filter instanceof SimpleFilter)) {
-                        return super.process(path, filter);
-                    }
-
-                    SimpleFilter sf = (SimpleFilter)filter;
-
-                    String attribute = sf.getAttribute();
-                    if (!attributeNames.contains(attribute.toLowerCase())) return filter;
-
-                    DN dn = new DN(sf.getValue().toString());
-                    dn = dn.getPrefix(newSourceBaseDn).append(sourceBaseDn);
-                    sf.setValue(dn.toString());
-
-                    return filter;
-                }
-            };
-
-            fp.process(filter);
-        }
-
-        long sizeLimit = createSizeLimit(request);
-        long timeLimit = createTimeLimit(request);
-
-        Collection<String> attributes = createAttributes(request);
-        Collection<Control> controls = createControls(request);
-
-        LDAPClient client = connection.getClient(session);
-
         try {
+
+            if (debug) log.debug("Source "+getName()+" is an LDAP subtree.");
+
+            DN baseDn = request.getDn();
+
+            if (baseDn != null && !baseDn.isEmpty() && newSourceBaseDn != null) {
+                baseDn = baseDn.getPrefix(newSourceBaseDn).append(sourceBaseDn);
+            }
+
+            int scope = request.getScope();
+
+            final Filter filter = createFilter(request);
+
+            if (newSourceBaseDn != null && !attributeNames.isEmpty()) {
+                FilterProcessor fp = new FilterProcessor() {
+                    public Filter process(Stack<Filter> path, Filter filter) throws Exception {
+                        if (!(filter instanceof SimpleFilter)) {
+                            return super.process(path, filter);
+                        }
+
+                        SimpleFilter sf = (SimpleFilter)filter;
+
+                        String attribute = sf.getAttribute();
+                        if (!attributeNames.contains(attribute.toLowerCase())) return filter;
+
+                        DN dn = new DN(sf.getValue().toString());
+                        dn = dn.getPrefix(newSourceBaseDn).append(sourceBaseDn);
+                        sf.setValue(dn.toString());
+
+                        return filter;
+                    }
+                };
+
+                fp.process(filter);
+            }
+
+            long sizeLimit = createSizeLimit(request);
+            long timeLimit = createTimeLimit(request);
+
+            Collection<String> attributes = createAttributes(request);
+            Collection<Control> controls = createControls(request);
+
+            LDAPClient client = connection.getClient(session);
 
             if (baseDn != null && baseDn.isEmpty()) {
 
@@ -791,21 +791,21 @@ public class LDAPSource extends Source {
             final SearchResponse response
     ) throws Exception {
 
-        if (debug) log.debug("Source "+getName()+" is a flat LDAP tree.");
-
-        DN baseDn = request.getDn();
-        int scope = request.getScope();
-
-        final Filter filter = createFilter(request);
-        long sizeLimit = createSizeLimit(request);
-        long timeLimit = createTimeLimit(request);
-
-        Collection<String> attributes = createAttributes(request);
-        Collection<Control> controls = createControls(request);
-
-        LDAPClient client = connection.getClient(session);
-
         try {
+
+            if (debug) log.debug("Source "+getName()+" is a flat LDAP tree.");
+
+            DN baseDn = request.getDn();
+            int scope = request.getScope();
+
+            final Filter filter = createFilter(request);
+            long sizeLimit = createSizeLimit(request);
+            long timeLimit = createTimeLimit(request);
+
+            Collection<String> attributes = createAttributes(request);
+            Collection<Control> controls = createControls(request);
+
+            LDAPClient client = connection.getClient(session);
 
             if (baseDn != null && baseDn.isEmpty()) {
 
