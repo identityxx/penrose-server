@@ -77,13 +77,8 @@ public class PartitionManagerService extends BaseService implements PartitionMan
 
     public void addPartition(PartitionConfig partitionConfig) throws Exception {
 
-        String partitionName = partitionConfig.getName();
-
-        File partitionsDir = partitionManager.getPartitionsDir();
-        File path = new File(partitionsDir, partitionName);
-        partitionConfig.store(path);
-
         partitionManager.addPartitionConfig(partitionConfig);
+        partitionManager.storePartition(partitionConfig.getName());
     }
 
     public void updatePartition(String partitionName, PartitionConfig partitionConfig) throws Exception {
@@ -96,9 +91,8 @@ public class PartitionManagerService extends BaseService implements PartitionMan
         File newDir = new File(partitionsDir, partitionConfig.getName());
         oldDir.renameTo(newDir);
 
-        partitionConfig.store(newDir);
-
         partitionManager.addPartitionConfig(partitionConfig);
+        partitionManager.storePartition(partitionConfig.getName());
         partitionManager.startPartition(partitionConfig.getName());
     }
 
@@ -127,8 +121,8 @@ public class PartitionManagerService extends BaseService implements PartitionMan
     public void register() throws Exception {
         super.register();
 
-        PartitionService defaultPartitionService = getPartitionService(PartitionConfig.ROOT);
-        defaultPartitionService.register();
+        PartitionService rootPartition = getPartitionService(PartitionConfig.ROOT);
+        rootPartition.register();
 
         for (PartitionConfig partitionConfig : partitionManager.getPartitionConfigs()) {
             String partitionName = partitionConfig.getName();
@@ -145,8 +139,8 @@ public class PartitionManagerService extends BaseService implements PartitionMan
             partitionService.unregister();
         }
 
-        PartitionService defaultPartitionService = getPartitionService(PartitionConfig.ROOT);
-        defaultPartitionService.unregister();
+        PartitionService rootPartition = getPartitionService(PartitionConfig.ROOT);
+        rootPartition.unregister();
 
         super.unregister();
     }

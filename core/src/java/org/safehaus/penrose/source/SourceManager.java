@@ -180,9 +180,9 @@ public class SourceManager {
         if (source != null) return source;
 
         if (partition.getName().equals(PartitionConfig.ROOT)) return null;
-        Partition defaultPartition = partition.getPartitionContext().getPartition(PartitionConfig.ROOT);
+        Partition rootPartition = partition.getPartitionContext().getPartition(PartitionConfig.ROOT);
 
-        SourceManager sourceManager = defaultPartition.getSourceManager();
+        SourceManager sourceManager = rootPartition.getSourceManager();
         return sourceManager.getSource(name);
     }
 

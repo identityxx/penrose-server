@@ -35,7 +35,7 @@ public class MappingManagerClient extends BaseClient implements MappingManagerSe
     }
 
     public MappingClient getMappingClient(String mappingName) throws Exception {
-        return new MappingClient(client, name, mappingName);
+        return new MappingClient(client, partitionName, mappingName);
     }
 
     public Collection<String> getMappingNames() throws Exception {

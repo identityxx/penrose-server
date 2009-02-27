@@ -19,22 +19,15 @@ package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.connection.ConnectionConfigManager;
-import org.safehaus.penrose.connection.ConnectionWriter;
 import org.safehaus.penrose.directory.DirectoryConfig;
-import org.safehaus.penrose.directory.DirectoryWriter;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.mapping.MappingConfigManager;
-import org.safehaus.penrose.mapping.MappingWriter;
 import org.safehaus.penrose.module.ModuleConfigManager;
-import org.safehaus.penrose.module.ModuleWriter;
 import org.safehaus.penrose.scheduler.SchedulerConfig;
 import org.safehaus.penrose.source.SourceConfigManager;
-import org.safehaus.penrose.source.SourceWriter;
 import org.safehaus.penrose.thread.ThreadManagerConfig;
 
-import java.io.File;
 import java.io.Serializable;
-import java.net.URL;
 import java.util.*;
 
 /**
@@ -65,8 +58,6 @@ public class PartitionConfig implements Serializable, Cloneable {
 
     protected ThreadManagerConfig     threadManagerConfig;
     protected SchedulerConfig         schedulerConfig;
-
-    protected Collection<URL>         xclassPaths               = new ArrayList<URL>();
 
     public PartitionConfig() {
     }
@@ -221,63 +212,6 @@ public class PartitionConfig implements Serializable, Cloneable {
 
     public void removeDepend(String depend) {
         depends.remove(depend);
-    }
-
-    public void load(File partitionDir) throws Exception {
-/*
-        File baseDir = new File(partitionDir, "DIR-INF");
-
-        PartitionReader reader = new PartitionReader();
-        reader.read(baseDir, this);
-
-        File connectionsXml = new File(baseDir, "connections.xml");
-        ConnectionReader connectionReader = new ConnectionReader();
-        connectionReader.read(connectionsXml, connectionConfigManager);
-
-        File sourcesXml = new File(baseDir, "sources.xml");
-        SourceReader sourceReader = new SourceReader();
-        sourceReader.read(sourcesXml, sourceConfigManager);
-
-        File mappingsXml = new File(baseDir, "mappings.xml");
-        MappingReader mappingReader = new MappingReader();
-        mappingReader.read(mappingsXml, mappingConfigManager);
-
-        File directoryXml = new File(baseDir, "directory.xml");
-        DirectoryReader directoryReader = new DirectoryReader();
-        directoryReader.read(directoryXml, directoryConfig);
-
-        File modulesXml = new File(baseDir, "modules.xml");
-        ModuleReader moduleReader = new ModuleReader();
-        moduleReader.read(modulesXml, moduleConfigManager);
-*/
-    }
-
-    public void store(File partitionDir) throws Exception {
-
-        File baseDir = new File(partitionDir, "DIR-INF");
-
-        PartitionWriter partitionWriter = new PartitionWriter();
-        partitionWriter.write(baseDir, this);
-
-        File connectionsXml = new File(baseDir, "connections.xml");
-        ConnectionWriter connectionWriter = new ConnectionWriter();
-        connectionWriter.write(connectionsXml, connectionConfigManager);
-
-        File sourcesXml = new File(baseDir, "sources.xml");
-        SourceWriter sourceWriter = new SourceWriter();
-        sourceWriter.write(sourcesXml, sourceConfigManager);
-
-        File mappingsXml = new File(baseDir, "mappings.xml");
-        MappingWriter mappingWriter = new MappingWriter();
-        mappingWriter.write(mappingsXml, mappingConfigManager);
-
-        File directoryXml = new File(baseDir, "directory.xml");
-        DirectoryWriter directoryWriter = new DirectoryWriter();
-        directoryWriter.write(directoryXml, directoryConfig);
-
-        File modulesXml = new File(baseDir, "modules.xml");
-        ModuleWriter moduleWriter = new ModuleWriter();
-        moduleWriter.write(modulesXml, moduleConfigManager);
     }
 
     public int hashCode() {

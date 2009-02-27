@@ -7,7 +7,6 @@ import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.SearchResult;
 import org.safehaus.penrose.ldap.SearchRequest;
 
-import javax.management.MBeanException;
 import java.util.Collection;
 
 /**
@@ -20,98 +19,66 @@ public class IdentityLinkingClient extends ModuleClient implements IdentityLinki
     }
 
     public Collection<IdentityLinkingResult> search(SearchRequest request) throws Exception {
-        try {
-            return (Collection<IdentityLinkingResult>)invoke(
-                    "search",
-                    new Object[] { request },
-                    new String[] { SearchRequest.class.getName() }
-            );
-        } catch (MBeanException e) {
-            throw (Exception)e.getCause();
-        }
+        return (Collection<IdentityLinkingResult>)invoke(
+                "search",
+                new Object[] { request },
+                new String[] { SearchRequest.class.getName() }
+        );
     }
 
     public Collection<SearchResult> searchLinks(SearchResult sourceEntry) throws Exception {
-        try {
-            return (Collection<SearchResult>)invoke(
-                    "searchLinks",
-                    new Object[] { sourceEntry },
-                    new String[] { SearchResult.class.getName() }
-            );
-        } catch (MBeanException e) {
-            throw (Exception)e.getCause();
-        }
+        return (Collection<SearchResult>)invoke(
+                "searchLinks",
+                new Object[] { sourceEntry },
+                new String[] { SearchResult.class.getName() }
+        );
     }
 
     public void linkEntry(DN sourceDn, DN targetDn) throws Exception {
-        try {
-            invoke(
-                    "linkEntry",
-                    new Object[] { sourceDn, targetDn },
-                    new String[] { DN.class.getName(), DN.class.getName() }
-            );
-        } catch (MBeanException e) {
-            throw (Exception)e.getCause();
-        }
+        invoke(
+                "linkEntry",
+                new Object[] { sourceDn, targetDn },
+                new String[] { DN.class.getName(), DN.class.getName() }
+        );
     }
 
     public void unlinkEntry(DN sourceDn, DN targetDn) throws Exception {
-        try {
-            invoke(
-                    "unlinkEntry",
-                    new Object[] { sourceDn, targetDn },
-                    new String[] { DN.class.getName(), DN.class.getName() }
-            );
-        } catch (MBeanException e) {
-            throw (Exception)e.getCause();
-        }
+        invoke(
+                "unlinkEntry",
+                new Object[] { sourceDn, targetDn },
+                new String[] { DN.class.getName(), DN.class.getName() }
+        );
     }
 
     public SearchResult importEntry(SearchResult sourceEntry) throws Exception {
-        try {
-            return (SearchResult)invoke(
-                    "importEntry",
-                    new Object[] { sourceEntry },
-                    new String[] { SearchResult.class.getName() }
-            );
-        } catch (MBeanException e) {
-            throw (Exception)e.getCause();
-        }
+        return (SearchResult)invoke(
+                "importEntry",
+                new Object[] { sourceEntry },
+                new String[] { SearchResult.class.getName() }
+        );
     }
 
     public SearchResult importEntry(DN sourceDn, SearchResult targetEntry) throws Exception {
-        try {
-            return (SearchResult)invoke(
-                    "importEntry",
-                    new Object[] { sourceDn, targetEntry },
-                    new String[] { DN.class.getName(), SearchResult.class.getName() }
-            );
-        } catch (MBeanException e) {
-            throw (Exception)e.getCause();
-        }
+        return (SearchResult)invoke(
+                "importEntry",
+                new Object[] { sourceDn, targetEntry },
+                new String[] { DN.class.getName(), SearchResult.class.getName() }
+        );
     }
 
     public void addEntry(DN targetDn, Attributes targetAttributes) throws Exception {
-        try {
-            invoke(
-                    "addEntry",
-                    new Object[] { targetDn, targetAttributes },
-                    new String[] { DN.class.getName(), Attributes.class.getName() }
-            );
-        } catch (MBeanException e) {
-            throw (Exception)e.getCause();
-        }
+        invoke(
+                "addEntry",
+                new Object[] { targetDn, targetAttributes },
+                new String[] { DN.class.getName(), Attributes.class.getName() }
+        );
     }
 
     public void deleteEntry(DN sourceDn, DN targetDn) throws Exception {
-        try {
-            invoke(
-                    "deleteEntry",
-                    new Object[] { sourceDn, targetDn },
-                    new String[] { DN.class.getName(), DN.class.getName() }
-            );
-        } catch (MBeanException e) {
-            throw (Exception)e.getCause();
-        }
+        invoke(
+                "deleteEntry",
+                new Object[] { sourceDn, targetDn },
+                new String[] { DN.class.getName(), DN.class.getName() }
+        );
     }
 }

@@ -356,6 +356,11 @@ public class Source implements Cloneable {
         if (debug) log.debug("Finding "+dn+".");
 
         SearchResponse response = search(session, dn, null, SearchRequest.SCOPE_BASE);
+        int rc = response.getReturnCode();
+
+        if (rc == LDAP.NO_SUCH_OBJECT) return null;
+        if (rc != LDAP.SUCCESS) throw response.getException();
+
         if (!response.hasNext()) return null;
 
         return response.next();

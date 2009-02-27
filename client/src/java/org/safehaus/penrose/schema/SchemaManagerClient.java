@@ -35,6 +35,10 @@ public class SchemaManagerClient extends BaseClient implements SchemaManagerServ
         return (Collection<String>)getAttribute("CustomSchemaNames");
     }
 
+    public Schema getSchema() throws Exception {
+        return (Schema)getAttribute("Schema");
+    }
+
     public Schema getSchema(String schemaName) throws Exception {
         return (Schema)invoke(
                 "getSchema",

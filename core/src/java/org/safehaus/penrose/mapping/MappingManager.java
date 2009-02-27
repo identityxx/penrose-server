@@ -109,9 +109,9 @@ public class MappingManager {
         if (mapping != null) return mapping;
 
         if (partition.getName().equals(PartitionConfig.ROOT)) return null;
-        Partition defaultPartition = partition.getPartitionContext().getPartition(PartitionConfig.ROOT);
+        Partition rootPartition = partition.getPartitionContext().getPartition(PartitionConfig.ROOT);
 
-        MappingManager mappingManager = defaultPartition.getMappingManager();
+        MappingManager mappingManager = rootPartition.getMappingManager();
         return mappingManager.getMapping(mappingName);
     }
 

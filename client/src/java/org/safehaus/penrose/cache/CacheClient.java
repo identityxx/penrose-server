@@ -7,7 +7,6 @@ import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.client.PenroseClient;
 import org.safehaus.penrose.module.ModuleClient;
 
-import javax.management.MBeanException;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,15 +22,11 @@ public class CacheClient extends ModuleClient implements CacheMBean{
     }
 
     public void clear() throws Exception {
-        try {
-            invoke(
-                    "clear",
-                    new Object[] { },
-                    new String[] { }
-            );
-        } catch (MBeanException e) {
-            throw (Exception)e.getCause();
-        }
+        invoke(
+                "clear",
+                new Object[] { },
+                new String[] { }
+        );
     }
 
     public static void clearCache(PenroseClient client, String partitionName) throws Exception {

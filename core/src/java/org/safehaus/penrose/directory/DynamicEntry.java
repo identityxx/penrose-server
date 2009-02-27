@@ -1326,6 +1326,7 @@ public class DynamicEntry extends Entry implements Cloneable {
 
             SearchResponse searchResponse = new SearchResponse() {
                 public void add(SearchResult searchResult) throws Exception {
+                    super.add(searchResult);
 
                     SourceAttributes sa  = (SourceAttributes)sourceAttributes.clone();
                     sa.set(alias, searchResult);
