@@ -35,15 +35,6 @@ public class FilterBuilder {
         this.interpreter = interpreter;
     }
 
-    public FilterBuilder(
-            Entry entry,
-            Interpreter interpreter
-    ) throws Exception {
-
-        this.entry = entry;
-        this.interpreter = interpreter;
-    }
-
     public Filter convert(
             Filter filter,
             EntrySource source
