@@ -94,7 +94,7 @@ if $cygwin; then
   LOCALLIBPATH=`cygpath --path --windows "$LOCALLIBPATH"`
 fi
 
-exec "$JAVACMD" $VD_SERVER_OPTS \
+exec "$JAVACMD" $VD_CLIENT_OPTS \
 -Djava.ext.dirs="$LOCALLIBPATH" \
 -Djava.library.path="$LOCALLIBPATH" \
 -Dorg.safehaus.penrose.client.home="$VD_CLIENT_HOME" \

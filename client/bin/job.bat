@@ -34,7 +34,7 @@ set LOCALLIBPATH=%JAVA_HOME%\lib\ext;%JAVA_HOME%\jre\lib\ext
 set LOCALLIBPATH=%LOCALLIBPATH%;%VD_CLIENT_HOME%\lib
 set LOCALLIBPATH=%LOCALLIBPATH%;%VD_CLIENT_HOME%\lib\ext
 
-"%_JAVACMD%" %VD_SERVER_OPTS% -Djava.ext.dirs="%LOCALLIBPATH%" -Djava.library.path="%LOCALLIBPATH%" -Dorg.safehaus.penrose.client.home="%VD_CLIENT_HOME%" org.safehaus.penrose.scheduler.JobClient %CMD_LINE_ARGS%
+"%_JAVACMD%" %VD_CLIENT_OPTS% -Djava.ext.dirs="%LOCALLIBPATH%" -Djava.library.path="%LOCALLIBPATH%" -Dorg.safehaus.penrose.client.home="%VD_CLIENT_HOME%" org.safehaus.penrose.scheduler.JobClient %CMD_LINE_ARGS%
 
 :end
 endlocal
