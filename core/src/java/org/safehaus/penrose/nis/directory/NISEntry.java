@@ -202,7 +202,8 @@ public class NISEntry extends DynamicEntry {
             Interpreter interpreter
     ) throws Exception {
 
-        FilterBuilder filterBuilder = new FilterBuilder(this, interpreter);
+        SourceAttributes sa = new SourceAttributes();
+        FilterBuilder filterBuilder = new FilterBuilder(this, sa, interpreter);
         Filter primaryFilter = filterBuilder.convert(filter, primarySourceRef);
 
         for (int i= getSourceCount()-1; i>0; i--) {

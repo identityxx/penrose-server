@@ -650,7 +650,7 @@ public class PartitionManager {
     }
 
     public Collection<String> getAvailablePartitionNames() throws Exception {
-        Collection<String> list = new ArrayList<String>();
+        Collection<String> list = new TreeSet<String>();
         for (File partitionDir : partitionsDir.listFiles()) {
             list.add(partitionDir.getName());
         }
