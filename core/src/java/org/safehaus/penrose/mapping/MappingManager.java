@@ -36,12 +36,16 @@ public class MappingManager {
         Collection<String> mappingNames = new ArrayList<String>();
         mappingNames.addAll(getMappingNames());
 
-        for (String moduleName : mappingNames) {
+        for (String mappingName : mappingNames) {
 
-            MappingConfig mappingConfig = getMappingConfig(moduleName);
+            MappingConfig mappingConfig = getMappingConfig(mappingName);
             if (!mappingConfig.isEnabled()) continue;
 
-            startMapping(moduleName);
+            try {
+                startMapping(mappingName);
+            } catch (Exception e) {
+                log.error("Failed creating mapping "+mappingName+" in partition "+partition.getName()+".", e);
+            }
         }
     }
 
@@ -50,8 +54,12 @@ public class MappingManager {
         Collection<String> mappingNames = new ArrayList<String>();
         mappingNames.addAll(mappings.keySet());
 
-        for (String name : mappingNames) {
-            stopMapping(name);
+        for (String mappingName : mappingNames) {
+            try {
+                stopMapping(mappingName);
+            } catch (Exception e) {
+                log.error("Failed removing mapping "+mappingName+" in partition "+partition.getName()+".", e);
+            }
         }
     }
 

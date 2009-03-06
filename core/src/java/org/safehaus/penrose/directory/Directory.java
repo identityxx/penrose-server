@@ -24,6 +24,7 @@ public class Directory implements Cloneable {
 
     protected DirectoryConfig directoryConfig;
 
+    protected Collection<Entry> rootEntries = new ArrayList<Entry>();
     protected Map<String,Entry> entries = new LinkedHashMap<String,Entry>();
 
     public Directory(Partition partition) throws Exception {
@@ -43,25 +44,26 @@ public class Directory implements Cloneable {
             try {
                 createEntry(entryConfig);
             } catch (Exception e) {
-                log.error(e.getMessage(), e);
+                log.error("Failed creating entry "+entryConfig.getName()+" ("+entryConfig.getDn()+") in partition "+partition.getName()+".", e);
             }
         }
     }
 
     public void destroy() throws Exception {
-        for (String id : getRootNames()) {
+
+        for (String entryName : getRootNames()) {
             try {
-                destroy(id);
+                destroy(entryName);
             } catch (Exception e) {
-                log.error(e.getMessage(), e);
+                log.error("Failed removing entry "+entryName+" in partition "+partition.getName()+".", e);
             }
         }
     }
 
-    public void destroy(String id) throws Exception {
+    public void destroy(String entryName) throws Exception {
 
-        Entry entry = removeEntry(id);
-        if (entry == null) throw new Exception("Entry "+id+" not found.");
+        Entry entry = getEntry(entryName);
+        if (entry == null) throw new Exception("Entry "+entryName+" not found.");
 
         Collection<Entry> children = new ArrayList<Entry>();
         children.addAll(entry.getChildren());
@@ -70,6 +72,8 @@ public class Directory implements Cloneable {
             if (child.getPartition() != partition) continue;
             destroy(child.getName());
         }
+
+        removeEntry(entryName);
 
         entry.destroy();
     }
@@ -103,15 +107,20 @@ public class Directory implements Cloneable {
 
     public void addEntry(Entry entry) throws Exception {
         entries.put(entry.getName(), entry);
+
+        Entry parent = entry.getParent();
+        if (parent == null) {
+            rootEntries.add(entry);
+        }
     }
 
-    public Entry removeEntry(String id) throws Exception {
+    public Entry removeEntry(String entryName) throws Exception {
 
-        if (debug) log.debug("Removing entry \""+id+"\".");
+        if (debug) log.debug("Removing entry \""+entryName+"\".");
 
-        Entry entry = entries.remove(id);
+        Entry entry = entries.remove(entryName);
         if (entry == null) {
-            if (debug) log.debug("Entry \""+id+"\" not found.");
+            if (debug) log.debug("Entry \""+entryName+"\" not found.");
             return null;
         }
 
@@ -119,7 +128,11 @@ public class Directory implements Cloneable {
         if (debug) log.debug("Removing entry \""+dn+"\".");
 
         Entry parent = entry.getParent();
-        if (parent != null) {
+        if (parent == null) {
+            if (debug) log.debug("Removing root entry \""+dn+"\".");
+            rootEntries.remove(entry);
+
+        } else {
             if (debug) log.debug("Detaching from \""+parent.getDn()+"\".");
             parent.removeChild(entry);
         }
@@ -186,8 +199,8 @@ public class Directory implements Cloneable {
         return null;
     }
 
-    public Entry getEntry(String id) {
-        return entries.get(id);
+    public Entry getEntry(String entryName) {
+        return entries.get(entryName);
     }
 
     public Entry getEntry(DN dn) throws Exception {
@@ -228,7 +241,7 @@ public class Directory implements Cloneable {
 
         Collection<Entry> results = new ArrayList<Entry>();
 
-        for (Entry entry : getRootEntries()) {
+        for (Entry entry : rootEntries) {
             if (debug) log.debug(" - Suffix: "+entry.getDn());
 
             Collection<Entry> list = entry.findEntries(dn);
@@ -325,7 +338,11 @@ public class Directory implements Cloneable {
     }
 
     public Collection<String> getRootNames() {
-        return directoryConfig.getRootNames();
+        Collection<String> entryNames = new ArrayList<String>();
+        for (Entry entry : rootEntries) {
+            entryNames.add(entry.getName());
+        }
+        return entryNames;
     }
 
     public Entry getRootEntry() {
@@ -333,7 +350,7 @@ public class Directory implements Cloneable {
     }
 
     public Collection<Entry> getRootEntries() {
-        return getEntries(getRootNames());
+        return rootEntries;
     }
 
     public DN getSuffix() {

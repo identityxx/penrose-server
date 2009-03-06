@@ -43,15 +43,15 @@ public class SourceManager {
         Collection<String> names = new ArrayList<String>();
         names.addAll(getSourceNames());
 
-        for (String name : names) {
+        for (String sourceName : names) {
 
-            SourceConfig sourceConfig = getSourceConfig(name);
+            SourceConfig sourceConfig = getSourceConfig(sourceName);
             if (!sourceConfig.isEnabled()) continue;
 
             try {
-                startSource(name);
+                startSource(sourceName);
             } catch (Exception e) {
-                log.error(e.getMessage(), e);
+                log.error("Failed creating source "+sourceName+" in partition "+partition.getName()+".", e);
             }
         }
     }
@@ -61,8 +61,12 @@ public class SourceManager {
         Collection<String> names = new ArrayList<String>();
         names.addAll(sources.keySet());
 
-        for (String name : names) {
-            stopSource(name);
+        for (String sourceName : names) {
+            try {
+                stopSource(sourceName);
+            } catch (Exception e) {
+                log.error("Failed removing source "+sourceName+" in partition "+partition.getName()+".", e);
+            }
         }
     }
 

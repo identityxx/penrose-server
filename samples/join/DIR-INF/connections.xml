@@ -32,10 +32,6 @@
   <connection name="Directory">
     <adapter-name>LDAP</adapter-name>
     <parameter>
-      <param-name>java.naming.factory.initial</param-name>
-      <param-value>com.sun.jndi.ldap.LdapCtxFactory</param-value>
-    </parameter>
-    <parameter>
       <param-name>java.naming.provider.url</param-name>
       <param-value>ldap://localhost/</param-value>
     </parameter>

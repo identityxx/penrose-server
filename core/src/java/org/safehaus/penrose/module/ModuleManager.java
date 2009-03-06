@@ -41,7 +41,11 @@ public class ModuleManager {
             ModuleConfig moduleConfig = getModuleConfig(moduleName);
             if (!moduleConfig.isEnabled()) continue;
 
-            startModule(moduleName);
+            try {
+                startModule(moduleName);
+            } catch (Exception e) {
+                log.error("Failed creating module "+moduleName+" in partition "+partition.getName()+".", e);
+            }
         }
     }
 
@@ -50,8 +54,12 @@ public class ModuleManager {
         Collection<String> moduleNames = new ArrayList<String>();
         moduleNames.addAll(modules.keySet());
 
-        for (String name : moduleNames) {
-            stopModule(name);
+        for (String moduleName : moduleNames) {
+            try {
+                stopModule(moduleName);
+            } catch (Exception e) {
+                log.error("Failed removing module "+moduleName+" in partition "+partition.getName()+".", e);
+            }
         }
     }
 

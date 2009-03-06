@@ -34,29 +34,33 @@ public class ConnectionManager {
 
     public void init() throws Exception {
 
-        Collection<String> names = new ArrayList<String>();
-        names.addAll(getConnectionNames());
+        Collection<String> connectionNames = new ArrayList<String>();
+        connectionNames.addAll(getConnectionNames());
 
-        for (String name : names) {
+        for (String connectionName : connectionNames) {
 
-            ConnectionConfig connectionConfig = getConnectionConfig(name);
+            ConnectionConfig connectionConfig = getConnectionConfig(connectionName);
             if (!connectionConfig.isEnabled()) continue;
 
             try {
-                startConnection(name);
+                startConnection(connectionName);
             } catch (Exception e) {
-                log.error(e.getMessage(), e);
+                log.error("Failed creating connection "+connectionName+" in partition "+partition.getName()+".", e);
             }
         }
     }
 
     public void destroy() throws Exception {
 
-        Collection<String> names = new ArrayList<String>();
-        names.addAll(connections.keySet());
+        Collection<String> connectionNames = new ArrayList<String>();
+        connectionNames.addAll(connections.keySet());
 
-        for (String name : names) {
-            stopConnection(name);
+        for (String connectionName : connectionNames) {
+            try {
+                stopConnection(connectionName);
+            } catch (Exception e) {
+                log.error("Failed removing connection "+connectionName+" in partition "+partition.getName()+".", e);
+            }
         }
     }
 
