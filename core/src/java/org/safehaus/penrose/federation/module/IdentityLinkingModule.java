@@ -32,6 +32,7 @@ import org.safehaus.penrose.federation.IdentityLinkingResult;
 import org.safehaus.penrose.federation.IdentityLinkingMBean;
 import org.safehaus.penrose.federation.IdentityLinkingException;
 import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.Penrose;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -170,7 +171,7 @@ public class IdentityLinkingModule extends Module implements IdentityLinkingMBea
             target.modify(session, request, response);
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
         }
     }
 
@@ -231,7 +232,7 @@ public class IdentityLinkingModule extends Module implements IdentityLinkingMBea
             target.modify(session, request, response);
             
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
         }
     }
 
@@ -286,7 +287,7 @@ public class IdentityLinkingModule extends Module implements IdentityLinkingMBea
                                 data.addLinkedEntry(globalEntry);
                             }
                         } catch (Exception e) {
-                            log.error("Unable to find "+targetKey+"="+link);
+                            Penrose.errorLog.error("Unable to find "+targetKey+"="+link);
                         }
                     }
                 }
@@ -503,7 +504,7 @@ public class IdentityLinkingModule extends Module implements IdentityLinkingMBea
                     source.modify(adminSession, modifyRequest, modifyResponse);
 
                 } catch (LDAPException e) {
-                    log.error(e.getMessage(), e);
+                    Penrose.errorLog.error(e.getMessage(), e);
                     if (e.getResultCode() != LDAP.ATTRIBUTE_OR_VALUE_EXISTS) throw e;
                 }
             }
@@ -595,7 +596,7 @@ public class IdentityLinkingModule extends Module implements IdentityLinkingMBea
                     source.modify(adminSession, modifyRequest, modifyResponse);
 
                 } catch (LDAPException e) {
-                    log.error(e.getMessage(), e);
+                    Penrose.errorLog.error(e.getMessage(), e);
                     if (e.getResultCode() != LDAP.ATTRIBUTE_OR_VALUE_EXISTS) throw e;
                 }
             }

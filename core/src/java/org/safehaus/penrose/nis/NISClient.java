@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.util.TextUtil;
+import org.safehaus.penrose.Penrose;
 
 import java.util.*;
 
@@ -57,11 +58,11 @@ public abstract class NISClient {
         boolean debug = log.isDebugEnabled();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Bind", 80));
-            log.debug(TextUtil.displayLine(" - User    : "+username, 80));
-            log.debug(TextUtil.displayLine(" - Password: "+password, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Bind", 70));
+            log.debug(TextUtil.displayLine(" - User    : "+username, 70));
+            log.debug(TextUtil.displayLine(" - Password: "+password, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         try {
@@ -69,12 +70,12 @@ public abstract class NISClient {
             PamReturnValue returnValue = pam.authenticate(username, password);
 
             if (!returnValue.equals(PamReturnValue.PAM_SUCCESS)) {
-                log.error("PAM return value: "+returnValue);
+                Penrose.errorLog.error("PAM return value: "+returnValue);
                 throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
             }
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
             throw LDAP.createException(e);
         }
     }

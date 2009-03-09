@@ -69,6 +69,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
             EntrySource sourceRef
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         String alias = sourceRef.getAlias();
         if (debug) log.debug("Processing source "+alias);
 
@@ -127,6 +128,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
             EntrySource sourceRef
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         String sourceName = sourceRef.getAlias();
         if (debug) log.debug("Processing source "+sourceName);
 

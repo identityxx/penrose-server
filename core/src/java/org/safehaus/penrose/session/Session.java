@@ -47,8 +47,6 @@ import java.util.*;
 public class Session {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean warn = log.isWarnEnabled();
-    public boolean debug = log.isDebugEnabled();
 
     public final static String EVENTS_ENABLED              = "eventsEnabled";
     public final static String SEARCH_RESPONSE_BUFFER_SIZE = "searchResponseBufferSize";
@@ -83,6 +81,7 @@ public class Session {
 
     public void init() {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug(TextUtil.repeat("-", 70));
             log.debug("Creating session "+ sessionName +".");
@@ -98,17 +97,20 @@ public class Session {
     }
 
     public void connect(ConnectRequest request) throws Exception {
+        boolean warn = log.isWarnEnabled();
         Access.log(this, request);
         if (warn) log.warn("Session "+ sessionName +": Connect from "+request.getClientAddress()+".");
     }
 
     public void disconnect(DisconnectRequest request) throws Exception {
+        boolean warn = log.isWarnEnabled();
         Access.log(this, request);
         if (warn) log.warn("Session "+ sessionName +": Disconnect.");
     }
 
     public void close() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug(TextUtil.repeat("-", 70));
             log.debug("Closing session "+ sessionName +".");
@@ -190,6 +192,10 @@ public class Session {
     }
 
     public void abandon(AbandonRequest request, AbandonResponse response) throws LDAPException {
+
+        boolean warn = log.isWarnEnabled();
+        boolean debug = log.isDebugEnabled();
+
         try {
             checkMessageId(request, response);
 
@@ -221,7 +227,7 @@ public class Session {
             operation.abandon();
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
             response.setException(e);
             throw response.getException();
 
@@ -250,6 +256,10 @@ public class Session {
     }
     
     public void add(AddRequest request, AddResponse response) throws LDAPException {
+
+        boolean warn = log.isWarnEnabled();
+        boolean debug = log.isDebugEnabled();
+
         try {
             checkMessageId(request, response);
 
@@ -298,11 +308,11 @@ public class Session {
             }
 
         } catch (LDAPException e) {
-            log.error(e.getMessage());
+            Penrose.errorLog.error(e.getMessage());
             throw e;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
             response.setException(e);
             throw response.getException();
 
@@ -344,6 +354,10 @@ public class Session {
     }
 
     public void bind(BindRequest request, BindResponse response) throws LDAPException {
+
+        boolean warn = log.isWarnEnabled();
+        boolean debug = log.isDebugEnabled();
+
         try {
             checkMessageId(request, response);
 
@@ -421,11 +435,11 @@ public class Session {
             }
 
         } catch (LDAPException e) {
-            log.error(e.getMessage());
+            Penrose.errorLog.error(e.getMessage());
             throw e;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
             response.setException(e);
             throw response.getException();
 
@@ -457,6 +471,10 @@ public class Session {
     }
 
     public void compare(CompareRequest request, CompareResponse response) throws LDAPException {
+
+        boolean warn = log.isWarnEnabled();
+        boolean debug = log.isDebugEnabled();
+
         try {
             checkMessageId(request, response);
 
@@ -514,11 +532,11 @@ public class Session {
             }
 
         } catch (LDAPException e) {
-            log.error(e.getMessage());
+            Penrose.errorLog.error(e.getMessage());
             throw e;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
             response.setException(e);
             throw response.getException();
 
@@ -546,6 +564,10 @@ public class Session {
     }
 
     public void delete(DeleteRequest request, DeleteResponse response) throws LDAPException {
+
+        boolean warn = log.isWarnEnabled();
+        boolean debug = log.isDebugEnabled();
+
         try {
             checkMessageId(request, response);
 
@@ -590,11 +612,11 @@ public class Session {
             }
 
         } catch (LDAPException e) {
-            log.error(e.getMessage());
+            Penrose.errorLog.error(e.getMessage());
             throw e;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
             response.setException(e);
             throw response.getException();
 
@@ -623,6 +645,10 @@ public class Session {
     }
 
     public void modify(ModifyRequest request, ModifyResponse response) throws LDAPException {
+
+        boolean warn = log.isWarnEnabled();
+        boolean debug = log.isDebugEnabled();
+
         try {
             checkMessageId(request, response);
 
@@ -680,11 +706,11 @@ public class Session {
             }
 
         } catch (LDAPException e) {
-            log.error(e.getMessage());
+            Penrose.errorLog.error(e.getMessage());
             throw e;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
             response.setException(e);
             throw response.getException();
 
@@ -718,6 +744,10 @@ public class Session {
     }
 
     public void modrdn(ModRdnRequest request, ModRdnResponse response) throws LDAPException {
+
+        boolean warn = log.isWarnEnabled();
+        boolean debug = log.isDebugEnabled();
+
         try {
             checkMessageId(request, response);
             Access.log(this, request);
@@ -764,11 +794,11 @@ public class Session {
             }
 
         } catch (LDAPException e) {
-            log.error(e.getMessage());
+            Penrose.errorLog.error(e.getMessage());
             throw e;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
             response.setException(e);
             throw response.getException();
 
@@ -816,7 +846,7 @@ public class Session {
             return search(new DN(baseDn), FilterTool.parseFilter(filter), scope);
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
             throw LDAP.createException(e);
         }
     }
@@ -846,6 +876,9 @@ public class Session {
 
     public void search(SearchOperation operation) throws Exception {
 
+        boolean warn = log.isWarnEnabled();
+        boolean debug = log.isDebugEnabled();
+
         Access.log(operation);
         addOperation(operation);
 
@@ -873,15 +906,15 @@ public class Session {
             partition.search(operation);
 
         } catch (LDAPException e) {
-            log.error(e.getMessage());
-            try { operation.close(); } catch (Exception ex) { log.error(ex.getMessage(), ex); }
+            Penrose.errorLog.error(e.getMessage());
+            try { operation.close(); } catch (Exception ex) { Penrose.errorLog.error(ex.getMessage(), ex); }
             throw e;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
 
             operation.setException(e);
-            try { operation.close(); } catch (Exception ex) { log.error(ex.getMessage(), ex); }
+            try { operation.close(); } catch (Exception ex) { Penrose.errorLog.error(ex.getMessage(), ex); }
 
             throw e;
 
@@ -905,6 +938,10 @@ public class Session {
     }
 
     public void unbind(UnbindRequest request, UnbindResponse response) throws LDAPException {
+
+        boolean warn = log.isWarnEnabled();
+        boolean debug = log.isDebugEnabled();
+
         try {
             checkMessageId(request, response);
             Access.log(this, request);
@@ -962,11 +999,11 @@ public class Session {
             }
 
         } catch (LDAPException e) {
-            log.error(e.getMessage());
+            Penrose.errorLog.error(e.getMessage());
             throw e;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
             response.setException(e);
             throw response.getException();
 

@@ -13,7 +13,7 @@ import java.lang.management.ManagementFactory;
 /**
  * @author Endi Sukma Dewata
  */
-public class RuntimeMonitorEntry extends Entry {
+public class RuntimeEntry extends Entry {
 
     protected MBeanServer mbeanServer;
     protected ObjectName memoryMBean;
@@ -33,18 +33,20 @@ public class RuntimeMonitorEntry extends Entry {
             SearchOperation operation
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         final DN baseDn     = operation.getDn();
         final Filter filter = operation.getFilter();
         final int scope     = operation.getScope();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("RUNTIME MONITOR SEARCH", 80));
-            log.debug(TextUtil.displayLine("Filter : "+filter, 80));
-            log.debug(TextUtil.displayLine("Scope  : "+ LDAP.getScope(scope), 80));
-            log.debug(TextUtil.displayLine("Entry  : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("Base   : "+baseDn, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("RUNTIME ENTRY SEARCH", 70));
+            log.debug(TextUtil.displayLine("Filter : "+filter, 70));
+            log.debug(TextUtil.displayLine("Scope  : "+ LDAP.getScope(scope), 70));
+            log.debug(TextUtil.displayLine("Entry  : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("Base   : "+baseDn, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         try {
@@ -58,6 +60,27 @@ public class RuntimeMonitorEntry extends Entry {
     }
 
     public void expand(
+            SearchOperation operation
+    ) throws Exception {
+
+        DN entryDn = getDn();
+
+        DN baseDn = operation.getDn();
+        int scope = operation.getScope();
+
+        int baseLength = baseDn.getLength();
+        int entryLength = entryDn.getLength();
+
+        if (baseLength < entryLength && scope == SearchRequest.SCOPE_SUB
+                || baseLength == entryLength-1 && scope == SearchRequest.SCOPE_ONE
+                || baseDn.matches(entryDn) && (scope == SearchRequest.SCOPE_SUB || scope == SearchRequest.SCOPE_BASE)) {
+
+            SearchResult result = createSearchResult(operation);
+            operation.add(result);
+        }
+    }
+
+    public SearchResult createSearchResult(
             SearchOperation operation
     ) throws Exception {
 
@@ -83,6 +106,6 @@ public class RuntimeMonitorEntry extends Entry {
         SearchResult result = new SearchResult(entryDn, attributes);
         result.setEntryName(getName());
 
-        operation.add(result);
+        return result;
     }
 }

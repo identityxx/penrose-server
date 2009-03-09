@@ -6,6 +6,7 @@ import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.PartitionContext;
+import org.safehaus.penrose.Penrose;
 
 import java.util.Map;
 import java.util.LinkedHashMap;
@@ -18,7 +19,6 @@ import java.util.ArrayList;
 public class ConnectionManager {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     protected Partition partition;
     protected ConnectionConfigManager connectionConfigManager;
@@ -45,7 +45,7 @@ public class ConnectionManager {
             try {
                 startConnection(connectionName);
             } catch (Exception e) {
-                log.error("Failed creating connection "+connectionName+" in partition "+partition.getName()+".", e);
+                Penrose.errorLog.error("Failed creating connection "+connectionName+" in partition "+partition.getName()+".", e);
             }
         }
     }
@@ -59,7 +59,7 @@ public class ConnectionManager {
             try {
                 stopConnection(connectionName);
             } catch (Exception e) {
-                log.error("Failed removing connection "+connectionName+" in partition "+partition.getName()+".", e);
+                Penrose.errorLog.error("Failed removing connection "+connectionName+" in partition "+partition.getName()+".", e);
             }
         }
     }
@@ -72,17 +72,26 @@ public class ConnectionManager {
         return connectionConfigManager.getConnectionConfig(name);
     }
 
-    public void startConnection(String name) throws Exception {
-        if (debug) log.debug("Starting connection "+name+".");
-        ConnectionConfig connectionConfig = getConnectionConfig(name);
+    public void startConnection(String connectionName) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Starting connection "+connectionName+".");
+
+        ConnectionConfig connectionConfig = getConnectionConfig(connectionName);
         Connection connection = createConnection(connectionConfig);
-        addConnection(connection);
+
+        connections.put(connection.getName(), connection);
     }
 
-    public void stopConnection(String name) throws Exception {
-        if (debug) log.debug("Stopping connection "+name+".");
-        Connection connection = removeConnection(name);
+    public void stopConnection(String connectionName) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Stopping connection "+connectionName+".");
+
+        Connection connection = connections.get(connectionName);
         connection.destroy();
+
+        connections.remove(connectionName);
     }
 
     public boolean isRunning(String name) {
@@ -91,6 +100,7 @@ public class ConnectionManager {
     
     public Connection createConnection(ConnectionConfig connectionConfig) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Creating connection "+connectionConfig.getName()+".");
 
         PartitionContext partitionContext = partition.getPartitionContext();
@@ -122,13 +132,16 @@ public class ConnectionManager {
         return connection;
     }
 
-    public void addConnection(Connection connection) {
-        connections.put(connection.getName(), connection);
-    }
+    public void updateConnection(ConnectionConfig connectionConfig) throws Exception {
 
-    public Connection removeConnection(String name) throws Exception {
-        if (debug) log.debug("Removing connection "+name+".");
-        return connections.remove(name);
+        connectionConfigManager.updateConnectionConfig(connectionConfig);
+
+        String connectionName = connectionConfig.getName();
+
+        if (isRunning(connectionName)) {
+            stopConnection(connectionName);
+            startConnection(connectionName);
+        }
     }
 
     public Collection<Connection> getConnections() {
@@ -144,14 +157,6 @@ public class ConnectionManager {
 
         ConnectionManager connectionManager = rootPartition.getConnectionManager();
         return connectionManager.getConnection(name);
-    }
-
-    public void updateConnectionConfig(ConnectionConfig connectionConfig) throws Exception {
-        connectionConfigManager.updateConnectionConfig(connectionConfig);
-    }
-
-    public ConnectionConfig removeConnectionConfig(String name) {
-        return connectionConfigManager.removeConnectionConfig(name);
     }
 
     public ConnectionConfigManager getConnectionManager() {

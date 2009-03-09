@@ -24,7 +24,6 @@ import org.safehaus.penrose.filter.SubstringFilter;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
@@ -42,7 +41,7 @@ public class SubstringsMatchingRule {
 
     public final static SubstringsMatchingRule DEFAULT = new SubstringsMatchingRule();
 
-    public static Map instances = new TreeMap();
+    public static Map<String,SubstringsMatchingRule> instances = new TreeMap<String,SubstringsMatchingRule>();
 
     static {
         instances.put(CASE_IGNORE,    DEFAULT);
@@ -54,24 +53,23 @@ public class SubstringsMatchingRule {
     public static SubstringsMatchingRule getInstance(String name) {
         if (name == null) return DEFAULT;
 
-        SubstringsMatchingRule substringsMatchingRule = (SubstringsMatchingRule)instances.get(name);
+        SubstringsMatchingRule substringsMatchingRule = instances.get(name);
         if (substringsMatchingRule == null) return DEFAULT;
 
         return substringsMatchingRule;
     }
 
-    public boolean compare(Object object, Collection substrings) {
+    public boolean compare(Object object, Collection<Object> substrings) {
         log.debug("comparing ["+object+"] with "+substrings);
         if (object == null) return false;
 
         StringBuilder sb = new StringBuilder();
         sb.append("^");
-        for (Iterator i=substrings.iterator(); i.hasNext(); ) {
-            Object o = i.next();
+        for (Object o : substrings) {
             if (o.equals(SubstringFilter.STAR)) {
                 sb.append(".*");
             } else {
-                String substring = (String)o;
+                String substring = (String) o;
                 sb.append(escape(substring));
             }
         }

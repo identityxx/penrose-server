@@ -53,17 +53,16 @@ public class NISYPClient extends NISClient {
             name = ipServicePort+"/"+ipServiceProtocol;
 
         } else {
-            String attrName = rdn.getNames().iterator().next();
-            name = rdn.get(attrName).toString();
+            name = rdn.getValue().toString();
         }
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("YPMATCH", 80));
-            log.debug(TextUtil.displayLine(" - Map: "+base, 80));
-            log.debug(TextUtil.displayLine(" - Key: "+name, 80));
-            log.debug(TextUtil.displayLine(" - Type: "+type, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("YPMATCH", 70));
+            log.debug(TextUtil.displayLine(" - Map: "+base, 70));
+            log.debug(TextUtil.displayLine(" - Key: "+name, 70));
+            log.debug(TextUtil.displayLine(" - Type: "+type, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         BufferedReader in = null;
@@ -119,11 +118,11 @@ public class NISYPClient extends NISClient {
         boolean debug = log.isDebugEnabled();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("YPCAT", 80));
-            log.debug(TextUtil.displayLine(" - Base: "+base, 80));
-            log.debug(TextUtil.displayLine(" - Type: "+type, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("YPCAT", 70));
+            log.debug(TextUtil.displayLine(" - Base: "+base, 70));
+            log.debug(TextUtil.displayLine(" - Type: "+type, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         BufferedReader in = null;

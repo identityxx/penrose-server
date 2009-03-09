@@ -18,8 +18,6 @@ import java.io.File;
 public class PenroseContext {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public Logger errorLog = org.safehaus.penrose.log.Error.log;
-    public boolean debug = log.isDebugEnabled();
 
     public final static String THREAD_MANAGER      = "java:comp/org/safehaus/penrose/thread/ThreadManager";
     public final static String SCHEMA_MANAGER      = "java:comp/org/safehaus/penrose/schema/SchemaManager";

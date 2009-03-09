@@ -48,9 +48,6 @@ import java.util.*;
 public class Entry implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
-    public boolean info = log.isInfoEnabled();
-    public boolean warn = log.isWarnEnabled();
 
     public final static Collection<Entry> EMPTY_ENTRIES = new ArrayList<Entry>();
 
@@ -85,7 +82,7 @@ public class Entry implements Cloneable {
         this.entryConfig = entryConfig;
         this.entryContext = entryContext;
 
-        parent = entryContext.getParent();
+        Entry parent = entryContext.getParent();
         if (parent != null) parent.addChild(this);
 
         directory = entryContext.getDirectory();
@@ -149,13 +146,11 @@ public class Entry implements Cloneable {
 
         // inherit source referencess from the parent entries
 
-        Entry p = parent;
-
-        while (p != null) {
+        while (parent != null) {
 
             //String psn = p.getPrimarySourceAlias();
 
-            for (EntrySource entrySource : p.getLocalSources()) {
+            for (EntrySource entrySource : parent.getLocalSources()) {
                 //String alias = entrySource.getAlias();
 
                 addSource(entrySource);
@@ -166,7 +161,7 @@ public class Entry implements Cloneable {
 */
             }
 
-            p = p.getParent();
+            parent = parent.getParent();
         }
 
         searchOrders = Arrays.asList(searchOrdersArray);
@@ -330,6 +325,7 @@ public class Entry implements Cloneable {
 
     public void addChild(Entry child) throws Exception {
         children.add(child);
+        child.setParent(this);
     }
 
     public void addChildren(Collection<Entry> children) throws Exception {
@@ -340,6 +336,7 @@ public class Entry implements Cloneable {
 
     public void removeChild(Entry child) throws Exception {
         children.remove(child);
+        child.setParent(null);
     }
 
     public void removeChildren() {
@@ -427,7 +424,7 @@ public class Entry implements Cloneable {
         do {
             path.add(0, entry);
             // if (entry == base) break;
-            if (baseDn.getSize() == entry.getDn().getSize()) break;
+            if (baseDn.getLength() == entry.getDn().getLength()) break;
             entry = entry.getParent();
         } while (entry != null);
 
@@ -529,6 +526,8 @@ public class Entry implements Cloneable {
 
     public boolean validateScope(SearchOperation operation) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         DN dn = operation.getDn();
         int scope = operation.getScope();
 
@@ -549,6 +548,8 @@ public class Entry implements Cloneable {
 
     public boolean validateFilter(SearchOperation operation) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         Filter filter = operation.getFilter();
         if (debug) log.debug("Checking search filter "+filter+".");
 
@@ -561,6 +562,8 @@ public class Entry implements Cloneable {
     }
 
     public boolean validateSearchResult(SearchOperation operation, SearchResult result) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         Filter filter = operation.getFilter();
         Attributes attributes = result.getAttributes();
@@ -585,6 +588,8 @@ public class Entry implements Cloneable {
             AddRequest request,
             AddResponse response
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
 
@@ -617,6 +622,8 @@ public class Entry implements Cloneable {
             BindRequest request,
             BindResponse response
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
 
@@ -660,6 +667,8 @@ public class Entry implements Cloneable {
             CompareRequest request,
             CompareResponse response
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
 
@@ -717,6 +726,8 @@ public class Entry implements Cloneable {
             DeleteResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         DN dn = request.getDn();
 
         if (debug) {
@@ -740,8 +751,8 @@ public class Entry implements Cloneable {
 
         DN entryDn = getDn();
 
-        int entryDnSize = entryDn.getSize();
-        int dnSize      = dn.getSize();
+        int entryDnSize = entryDn.getLength();
+        int dnSize      = dn.getLength();
 
         if (dnSize < entryDnSize) {
             return false;
@@ -770,8 +781,8 @@ public class Entry implements Cloneable {
         DN entryDn        = getDn();
         //if (debug) log.debug("Checking \""+entryDn+"\".");
 
-        int dnLength      = dn.getSize();
-        int entryDnLength = entryDn.getSize();
+        int dnLength      = dn.getLength();
+        int entryDnLength = entryDn.getLength();
 
         if (dnLength == 0 && entryDnLength == 0) { // Root DSE
             Collection<Entry> results = new ArrayList<Entry>();
@@ -856,6 +867,8 @@ public class Entry implements Cloneable {
             DN dn
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         SearchRequest request = new SearchRequest();
         request.setDn(dn);
         request.setScope(SearchRequest.SCOPE_BASE);
@@ -891,6 +904,8 @@ public class Entry implements Cloneable {
             ModifyResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         DN dn = request.getDn();
 
         if (debug) {
@@ -917,6 +932,8 @@ public class Entry implements Cloneable {
             ModRdnResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         DN dn = request.getDn();
 
         if (debug) {
@@ -940,6 +957,8 @@ public class Entry implements Cloneable {
     public void search(
             SearchOperation operation
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         DN baseDn     = operation.getDn();
         Filter filter = operation.getFilter();
@@ -986,6 +1005,8 @@ public class Entry implements Cloneable {
     public boolean validate(
             SearchOperation operation
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         if (debug) log.debug("Validating search scope.");
 
@@ -1036,6 +1057,8 @@ public class Entry implements Cloneable {
             UnbindResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         DN dn = session.getBindDn();
 
         if (debug) {
@@ -1049,6 +1072,8 @@ public class Entry implements Cloneable {
 
     public SearchResult createSearchResult(SourceAttributes sourceAttributes) throws Exception {
         
+        boolean debug = log.isDebugEnabled();
+
         Interpreter interpreter = partition.newInterpreter();
         interpreter.set(sourceAttributes);
 
@@ -1119,6 +1144,8 @@ public class Entry implements Cloneable {
             Interpreter interpreter
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         Attributes attributes = new Attributes();
 
         Mapping mapping = getMapping();
@@ -1159,8 +1186,10 @@ public class Entry implements Cloneable {
 
     public void extractSourceAttributes(Request request, DN dn, Interpreter interpreter, SourceAttributes output) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         Entry parent = getParent();
-        if (getDn().getSize() > dn.getSize()) {
+        if (getDn().getLength() > dn.getLength()) {
             if (parent == null) return;
             parent.extractSourceAttributes(request, dn, interpreter, output);
             return;
@@ -1187,6 +1216,7 @@ public class Entry implements Cloneable {
             Attributes attributes
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Extracting entry "+dn+":");
 
         Interpreter interpreter = partition.newInterpreter();
@@ -1233,6 +1263,8 @@ public class Entry implements Cloneable {
             Interpreter interpreter,
             SourceAttributes sourceAttributes
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         for (EntrySource entrySource : getLocalSources()) {
 

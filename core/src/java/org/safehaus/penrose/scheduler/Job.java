@@ -14,7 +14,6 @@ import java.util.Collection;
 public class Job {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     protected JobConfig jobConfig;
     protected JobContext jobContext;

@@ -10,6 +10,7 @@ import org.safehaus.penrose.scheduler.Job;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.SourceManager;
+import org.safehaus.penrose.Penrose;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -71,7 +72,7 @@ public class NISSyncJob extends Job {
             try {
                 tmp.create();
             } catch (Exception e) {
-                log.error("Failed to create " + tmp.getName() + ": " + e.getMessage());
+                Penrose.errorLog.error("Failed to create " + tmp.getName() + ": " + e.getMessage());
                 tmp.drop();
                 tmp.create();
             }

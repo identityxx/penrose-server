@@ -17,6 +17,8 @@ public class AbandonEntry extends Entry {
             SearchOperation operation
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         for (int i=0; i<10; i++) {
 
             if (operation.isAbandoned()) {

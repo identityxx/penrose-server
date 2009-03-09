@@ -11,6 +11,7 @@ import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.operation.SearchOperation;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.util.TextUtil;
+import org.safehaus.penrose.Penrose;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -33,14 +34,16 @@ public class LDAPMergeEntry extends DynamicEntry {
             BindResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         DN bindDn = request.getDn();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("MERGE BIND", 80));
-            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("DN    : "+bindDn, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("MERGE BIND", 70));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("DN    : "+bindDn, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         SearchResult sr = find(bindDn);
@@ -98,18 +101,20 @@ public class LDAPMergeEntry extends DynamicEntry {
             SearchOperation operation
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         final DN baseDn     = operation.getDn();
         final Filter filter = operation.getFilter();
         final int scope     = operation.getScope();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("MERGE SEARCH", 80));
-            log.debug(TextUtil.displayLine("Entry  : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("Base   : "+baseDn, 80));
-            log.debug(TextUtil.displayLine("Filter : "+filter, 80));
-            log.debug(TextUtil.displayLine("Scope  : "+ LDAP.getScope(scope), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("MERGE SEARCH", 70));
+            log.debug(TextUtil.displayLine("Entry  : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("Base   : "+baseDn, 70));
+            log.debug(TextUtil.displayLine("Filter : "+filter, 70));
+            log.debug(TextUtil.displayLine("Scope  : "+ LDAP.getScope(scope), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         EntrySearchOperation op = new EntrySearchOperation(operation, this);
@@ -187,7 +192,7 @@ public class LDAPMergeEntry extends DynamicEntry {
                 source.search(session, newRequest, newResponse);
 
             } catch (Exception e) {
-                log.error(e.getMessage(), e);
+                Penrose.errorLog.error(e.getMessage(), e);
             }
         }
     }

@@ -10,8 +10,6 @@ import org.slf4j.LoggerFactory;
 public class MergeSearchResponse extends SearchResponse {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public Logger errorLog = org.safehaus.penrose.log.Error.log;
-    public boolean debug = log.isDebugEnabled();
 
     SearchResponse response;
 
@@ -25,6 +23,8 @@ public class MergeSearchResponse extends SearchResponse {
     }
 
     public void add(SearchResult result) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         DN dn = result.getDn();
 
@@ -57,6 +57,8 @@ public class MergeSearchResponse extends SearchResponse {
     }
 
     public void close() throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         if (lastDn != null) {
             if (debug) log.debug("Returning entry " + lastDn);

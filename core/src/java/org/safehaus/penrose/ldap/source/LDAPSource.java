@@ -40,6 +40,9 @@ public class LDAPSource extends Source {
     }
 
     public void init() throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
         connection = (LDAPConnection)getConnection();
 
         String value = getParameter(LDAP.BASE_DN);
@@ -105,6 +108,7 @@ public class LDAPSource extends Source {
             AddResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug(TextUtil.displaySeparator(70));
             log.debug(TextUtil.displayLine("Add "+partition.getName()+"."+getName(), 70));
@@ -187,6 +191,7 @@ public class LDAPSource extends Source {
             Attributes attributes
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug(TextUtil.displaySeparator(70));
             log.debug(TextUtil.displayLine("Bind "+partition.getName()+"."+getName(), 70));
@@ -248,6 +253,7 @@ public class LDAPSource extends Source {
             CompareResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug(TextUtil.displaySeparator(70));
             log.debug(TextUtil.displayLine("Compare "+partition.getName()+"."+getName(), 70));
@@ -309,6 +315,7 @@ public class LDAPSource extends Source {
             DeleteResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug(TextUtil.displaySeparator(70));
             log.debug(TextUtil.displayLine("Delete "+partition.getName()+"."+getName(), 70));
@@ -356,6 +363,7 @@ public class LDAPSource extends Source {
             ModifyResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug(TextUtil.displaySeparator(70));
             log.debug(TextUtil.displayLine("Modify "+partition.getName()+"."+getName(), 70));
@@ -419,6 +427,7 @@ public class LDAPSource extends Source {
             ModRdnResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug(TextUtil.displaySeparator(70));
             log.debug(TextUtil.displayLine("ModRdn "+partition.getName()+"."+getName(), 70));
@@ -466,6 +475,7 @@ public class LDAPSource extends Source {
             final SearchResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug(TextUtil.displaySeparator(70));
             log.debug(TextUtil.displayLine("SEARCH "+partition.getName()+"."+getName(), 70));
@@ -494,6 +504,7 @@ public class LDAPSource extends Source {
             final SearchResponse response
     ) throws Exception {
 
+        final boolean debug = log.isDebugEnabled();
         try {
 
             DN baseDn = request.getDn();
@@ -624,6 +635,7 @@ public class LDAPSource extends Source {
             final SearchResponse response
     ) throws Exception {
 
+        final boolean debug = log.isDebugEnabled();
         try {
 
             if (debug) log.debug("Source "+getName()+" is an LDAP subtree.");
@@ -791,6 +803,7 @@ public class LDAPSource extends Source {
             final SearchResponse response
     ) throws Exception {
 
+        final boolean debug = log.isDebugEnabled();
         try {
 
             if (debug) log.debug("Source "+getName()+" is a flat LDAP tree.");
@@ -961,6 +974,7 @@ public class LDAPSource extends Source {
             UnbindResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug(TextUtil.displaySeparator(70));
             log.debug(TextUtil.displayLine("Unbind "+partition.getName()+"."+getName(), 70));
@@ -1030,6 +1044,7 @@ public class LDAPSource extends Source {
             SearchResult sr
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         DN dn = sr.getDn();
         if (newSourceBaseDn != null) {
             dn = dn.getPrefix(sourceBaseDn).append(newSourceBaseDn);
@@ -1098,6 +1113,7 @@ public class LDAPSource extends Source {
 
     public void create() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug(TextUtil.displaySeparator(70));
             log.debug(TextUtil.displayLine("Create "+getName(), 70));
@@ -1107,6 +1123,7 @@ public class LDAPSource extends Source {
 
     public void rename(Source newSource) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug(TextUtil.displaySeparator(70));
             log.debug(TextUtil.displayLine("Rename "+getName(), 70));
@@ -1116,6 +1133,7 @@ public class LDAPSource extends Source {
 
     public void clear(Session session) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug(TextUtil.displaySeparator(70));
             log.debug(TextUtil.displayLine("Clear "+getName(), 70));
@@ -1144,6 +1162,7 @@ public class LDAPSource extends Source {
 
     public void drop() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug(TextUtil.displaySeparator(70));
             log.debug(TextUtil.displayLine("Drop "+getName(), 70));
@@ -1152,6 +1171,9 @@ public class LDAPSource extends Source {
     }
 
     public long getCount(Session session) throws Exception {
+
+        final boolean warn = log.isWarnEnabled();
+        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(70));

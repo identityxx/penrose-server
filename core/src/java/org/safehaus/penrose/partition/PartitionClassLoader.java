@@ -2,6 +2,7 @@ package org.safehaus.penrose.partition;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.safehaus.penrose.Penrose;
 
 import java.io.File;
 import java.io.BufferedInputStream;
@@ -13,8 +14,6 @@ import java.util.Collection;
 import java.util.ArrayList;
 import java.util.jar.JarFile;
 import java.util.jar.JarEntry;
-import java.net.URL;
-import java.net.URI;
 
 /**
  * Based on example at http://forums.sun.com/thread.jspa?threadID=360060&forumID=31.
@@ -22,7 +21,6 @@ import java.net.URI;
 public class PartitionClassLoader extends ClassLoader {
 
     Logger log = LoggerFactory.getLogger(getClass());
-    boolean debug = log.isDebugEnabled();
 
     Map<String,Class> classes = new LinkedHashMap<String,Class>();
 
@@ -59,7 +57,7 @@ public class PartitionClassLoader extends ClassLoader {
             return buffer;
 
         } finally {
-            if (is != null) try { is.close(); } catch (IOException e) { log.error(e.getMessage(), e); }
+            if (is != null) try { is.close(); } catch (IOException e) { Penrose.errorLog.error(e.getMessage(), e); }
         }
     }
 
@@ -83,8 +81,8 @@ public class PartitionClassLoader extends ClassLoader {
             return buffer;
 
         } finally {
-            if (is != null) try { is.close(); } catch (IOException e) { log.error(e.getMessage(), e); }
-            if (jarFile != null) try { jarFile.close(); } catch (IOException e) { log.error(e.getMessage(), e); }
+            if (is != null) try { is.close(); } catch (IOException e) { Penrose.errorLog.error(e.getMessage(), e); }
+            if (jarFile != null) try { jarFile.close(); } catch (IOException e) { Penrose.errorLog.error(e.getMessage(), e); }
         }
     }
 
@@ -104,7 +102,7 @@ public class PartitionClassLoader extends ClassLoader {
                 return buffer;
 
             } catch (Exception e) {
-                log.error(e.getMessage(), e);
+                Penrose.errorLog.error(e.getMessage(), e);
             }
         }
 

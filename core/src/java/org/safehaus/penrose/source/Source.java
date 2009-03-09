@@ -20,8 +20,6 @@ import java.util.*;
 public class Source implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
-    public boolean warn = log.isWarnEnabled();
 
     protected SourceConfig sourceConfig;
     protected SourceContext sourceContext;
@@ -205,6 +203,7 @@ public class Source implements Cloneable {
             AddResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Adding "+request.getDn()+".");
     }
 
@@ -260,6 +259,7 @@ public class Source implements Cloneable {
             Attributes attributes
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Binding as "+request.getDn()+".");
 
         throw LDAP.createException(LDAP.LDAP_NOT_SUPPORTED);
@@ -275,6 +275,7 @@ public class Source implements Cloneable {
             CompareResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Compare "+request.getDn()+".");
 
         //connection.compare(null, this, request, response);
@@ -319,6 +320,7 @@ public class Source implements Cloneable {
             DeleteResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Deleting "+request.getDn()+".");
     }
 
@@ -353,6 +355,7 @@ public class Source implements Cloneable {
 
     public SearchResult find(Session session, DN dn) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Finding "+dn+".");
 
         SearchResponse response = search(session, dn, null, SearchRequest.SCOPE_BASE);
@@ -409,6 +412,7 @@ public class Source implements Cloneable {
             ModifyResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Modifying "+request.getDn()+".");
     }
 
@@ -459,6 +463,7 @@ public class Source implements Cloneable {
             ModRdnResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Renaming "+request.getDn()+".");
     }
 
@@ -509,6 +514,7 @@ public class Source implements Cloneable {
             SearchResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Searching "+request.getDn()+".");
         response.close();
     }
@@ -523,6 +529,7 @@ public class Source implements Cloneable {
             UnbindResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Unbinding as "+request.getDn()+".");
 
         throw LDAP.createException(LDAP.LDAP_NOT_SUPPORTED);

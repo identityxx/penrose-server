@@ -27,6 +27,7 @@ import org.safehaus.penrose.ldap.SourceAttributes;
 import org.safehaus.penrose.mapping.Expression;
 import org.safehaus.penrose.mapping.MappingRule;
 import org.safehaus.penrose.source.Field;
+import org.safehaus.penrose.Penrose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -126,7 +127,7 @@ public abstract class Interpreter {
             return get(attributeMapping.getName());
 
         } catch (Exception e) {
-            log.error("Error evaluating attribute "+attributeMapping.getName()+": "+e.getMessage());
+            Penrose.errorLog.error("Error evaluating attribute "+attributeMapping.getName()+": "+e.getMessage());
             throw e;
         }
     }

@@ -140,6 +140,8 @@ public class NISSynchronizationModule extends SynchronizationModule {
 
     public SynchronizationResult synchronize(final Session session, final DN targetDn) throws Exception {
 
+        final boolean warn = log.isWarnEnabled();
+
         long startTime = System.currentTimeMillis();
 
         final DN sourceSuffix = getSourceSuffix();

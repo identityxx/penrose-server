@@ -12,21 +12,23 @@ import java.util.Collection;
 public interface LogManagerServiceMBean {
 
     public Collection<AppenderConfig> getAppenderConfigs() throws Exception;
-    public Collection<String> getAppenderConfigNames() throws Exception;
+    public Collection<String> getAppenderNames() throws Exception;
     public AppenderConfig getAppenderConfig(String appenderName) throws Exception;
-    public void addAppenderConfig(AppenderConfig appenderConfig) throws Exception;
-    public void updateAppenderConfig(String appenderName, AppenderConfig appenderConfig) throws Exception;
-    public AppenderConfig removeAppenderConfig(String appenderName) throws Exception;
+
+    public void addAppender(AppenderConfig appenderConfig) throws Exception;
+    public void updateAppender(String appenderName, AppenderConfig appenderConfig) throws Exception;
+    public void removeAppender(String appenderName) throws Exception;
 
     public Collection<LoggerConfig> getLoggerConfigs() throws Exception;
-    public Collection<String> getLoggerConfigNames() throws Exception;
+    public Collection<String> getLoggerNames() throws Exception;
     public LoggerConfig getLoggerConfig(String loggerName) throws Exception;
-    public void addLoggerConfig(LoggerConfig loggerConfig) throws Exception;
-    public void updateLoggerConfig(String loggerName, LoggerConfig loggerConfig) throws Exception;
-    public LoggerConfig removeLoggerConfig(String loggerName) throws Exception;
+
+    public void addLogger(LoggerConfig loggerConfig) throws Exception;
+    public void updateLogger(String loggerName, LoggerConfig loggerConfig) throws Exception;
+    public void removeLogger(String loggerName) throws Exception;
 
     public RootLoggerConfig getRootLoggerConfig() throws Exception;
-    public void setRootLoggerConfig(RootLoggerConfig rootLoggerConfig) throws Exception;
+    public void updateRootLogger(RootLoggerConfig rootLoggerConfig) throws Exception;
 
     public void store() throws Exception;
 }

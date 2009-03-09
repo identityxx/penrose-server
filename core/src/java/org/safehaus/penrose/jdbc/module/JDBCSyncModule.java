@@ -78,6 +78,7 @@ public class JDBCSyncModule extends Module {
 
     public void synchronize() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         log.debug("==================================================================================");
         log.debug("Synchronizing cache...");
 
@@ -168,6 +169,7 @@ public class JDBCSyncModule extends Module {
 
     public void process(Session session, Attributes attributes) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         RDNBuilder rb = new RDNBuilder();
 
         for (String name : source.getPrimaryKeyNames()) {

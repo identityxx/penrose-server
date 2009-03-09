@@ -40,10 +40,11 @@ public class ADGroupSource extends LDAPSource {
             final SearchResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("AD Group Search "+getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("AD Group Search "+getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         LDAPClient client = connection.getClient(session);
@@ -185,6 +186,8 @@ public class ADGroupSource extends LDAPSource {
             final LDAPClient client
     ) throws Exception {
 
+        final boolean debug = log.isDebugEnabled();
+
         SearchRequest newRequest = new SearchRequest();
         newRequest.setDn(sourceBaseDn);
         newRequest.setScope(sourceScope);
@@ -310,8 +313,11 @@ public class ADGroupSource extends LDAPSource {
             SearchResult sr
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         DN dn = sr.getDn();
         DN newDn = dn.getPrefix(baseDn);
+
         if (debug) log.debug("Creating search result ["+newDn+"]");
 
         Attributes attributes = sr.getAttributes();

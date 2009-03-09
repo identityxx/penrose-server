@@ -1,6 +1,7 @@
 package org.safehaus.penrose.schema;
 
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.Penrose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,10 +13,10 @@ import java.io.StringReader;
 public class SchemaUtil {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    boolean debug = log.isDebugEnabled();
 
     public Schema getSchema(LDAPClient client) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         SearchResult rootDSE = client.getRootDSE();
 
         if (debug) log.debug("Searching Schema ...");
@@ -43,13 +44,14 @@ public class SchemaUtil {
             }
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
             throw e;
         }
     }
 
     public Schema getLDAPSchema(LDAPClient client, String schemaDn) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         Schema schema = new Schema("ldap");
 
         if (debug) log.debug("Searching "+schemaDn+" ...");
@@ -96,7 +98,7 @@ public class SchemaUtil {
             return schema.getAttributeTypes().iterator().next();
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
             return null;
         }
     }
@@ -109,13 +111,14 @@ public class SchemaUtil {
             return schema.getObjectClasses().iterator().next();
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
             return null;
         }
     }
 
     public Schema getActiveDirectorySchema(LDAPClient client, String schemaDn) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Searching "+schemaDn+" ...");
 
         Schema schema = new Schema("ad");
@@ -128,6 +131,7 @@ public class SchemaUtil {
 
     public synchronized void getActiveDirectoryAttributeTypes(LDAPClient client, Schema schema, String schemaDn) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Search \""+ schemaDn +"\"");
 
         SearchRequest request = new SearchRequest();
@@ -140,7 +144,7 @@ public class SchemaUtil {
         try {
             client.search(request, response);
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
         }
 
         while (response.hasNext()) {
@@ -163,6 +167,7 @@ public class SchemaUtil {
 
     public synchronized void getActiveDirectoryObjectClasses(LDAPClient client, Schema schema, String schemaDn) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Search \""+ schemaDn +"\"");
 
         SearchRequest request = new SearchRequest();
@@ -175,7 +180,7 @@ public class SchemaUtil {
         try {
             client.search(request, response);
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
         }
 
         while (response.hasNext()) {

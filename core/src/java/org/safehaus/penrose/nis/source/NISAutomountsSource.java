@@ -43,17 +43,19 @@ public class NISAutomountsSource extends Source {
             final SearchResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         final DN baseDn = request.getDn();
         final Filter filter = request.getFilter();
         final int scope = request.getScope();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Search "+getName(), 80));
-            log.debug(TextUtil.displayLine(" - Base   : "+baseDn, 80));
-            log.debug(TextUtil.displayLine(" - Filter : "+filter, 80));
-            log.debug(TextUtil.displayLine(" - Scope  : "+LDAP.getScope(scope), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Search "+getName(), 70));
+            log.debug(TextUtil.displayLine(" - Base   : "+baseDn, 70));
+            log.debug(TextUtil.displayLine(" - Filter : "+filter, 70));
+            log.debug(TextUtil.displayLine(" - Scope  : "+LDAP.getScope(scope), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         PartitionContext partitionContext = partition.getPartitionContext();
@@ -115,6 +117,8 @@ public class NISAutomountsSource extends Source {
     }
 
     public NISMap getAutomountMap(Session session, String automountMapName) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         SearchResponse response = new SearchResponse();
 

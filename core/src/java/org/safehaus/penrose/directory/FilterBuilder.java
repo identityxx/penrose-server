@@ -18,7 +18,6 @@ import java.util.Collection;
 public class FilterBuilder {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     Entry entry;
     SourceAttributes sourceAttributes;
@@ -95,6 +94,7 @@ public class FilterBuilder {
 
     public Filter convert(SimpleFilter filter, EntrySource source) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Converting filter "+filter);
 
         String attributeName = filter.getAttribute();
@@ -148,6 +148,7 @@ public class FilterBuilder {
 
     public Filter convert(SubstringFilter filter, EntrySource source) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Converting filter "+filter);
 
         String attributeName = filter.getAttribute();
@@ -191,6 +192,7 @@ public class FilterBuilder {
 
     public Filter convert(PresentFilter filter, EntrySource source) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Converting filter "+filter);
 
         String attributeName = filter.getAttribute();

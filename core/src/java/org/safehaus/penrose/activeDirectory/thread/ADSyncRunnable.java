@@ -8,6 +8,7 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.connection.LDAPConnection;
 import org.safehaus.penrose.ldap.source.LDAPSource;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.Penrose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,8 +21,6 @@ import java.util.Collection;
 public class ADSyncRunnable implements Runnable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean warn = log.isWarnEnabled();
-    public boolean debug = log.isDebugEnabled();
 
     ADSyncModule module;
     LDAPSource source;
@@ -32,6 +31,9 @@ public class ADSyncRunnable implements Runnable {
     boolean stopped;
 
     public ADSyncRunnable(ADSyncModule module) throws Exception {
+
+        final boolean debug = log.isDebugEnabled();
+
         this.module = module;
 
         source = module.getSource();
@@ -88,7 +90,7 @@ public class ADSyncRunnable implements Runnable {
             runImpl();
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
         }
     }
 
@@ -101,7 +103,7 @@ public class ADSyncRunnable implements Runnable {
                 synchronize();
 
             } catch (Exception e) {
-                log.error(e.getMessage(), e);
+                Penrose.errorLog.error(e.getMessage(), e);
             }
         }
     }
@@ -111,6 +113,8 @@ public class ADSyncRunnable implements Runnable {
     }
 
     public void synchronize() throws Exception {
+
+        final boolean debug = log.isDebugEnabled();
 
         Session session = module.createAdminSession();
         LDAPClient client = connection.getClient(session);

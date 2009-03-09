@@ -53,7 +53,8 @@ public class Response implements Serializable, Cloneable {
 
     public void setException(LDAPException e) {
         Logger log = LoggerFactory.getLogger(getClass());
-        if (log.isDebugEnabled()) {
+        boolean debug = log.isDebugEnabled();
+        if (debug) {
             log.debug("Setting response exception: "+e.getMessage());
         }
         this.exception = e;

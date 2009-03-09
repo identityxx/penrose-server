@@ -134,6 +134,7 @@ public class BasicSearchOperation extends BasicOperation implements SearchOperat
 
     public void add(SearchResult result) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (sizeLimit > 0 && totalCount >= sizeLimit) {
             LDAPException exception = LDAP.createException(LDAP.SIZE_LIMIT_EXCEEDED);
             response.setException(exception);
@@ -160,6 +161,7 @@ public class BasicSearchOperation extends BasicOperation implements SearchOperat
 
     public void add(SearchReference reference) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (timeLimit > 0 && System.currentTimeMillis() - createTimestamp > timeLimit) {
             LDAPException exception = LDAP.createException(LDAP.TIME_LIMIT_EXCEEDED);
             response.setException(exception);
@@ -210,6 +212,7 @@ public class BasicSearchOperation extends BasicOperation implements SearchOperat
 
     public void close() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (searchResponse != null && searchResponse.isClosed()) {
             if (debug) log.debug("Operation "+operationName+" already closed.");
             return;
@@ -247,6 +250,7 @@ public class BasicSearchOperation extends BasicOperation implements SearchOperat
     }
 
     public void setException(LDAPException exception) {
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Error: \""+exception.getMessage()+"\".");
         super.setException(exception);
     }

@@ -41,7 +41,6 @@ import java.util.TreeMap;
 public class SchemaManager {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
@@ -245,6 +244,7 @@ public class SchemaManager {
 
     public String normalizeAttributeName(String attributeName) {
 
+        boolean debug = log.isDebugEnabled();
         AttributeType attributeType = getAttributeType(attributeName);
 
         String normalizedAttributeName;

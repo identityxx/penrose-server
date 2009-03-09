@@ -3,6 +3,7 @@ package org.safehaus.penrose.partition;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.pipeline.Pipeline;
+import org.safehaus.penrose.Penrose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +55,7 @@ public class ParallelSearchResponse extends Pipeline {
             try {
                 wait();
             } catch (Exception e) {
-                log.error(e.getMessage(), e);
+                Penrose.errorLog.error(e.getMessage(), e);
             }
         }
         return getReturnCode();

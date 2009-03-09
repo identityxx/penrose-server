@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 public class MappingRule {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     private MappingRuleConfig ruleConfig;
 

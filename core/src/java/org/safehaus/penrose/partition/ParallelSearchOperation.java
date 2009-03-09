@@ -5,6 +5,7 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.operation.SearchOperation;
 import org.safehaus.penrose.operation.PipelineSearchOperation;
 import org.safehaus.penrose.directory.Entry;
+import org.safehaus.penrose.Penrose;
 
 import java.util.*;
 
@@ -22,6 +23,7 @@ public class ParallelSearchOperation extends PipelineSearchOperation {
 
         this.total = total;
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Start searching "+total+" entries.");
 
         counter = total;
@@ -29,6 +31,7 @@ public class ParallelSearchOperation extends PipelineSearchOperation {
 
     public void add(SearchResult result) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         //if (debug) log.debug("Result: \""+result.getDn()+"\".");
 
         DN dn = result.getDn();
@@ -47,6 +50,7 @@ public class ParallelSearchOperation extends PipelineSearchOperation {
 
     public synchronized void close(Entry entry) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Done searching \""+entry.getDn()+"\".");
 
         if (counter > 0) counter--;
@@ -67,7 +71,7 @@ public class ParallelSearchOperation extends PipelineSearchOperation {
             try {
                 wait();
             } catch (Exception e) {
-                log.error(e.getMessage(), e);
+                Penrose.errorLog.error(e.getMessage(), e);
             }
         }
         return getReturnCode();

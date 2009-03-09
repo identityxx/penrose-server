@@ -5,6 +5,7 @@ import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.ldap.SearchResult;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.LDAP;
+import org.safehaus.penrose.Penrose;
 import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
@@ -81,7 +82,7 @@ public class SearchSubtreeTest extends BasicTestCase {
             log.debug("hasNext: "+hasNext);
             fail();
         } catch (LDAPException e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
             assertEquals(LDAP.NO_SUCH_OBJECT, e.getResultCode());
         }
 

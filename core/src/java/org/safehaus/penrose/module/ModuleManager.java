@@ -3,6 +3,7 @@ package org.safehaus.penrose.module;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.Penrose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +18,6 @@ import java.util.Map;
 public class ModuleManager {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     protected Partition partition;
     protected ModuleConfigManager moduleConfigManager;
@@ -44,7 +44,7 @@ public class ModuleManager {
             try {
                 startModule(moduleName);
             } catch (Exception e) {
-                log.error("Failed creating module "+moduleName+" in partition "+partition.getName()+".", e);
+                Penrose.errorLog.error("Failed creating module "+moduleName+" in partition "+partition.getName()+".", e);
             }
         }
     }
@@ -58,7 +58,7 @@ public class ModuleManager {
             try {
                 stopModule(moduleName);
             } catch (Exception e) {
-                log.error("Failed removing module "+moduleName+" in partition "+partition.getName()+".", e);
+                Penrose.errorLog.error("Failed removing module "+moduleName+" in partition "+partition.getName()+".", e);
             }
         }
     }
@@ -73,6 +73,7 @@ public class ModuleManager {
 
     public void startModule(String moduleName) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Starting module "+moduleName+".");
 
         ModuleConfig moduleConfig = getModuleConfig(moduleName);
@@ -93,6 +94,7 @@ public class ModuleManager {
 
     public void stopModule(String moduleName) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Stopping module "+moduleName+".");
 
         Module module = modules.remove(moduleName);

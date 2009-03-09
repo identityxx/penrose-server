@@ -82,7 +82,7 @@ public class DN implements Serializable, Comparable {
     }
 
     public synchronized DN getSuffix(int i) throws Exception {
-        return getDn(i, getSize());
+        return getDn(i, getLength());
     }
 
     public synchronized DN getPrefix(int i) throws Exception {
@@ -94,7 +94,7 @@ public class DN implements Serializable, Comparable {
     }
 
     public synchronized DN getPrefix(DN suffix) throws Exception {
-        return getPrefix(getSize() - suffix.getSize());
+        return getPrefix(getLength() - suffix.getLength());
     }
 
     public synchronized String getPattern() throws Exception {
@@ -139,7 +139,7 @@ public class DN implements Serializable, Comparable {
         }
     }
 
-    public synchronized int getSize() throws Exception {
+    public synchronized int getLength() throws Exception {
         parse();
         return rdns.size();
     }
@@ -150,7 +150,7 @@ public class DN implements Serializable, Comparable {
         return rdns.get(0);
     }
 
-    public synchronized RDN get(int i) throws Exception {
+    public synchronized RDN getRdn(int i) throws Exception {
         parse();
         return rdns.get(i);
     }

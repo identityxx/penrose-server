@@ -30,14 +30,16 @@ public class FederationEntry extends DynamicEntry {
             BindResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         DN dn = request.getDn();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("BIND", 80));
-            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("BIND", 70));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         SearchResult sr = find(dn);
@@ -103,6 +105,8 @@ public class FederationEntry extends DynamicEntry {
     public void expand(
             SearchOperation operation
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         Session session = operation.getSession();
         SearchResponse response = operation.getSearchResponse();

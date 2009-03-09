@@ -53,10 +53,11 @@ public class ADUserSource extends LDAPSource {
             Attributes attributes
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("AD User Bind "+getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("AD User Bind "+getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         log.debug("Checking Active Directory account.");

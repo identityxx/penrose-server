@@ -59,17 +59,16 @@ public class NISJNDIClient extends NISClient {
             name = ipServicePort+"/"+ipServiceProtocol;
 
         } else {
-            String attrName = rdn.getNames().iterator().next();
-            name = rdn.get(attrName).toString();
+            name = rdn.getValue().toString();
         }
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("LOOKUP", 80));
-            log.debug(TextUtil.displayLine(" - Base: "+base, 80));
-            log.debug(TextUtil.displayLine(" - Name: "+name, 80));
-            log.debug(TextUtil.displayLine(" - Type: "+type, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("LOOKUP", 70));
+            log.debug(TextUtil.displayLine(" - Base: "+base, 70));
+            log.debug(TextUtil.displayLine(" - Name: "+name, 70));
+            log.debug(TextUtil.displayLine(" - Type: "+type, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         try {
@@ -119,11 +118,11 @@ public class NISJNDIClient extends NISClient {
         boolean debug = log.isDebugEnabled();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("LIST", 80));
-            log.debug(TextUtil.displayLine(" - Base: "+base, 80));
-            log.debug(TextUtil.displayLine(" - Type: "+type, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("LIST", 70));
+            log.debug(TextUtil.displayLine(" - Base: "+base, 70));
+            log.debug(TextUtil.displayLine(" - Type: "+type, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         try {

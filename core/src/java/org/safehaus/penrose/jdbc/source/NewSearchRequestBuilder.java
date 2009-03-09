@@ -96,6 +96,8 @@ public class NewSearchRequestBuilder extends RequestBuilder {
 
     public SelectStatement generate() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         SelectStatement statement = new SelectStatement();
 
         if (debug) log.debug("Generating select statement.");

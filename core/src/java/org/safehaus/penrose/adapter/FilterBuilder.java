@@ -11,6 +11,7 @@ import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.ldap.SourceAttributes;
 import org.safehaus.penrose.mapping.Expression;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.Penrose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +25,6 @@ import java.util.Map;
 public class FilterBuilder {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     Partition partition;
 
@@ -40,6 +40,8 @@ public class FilterBuilder {
             SourceAttributes sourceAttributes,
             Interpreter interpreter
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         this.partition = partition;
 
@@ -71,7 +73,7 @@ public class FilterBuilder {
                 }
 
                 if (field == null) {
-                    log.error("Unknown field "+fieldName);
+                    Penrose.errorLog.error("Unknown field "+fieldName);
                     throw LDAP.createException(LDAP.OPERATIONS_ERROR);
                 }
 
@@ -151,6 +153,7 @@ public class FilterBuilder {
             SimpleFilter filter
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Converting filter "+filter);
 
         String attributeName = filter.getAttribute();
@@ -189,6 +192,7 @@ public class FilterBuilder {
             SubstringFilter filter
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Converting filter "+filter);
 
         String attributeName = filter.getAttribute();
@@ -219,6 +223,7 @@ public class FilterBuilder {
             PresentFilter filter
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Converting filter "+filter);
 
         String attributeName = filter.getAttribute();

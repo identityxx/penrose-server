@@ -15,8 +15,6 @@ import java.io.File;
 public class PenroseMonitor {
 
     public static Logger log = Logger.getLogger(PenroseMonitor.class);
-    public static org.slf4j.Logger errorLog = org.safehaus.penrose.log.Error.log;
-    public static boolean debug = log.isDebugEnabled();
 
     File home;
 
@@ -50,7 +48,7 @@ public class PenroseMonitor {
                 monitorManager.startMonitor(monitorName);
 
             } catch (Exception e) {
-                errorLog.error(e.getMessage(), e);
+                Penrose.errorLog.error(e.getMessage(), e);
             }
         }
 
@@ -69,7 +67,7 @@ public class PenroseMonitor {
                 monitorManager.unloadMonitor(monitorName);
 
             } catch (Exception e) {
-                errorLog.error(e.getMessage(), e);
+                Penrose.errorLog.error(e.getMessage(), e);
             }
         }
 
@@ -142,7 +140,7 @@ public class PenroseMonitor {
                     try {
                         penroseMonitor.stop();
                     } catch (Exception e) {
-                        errorLog.error(e.getMessage(), e);
+                        Penrose.errorLog.error(e.getMessage(), e);
                     }
                 }
             });

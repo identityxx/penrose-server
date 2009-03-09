@@ -33,7 +33,6 @@ public class SourceConfig implements Serializable, Cloneable {
     }
 
     public static transient Logger log;
-    public static boolean debug = log.isDebugEnabled();
 
     public final static String REFRESH_METHOD          = "refreshMethod";
     public final static String RELOAD_EXPIRED          = "reloadExpired";

@@ -36,7 +36,6 @@ import org.safehaus.penrose.ldapbackend.Connection;
 public class PenroseConnection implements Connection {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    boolean debug = log.isDebugEnabled();
 
     Session session;
 
@@ -74,6 +73,7 @@ public class PenroseConnection implements Connection {
 
     public void connect(org.safehaus.penrose.ldapbackend.ConnectRequest request) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("connect("+request.getConnectionId()+")");
 
         ConnectRequest penroseRequest = ((PenroseConnectRequest)request).getRequest();
@@ -87,6 +87,7 @@ public class PenroseConnection implements Connection {
 
     public void disconnect(org.safehaus.penrose.ldapbackend.DisconnectRequest request) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("disconnect("+request.getConnectionId()+")");
 
         DisconnectRequest penroseRequest = ((PenroseDisconnectRequest)request).getRequest();
@@ -102,6 +103,7 @@ public class PenroseConnection implements Connection {
             int idToAbandon
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("abandon("+idToAbandon+")");
 
         session.abandon(""+idToAbandon);
@@ -112,6 +114,7 @@ public class PenroseConnection implements Connection {
             org.safehaus.penrose.ldapbackend.AbandonResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("abandon("+request.getIdToAbandon()+")");
 
         AbandonRequest penroseRequest = ((PenroseAbandonRequest)request).getAbandonRequest();
@@ -129,6 +132,7 @@ public class PenroseConnection implements Connection {
             org.safehaus.penrose.ldapbackend.Attributes attributes
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("add("+dn+")");
 
         DN penroseDn = ((PenroseDN)dn).getDn();
@@ -142,6 +146,7 @@ public class PenroseConnection implements Connection {
             org.safehaus.penrose.ldapbackend.AddResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("add("+request.getDn()+")");
 
         AddRequest penroseRequest = ((PenroseAddRequest)request).getAddRequest();
@@ -159,6 +164,7 @@ public class PenroseConnection implements Connection {
             String password
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("bind(\""+dn+", \""+password+"\")");
 
         DN penroseDn = ((PenroseDN)dn).getDn();
@@ -171,6 +177,7 @@ public class PenroseConnection implements Connection {
             byte[] password
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("bind(\""+dn+"\", \""+new String(password)+"\")");
 
         DN penroseDn = ((PenroseDN)dn).getDn();
@@ -183,6 +190,7 @@ public class PenroseConnection implements Connection {
             org.safehaus.penrose.ldapbackend.BindResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         byte[] password = request.getPassword();
         if (debug) log.debug("bind(\""+request.getDn()+"\", "+(password == null ? null : "\""+new String(password)+"\"")+")");
 
@@ -202,6 +210,7 @@ public class PenroseConnection implements Connection {
             Object attributeValue
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("compare(\""+dn+", \""+attributeName+"\", \""+attributeValue+"\")");
 
         DN penroseDn = ((PenroseDN)dn).getDn();
@@ -214,6 +223,7 @@ public class PenroseConnection implements Connection {
             org.safehaus.penrose.ldapbackend.CompareResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("compare("+request.getDn()+", "+request.getAttributeName()+", "+request.getAttributeValue()+")");
 
         CompareRequest penroseRequest = ((PenroseCompareRequest)request).getCompareRequest();
@@ -232,6 +242,7 @@ public class PenroseConnection implements Connection {
             org.safehaus.penrose.ldapbackend.DN dn
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("delete(\""+dn+")");
 
         DN penroseDn = ((PenroseDN)dn).getDn();
@@ -244,6 +255,7 @@ public class PenroseConnection implements Connection {
             org.safehaus.penrose.ldapbackend.DeleteResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("delete("+request.getDn()+")");
 
         DeleteRequest penroseRequest = ((PenroseDeleteRequest)request).getDeleteRequest();
@@ -261,6 +273,7 @@ public class PenroseConnection implements Connection {
             Collection<org.safehaus.penrose.ldapbackend.Modification> modifications
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("modify("+dn+")");
 
         DN penroseDn = ((PenroseDN)dn).getDn();
@@ -279,6 +292,7 @@ public class PenroseConnection implements Connection {
             org.safehaus.penrose.ldapbackend.ModifyResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("modify("+request.getDn()+")");
 
         ModifyRequest penroseRequest = ((PenroseModifyRequest)request).getModifyRequest();
@@ -297,6 +311,7 @@ public class PenroseConnection implements Connection {
             boolean deleteOldRdn
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("modrdn(\""+dn+"\", \""+newRdn+"\")");
 
         DN penroseDn = ((PenroseDN)dn).getDn();
@@ -310,6 +325,7 @@ public class PenroseConnection implements Connection {
             org.safehaus.penrose.ldapbackend.ModRdnResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("modrdn(\""+request.getDn()+"\", \""+request.getNewRdn()+"\")");
 
         ModRdnRequest penroseRequest = ((PenroseModRdnRequest)request).getModRdnRequest();
@@ -328,6 +344,7 @@ public class PenroseConnection implements Connection {
             int scope
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("search(\""+dn+"\", \""+filter+"\")");
 
         DN penroseDn = ((PenroseDN)dn).getDn();
@@ -355,6 +372,7 @@ public class PenroseConnection implements Connection {
             org.safehaus.penrose.ldapbackend.SearchResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("search(\""+request.getDn()+"\", \""+request.getFilter()+"\")");
 
         SearchRequest penroseRequest = ((PenroseSearchRequest)request).getSearchRequest();
@@ -375,6 +393,7 @@ public class PenroseConnection implements Connection {
     public void unbind(
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("unbind()");
 
         session.unbind();
@@ -385,6 +404,7 @@ public class PenroseConnection implements Connection {
             org.safehaus.penrose.ldapbackend.UnbindResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("unbind()");
 
         UnbindRequest penroseRequest = ((PenroseUnbindRequest)request).getUnbindRequest();

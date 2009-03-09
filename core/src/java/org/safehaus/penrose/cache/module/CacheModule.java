@@ -25,6 +25,8 @@ public class CacheModule extends Module implements CacheMBean {
 
     public void init() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         cacheManager = new CacheManager();
 
         String s = getParameter(QUERY_SIZE);
@@ -64,6 +66,8 @@ public class CacheModule extends Module implements CacheMBean {
             ModuleChain chain
     ) throws Exception {
 
+        boolean warn = log.isWarnEnabled();
+
         String entryId = chain.getEntry().getName();
 
         SearchRequest searchRequest = new SearchRequest();
@@ -93,6 +97,8 @@ public class CacheModule extends Module implements CacheMBean {
             CompareResponse response,
             ModuleChain chain
     ) throws Exception {
+
+        boolean warn = log.isWarnEnabled();
 
         String entryId = chain.getEntry().getName();
 
@@ -154,6 +160,9 @@ public class CacheModule extends Module implements CacheMBean {
             final SearchOperation operation,
             final ModuleChain chain
     ) throws Exception {
+
+        boolean warn = log.isWarnEnabled();
+        final boolean debug = log.isDebugEnabled();
 
         String entryId = chain.getEntry().getName();
 
@@ -227,6 +236,7 @@ public class CacheModule extends Module implements CacheMBean {
     }
 
     public void clear() {
+        boolean warn = log.isWarnEnabled();
         cacheManager.clear();
         if (warn) log.warn("Cache cleared.");
     }

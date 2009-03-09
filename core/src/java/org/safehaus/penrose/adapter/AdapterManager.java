@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.PartitionContext;
-import org.safehaus.penrose.naming.PenroseContext;
 
 import java.util.Map;
 import java.util.LinkedHashMap;
@@ -17,7 +16,6 @@ import java.util.Collection;
 public class AdapterManager {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     Partition partition;
 

@@ -152,6 +152,7 @@ public class LDAPConnection extends Connection {
 
     public LDAPClient createClient() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Creating new LDAP client.");
 
         return new LDAPPoolableClient(connectionPool, connectionFactory);
@@ -159,6 +160,7 @@ public class LDAPConnection extends Connection {
 
     public synchronized LDAPClient getClient(final Session session) throws Exception {
 
+        final boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Getting LDAP client from session.");
         final String attributeName = getPartition().getName()+".connection."+getName();
 

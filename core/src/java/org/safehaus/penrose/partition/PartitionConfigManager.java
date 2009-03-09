@@ -117,7 +117,7 @@ public class PartitionConfigManager implements Serializable {
                 if (suffix.isEmpty() && dn.isEmpty() // Root DSE
                         || dn.endsWith(suffix)) {
 
-                    if (s == null || s.getSize() < suffix.getSize()) {
+                    if (s == null || s.getLength() < suffix.getLength()) {
                         p = partitionConfig;
                         s = suffix;
                     }
@@ -140,8 +140,14 @@ public class PartitionConfigManager implements Serializable {
         return partitionConfigs.keySet();
     }
 
-    public void addPartitionConfig(PartitionConfig partitionConfig) {
-        partitionConfigs.put(partitionConfig.getName(), partitionConfig);
+    public void addPartitionConfig(PartitionConfig partitionConfig) throws Exception {
+        String partitionName = partitionConfig.getName();
+
+        if (partitionConfigs.containsKey(partitionName)) {
+            throw new Exception("Partition "+partitionName+" already exists.");
+        }
+
+        partitionConfigs.put(partitionName, partitionConfig);
     }
 
     public Collection<PartitionConfig> getPartitionConfigs() {

@@ -48,6 +48,8 @@ public class ProxyEntry extends Entry {
 
     public void init() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         entrySource = localSources.values().iterator().next();
         source = entrySource.getSource();
 
@@ -119,6 +121,8 @@ public class ProxyEntry extends Entry {
 
     public DN convertDn(DN dn, DN oldSuffix, DN newSuffix) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         if (proxyBaseDn == null) return dn;
 
         if (debug) {
@@ -131,11 +135,11 @@ public class ProxyEntry extends Entry {
         if (oldSuffix == null || oldSuffix.isEmpty() || !dn.endsWith(oldSuffix)) return dn;
         if (newSuffix == null || newSuffix.isEmpty()) return dn;
 
-        int start = dn.getSize() - oldSuffix.getSize();
+        int start = dn.getLength() - oldSuffix.getLength();
 
         DNBuilder db = new DNBuilder();
         for (int i=0; i<start; i++) {
-            RDN rdn = dn.get(i);
+            RDN rdn = dn.getRdn(i);
             db.append(rdn);
         }
 
@@ -173,6 +177,8 @@ public class ProxyEntry extends Entry {
             AddRequest request,
             AddResponse response
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
 
@@ -215,6 +221,7 @@ public class ProxyEntry extends Entry {
             BindResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug(TextUtil.displaySeparator(70));
             log.debug(TextUtil.displayLine("PROXY BIND", 70));
@@ -237,6 +244,8 @@ public class ProxyEntry extends Entry {
             CompareRequest request,
             CompareResponse response
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
 
@@ -276,10 +285,10 @@ public class ProxyEntry extends Entry {
 
         DN entryDn = getDn();
 
-        if (entryDn.getSize() == dn.getSize()) {
+        if (entryDn.getLength() == dn.getLength()) {
             return entryDn.matches(dn);
 
-        } else if (entryDn.getSize() < dn.getSize()) {
+        } else if (entryDn.getLength() < dn.getLength()) {
             return entryDn.endsWith(dn);
         }
 
@@ -288,14 +297,16 @@ public class ProxyEntry extends Entry {
 
     public Collection<Entry> findEntries(DN dn) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         Collection<Entry> results = new ArrayList<Entry>();
         if (dn == null) return results;
 
         DN entryDn = getDn();
         //if (debug) log.debug("Finding matching entries for \""+dn+"\" in \""+entryDn+"\".");
 
-        int entryDnLength = entryDn.getSize();
-        int dnLength      = dn.getSize();
+        int entryDnLength = entryDn.getLength();
+        int dnLength      = dn.getLength();
 
         if (entryDnLength == 0) { // Root DSE
             if (dnLength == 0) {
@@ -375,6 +386,8 @@ public class ProxyEntry extends Entry {
             DeleteResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         DN dn = request.getDn();
 
         if (debug) {
@@ -402,6 +415,8 @@ public class ProxyEntry extends Entry {
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
 
@@ -445,6 +460,8 @@ public class ProxyEntry extends Entry {
             ModRdnResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         DN dn = request.getDn();
 
         if (debug) {
@@ -470,6 +487,8 @@ public class ProxyEntry extends Entry {
     public void search(
             SearchOperation operation
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         final DN baseDn     = operation.getDn();
         final Filter filter = operation.getFilter();
@@ -499,6 +518,7 @@ public class ProxyEntry extends Entry {
             final SearchOperation operation
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Expanding "+getDn()+".");
 
         Session session = operation.getSession();
@@ -603,6 +623,8 @@ public class ProxyEntry extends Entry {
 
     public SearchResult createSearchResult(Interpreter interpreter, SearchResult result) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         DN dn = result.getDn();
         Attributes attributes = result.getAttributes();
 
@@ -627,6 +649,8 @@ public class ProxyEntry extends Entry {
     }
 
     public Attributes computeAttributes(Interpreter interpreter, Attributes attributes) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         Attributes newAttributes = (Attributes)attributes.clone();
 
@@ -674,6 +698,8 @@ public class ProxyEntry extends Entry {
 
     public SearchReference createSearchReference(SearchReference reference) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         DN dn = reference.getDn();
 
         DN newDn = convertDn(dn, proxyBaseDn, getDn());
@@ -701,6 +727,8 @@ public class ProxyEntry extends Entry {
             UnbindRequest request,
             UnbindResponse response
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(70));

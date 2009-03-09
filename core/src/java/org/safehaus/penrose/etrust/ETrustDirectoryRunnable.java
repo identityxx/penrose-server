@@ -18,6 +18,7 @@
 package org.safehaus.penrose.etrust;
 
 import org.apache.log4j.Logger;
+import org.safehaus.penrose.Penrose;
 
 import java.io.*;
 import java.util.TreeSet;
@@ -49,7 +50,7 @@ public class ETrustDirectoryRunnable implements Runnable, FilenameFilter {
         try {
             runImpl();
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
         }
     }
 

@@ -29,7 +29,6 @@ import java.math.BigInteger;
 public class BinaryUtil {
 
     public static Logger log = LoggerFactory.getLogger(BinaryUtil.class);
-    public static boolean debug = log.isDebugEnabled();
 
     public static String BASE64      = "Base64";
     public static String BIG_INTEGER = "BigInteger";

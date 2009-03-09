@@ -70,6 +70,7 @@ public class SearchRequestBuilder extends RequestBuilder {
 
     public Filter generateJoinOn(EntrySource sourceRef, String alias) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug(" - Join on:");
 
         Filter filter = null;
@@ -104,6 +105,7 @@ public class SearchRequestBuilder extends RequestBuilder {
 
     public Filter generateJoinOn2(EntrySource sourceRef, String alias) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug(" - Join on:");
 
         Filter filter = null;
@@ -170,6 +172,7 @@ public class SearchRequestBuilder extends RequestBuilder {
 
     public String generateJoinFilter(EntrySource sourceRef, String alias) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug(" - Join filter:");
 
         String table = sourceRef.getSource().getParameter(JDBC.TABLE);
@@ -212,6 +215,7 @@ public class SearchRequestBuilder extends RequestBuilder {
 
     public SelectStatement generate() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         SelectStatement statement = new SelectStatement();
 
         int sourceCounter = 0;

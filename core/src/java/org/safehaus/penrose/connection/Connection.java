@@ -34,7 +34,6 @@ import java.util.Map;
 public class Connection {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     protected ConnectionConfig connectionConfig;
     protected ConnectionContext connectionContext;

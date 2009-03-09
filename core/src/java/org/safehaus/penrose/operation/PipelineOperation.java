@@ -16,8 +16,6 @@ import java.util.Collection;
 public class PipelineOperation implements Operation {
 
     protected Logger log = LoggerFactory.getLogger(getClass());
-    protected boolean warn = log.isWarnEnabled();
-    protected boolean debug = log.isDebugEnabled();
 
     protected Operation operation;
 

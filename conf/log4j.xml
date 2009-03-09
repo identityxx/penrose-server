@@ -59,10 +59,9 @@
     <appender-ref ref="console"/>
   </logger>
 
-  <logger name="org.safehaus.penrose.monitor" additivity="false">
+  <logger name="org.safehaus.penrose.log.Monitor" additivity="false">
     <level value="ERROR"/>
     <appender-ref ref="monitor"/>
-    <appender-ref ref="console"/>
   </logger>
 
   <logger name="org.safehaus.penrose" additivity="false">

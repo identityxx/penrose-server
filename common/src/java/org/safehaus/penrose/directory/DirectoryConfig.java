@@ -18,7 +18,6 @@ public class DirectoryConfig implements Serializable, Cloneable {
     }
 
     public static transient Logger log;
-    public static boolean debug = log.isDebugEnabled();
 
     public final static Collection<String> EMPTY_IDS  = new ArrayList<String>();
     public final static Collection<EntryConfig> EMPTY = new ArrayList<EntryConfig>();
@@ -37,6 +36,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
 
     public void addEntryConfig(EntryConfig entryConfig) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         DN dn = entryConfig.getDn();
         if (debug) log.debug("Adding entry \""+dn+"\".");
 
@@ -155,6 +155,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
 
     public void removeEntryConfig(String name) throws Exception {
         
+        boolean debug = log.isDebugEnabled();
         for (String childName : getChildNames(name)) {
             removeEntryConfig(childName);
         }
@@ -265,6 +266,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
     }
 
     public void renameChildren(EntryConfig entryConfig, String newDn) throws Exception {
+        boolean debug = log.isDebugEnabled();
         if (entryConfig == null) return;
         if (newDn.equals(entryConfig.getDn().toString())) return;
 
@@ -307,6 +309,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
 
     public void renameEntryConfig(EntryConfig entryConfig, DN newDn) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         EntryConfig oldParent = getParent(entryConfig);
         DN oldDn = entryConfig.getDn();
 
@@ -364,6 +367,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
 
     public void renameEntryConfig(EntryConfig entryConfig, RDN newRdn) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         EntryConfig oldParent = getParent(entryConfig);
         DN oldDn = entryConfig.getDn();
 
@@ -399,7 +403,10 @@ public class DirectoryConfig implements Serializable, Cloneable {
     }
 
     public void addChild(String parentName, String childName) {
+
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Adding child "+childName+" to parent "+parentName+".");
+
         Collection<String> children = childrenByName.get(parentName);
         if (children == null) {
             children = new LinkedHashSet<String>();
@@ -411,7 +418,10 @@ public class DirectoryConfig implements Serializable, Cloneable {
     }
 
     public void removeChild(String parentName, String childName) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Removing child "+childName+" from parent "+parentName+".");
+
         parentByName.remove(childName);
 
         Collection<String> children = childrenByName.get(parentName);

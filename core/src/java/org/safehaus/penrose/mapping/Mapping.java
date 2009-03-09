@@ -13,7 +13,6 @@ import java.util.*;
 public class Mapping {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     public final static List<MappingRule> EMPTY = new LinkedList<MappingRule>();
 
@@ -149,6 +148,7 @@ public class Mapping {
 
     public void map(Interpreter interpreter, Attributes output) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Executing "+mappingConfig.getName()+" mapping:");
 
         String preMapping = mappingConfig.getPreScript();

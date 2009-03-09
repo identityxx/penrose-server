@@ -19,7 +19,6 @@ import java.util.Collection;
 public class FilterEvaluator {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    boolean debug = log.isDebugEnabled();
 
     public Schema schema;
 

@@ -13,8 +13,6 @@ import java.text.NumberFormat;
  */
 public class LDAPMonitor extends PollingMonitor {
 
-    public boolean info = log.isInfoEnabled();
-
     public final static String URL           = "url";
     public final static String BIND_DN       = "bindDn";
     public final static String BIND_PASSWORD = "bindPassword";

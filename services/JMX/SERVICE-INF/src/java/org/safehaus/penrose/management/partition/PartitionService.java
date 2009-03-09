@@ -247,6 +247,7 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
             AddResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         Partition partition = getPartition();
         if (debug) log.debug("Adding "+request.getDn()+".");
 
@@ -311,6 +312,7 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
             DeleteResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         Partition partition = getPartition();
         if (debug) log.debug("Deleting "+request.getDn()+".");
 
@@ -352,6 +354,7 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
             DN dn
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         Partition partition = getPartition();
         if (debug) log.debug("Finding "+dn+".");
 
@@ -417,6 +420,7 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
             ModifyResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         Partition partition = getPartition();
         if (debug) log.debug("Modifying "+request.getDn()+".");
 
@@ -493,6 +497,7 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
             ModRdnResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         Partition partition = getPartition();
         if (debug) log.debug("Renaming "+request.getDn()+".");
 
@@ -569,6 +574,7 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
             SearchResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         Partition partition = getPartition();
         if (debug) log.debug("Searching "+request.getDn()+".");
 

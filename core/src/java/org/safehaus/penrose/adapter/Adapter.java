@@ -29,13 +29,13 @@ import org.slf4j.Logger;
 public abstract class Adapter {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     protected AdapterConfig adapterConfig;
     protected AdapterContext adapterContext;
 
     public void init(AdapterConfig adapterConfig, AdapterContext adapterContext) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Creating "+adapterConfig.getName()+" adapter.");
 
         this.adapterConfig = adapterConfig;

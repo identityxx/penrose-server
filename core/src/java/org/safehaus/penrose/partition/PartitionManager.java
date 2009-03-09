@@ -2,6 +2,7 @@ package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.PenroseConfig;
+import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.module.ModuleReader;
 import org.safehaus.penrose.module.ModuleWriter;
 import org.safehaus.penrose.mapping.MappingReader;
@@ -31,8 +32,6 @@ import java.util.*;
 public class PartitionManager {
 
     public Logger log      = LoggerFactory.getLogger(getClass());
-    public Logger errorLog = org.safehaus.penrose.log.Error.log;
-    public boolean debug   = log.isDebugEnabled();
 
     protected File home;
     protected File partitionsDir;
@@ -93,7 +92,7 @@ public class PartitionManager {
                 loadPartition(partitionName);
 
             } catch (Exception e) {
-                errorLog.error("Failed loading partition "+partitionName+".", e);
+                Penrose.errorLog.error("Failed loading partition "+partitionName+".", e);
             }
         }
 
@@ -107,7 +106,7 @@ public class PartitionManager {
                 startPartition(partitionName);
 
             } catch (Exception e) {
-                errorLog.error("Failed starting partition "+partitionName+".", e);
+                Penrose.errorLog.error("Failed starting partition "+partitionName+".", e);
             }
         }
 
@@ -119,7 +118,7 @@ public class PartitionManager {
                 loadPartition(partitionName);
 
             } catch (Exception e) {
-                errorLog.error("Failed loading partition "+partitionName+".", e);
+                Penrose.errorLog.error("Failed loading partition "+partitionName+".", e);
                 continue;
             }
 
@@ -127,13 +126,14 @@ public class PartitionManager {
                 startPartition(partitionName);
 
             } catch (Exception e) {
-                errorLog.error("Failed starting partition "+partitionName+".", e);
+                Penrose.errorLog.error("Failed starting partition "+partitionName+".", e);
             }
         }
     }
 
     public PartitionConfig loadRootPartition() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug(TextUtil.repeat("-", 70));
             log.debug("Loading root partition.");
@@ -175,6 +175,7 @@ public class PartitionManager {
 
     public void storeRootPartition() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug(TextUtil.repeat("-", 70));
             log.debug("Storing root partition.");
@@ -207,6 +208,7 @@ public class PartitionManager {
 
     public PartitionConfig loadPartition(String partitionName) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         PartitionConfig partitionConfig = partitionConfigManager.getPartitionConfig(partitionName);
         if (partitionConfig != null) {
             log.debug("Partition "+partitionName+" is already loaded.");
@@ -256,6 +258,7 @@ public class PartitionManager {
 
     public void storePartition(String partitionName) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (PartitionConfig.ROOT.equals(partitionName)) {
             storeRootPartition();
             return;
@@ -299,6 +302,7 @@ public class PartitionManager {
 
     public void startPartition(String name) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         Partition partition = partitions.get(name);
         if (partition != null) {
             log.debug("Partition "+name+" already started.");
@@ -307,7 +311,7 @@ public class PartitionManager {
 
         PartitionConfig partitionConfig = partitionConfigManager.getPartitionConfig(name);
         if (partitionConfig == null) {
-            log.error("Can't start partition "+name+": Partition not found.");
+            Penrose.errorLog.error("Can't start partition "+name+": Partition not found.");
             return;
         }
 
@@ -318,7 +322,7 @@ public class PartitionManager {
 
         for (String depend : partitionConfig.getDepends()) {
             if (partitionConfigManager.getPartitionConfig(depend) == null) {
-                log.error("Can't start partition "+name+": Missing dependency ["+depend+"].");
+                Penrose.errorLog.error("Can't start partition "+name+": Missing dependency ["+depend+"].");
                 return;
             }
 
@@ -347,6 +351,7 @@ public class PartitionManager {
 
     public PartitionContext createPartitionContext(PartitionConfig partitionConfig) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         String partitionName = partitionConfig.getName();
         PartitionContext partitionContext = new PartitionContext();
 
@@ -444,13 +449,14 @@ public class PartitionManager {
                 removePartition(partitionName);
 
             } catch (Exception e) {
-                errorLog.error(e.getMessage(), e);
+                Penrose.errorLog.error(e.getMessage(), e);
             }
         }
     }
 
     public void stopPartition(String partitionName) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug(TextUtil.repeat("-", 70));
             log.debug("Stopping partition "+partitionName+".");
@@ -553,6 +559,7 @@ public class PartitionManager {
 
     public Partition getPartition(DN dn) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Searching partition for \""+dn+"\".");
 
         Collection<Partition> results = getPartitions(dn);

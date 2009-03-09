@@ -34,7 +34,6 @@ public class MappingRuleConfig implements Serializable, Cloneable {
     }
 
     public static transient Logger log;
-    public static boolean debug = log.isDebugEnabled();
 
     public final static String ADD            = "add";
     public final static String REPLACE        = "replace";

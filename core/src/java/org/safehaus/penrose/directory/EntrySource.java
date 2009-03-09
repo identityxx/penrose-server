@@ -20,7 +20,6 @@ import java.util.Map;
 public class EntrySource implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     protected Entry entry;
     protected EntrySourceConfig sourceConfig;
@@ -54,6 +53,9 @@ public class EntrySource implements Cloneable {
     }
 
     public EntrySource(Entry entry, EntrySourceConfig sourceConfig, Source source) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
         this.entry = entry;
         this.sourceConfig = sourceConfig;
         this.source = source;
@@ -276,6 +278,8 @@ public class EntrySource implements Cloneable {
     }
     
     public SearchResult find(Session session, DN dn) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         SearchResponse response = search(session, dn, null, SearchRequest.SCOPE_BASE);
 

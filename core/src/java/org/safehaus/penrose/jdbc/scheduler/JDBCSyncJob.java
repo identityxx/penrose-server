@@ -10,6 +10,7 @@ import org.safehaus.penrose.jdbc.JDBC;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.operation.SearchOperation;
+import org.safehaus.penrose.Penrose;
 
 import java.util.*;
 
@@ -146,7 +147,6 @@ public class JDBCSyncJob extends Job {
 
         for (Entry child : entry.getChildren()) {
             Entry tmpChild = createTmpEntry(child);
-            tmpChild.setParent(tmpEntry);
             tmpEntry.addChild(tmpChild);
         }
 
@@ -166,7 +166,7 @@ public class JDBCSyncJob extends Job {
             try {
                 target.create();
             } catch (Exception e) {
-                log.error("Failed to create " + target.getName() + ": " + e.getMessage());
+                Penrose.errorLog.error("Failed to create " + target.getName() + ": " + e.getMessage());
             }
         }
     }
@@ -207,7 +207,7 @@ public class JDBCSyncJob extends Job {
                 try {
                     target.clear(session);
                 } catch (Exception e) {
-                    log.error("Failed to create " + target.getName() + ": " + e.getMessage());
+                    Penrose.errorLog.error("Failed to create " + target.getName() + ": " + e.getMessage());
                 }
             }
 
@@ -225,7 +225,7 @@ public class JDBCSyncJob extends Job {
             try {
                 target.drop();
             } catch (Exception e) {
-                log.error("Failed to create " + target.getName() + ": " + e.getMessage());
+                Penrose.errorLog.error("Failed to create " + target.getName() + ": " + e.getMessage());
             }
         }
     }
@@ -236,7 +236,7 @@ public class JDBCSyncJob extends Job {
             try {
                 tmp.create();
             } catch (Exception e) {
-                log.error("Failed to create " + tmp.getName() + ": " + e.getMessage());
+                Penrose.errorLog.error("Failed to create " + tmp.getName() + ": " + e.getMessage());
                 tmp.drop();
                 tmp.create();
             }
@@ -320,7 +320,7 @@ public class JDBCSyncJob extends Job {
                     );
 
                 } catch (Exception e) {
-                    log.error(e.getMessage(), e);
+                    Penrose.errorLog.error(e.getMessage(), e);
                 }
             }
 */
@@ -375,6 +375,8 @@ public class JDBCSyncJob extends Job {
             SearchResponse response1,
             SearchResponse response2
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         boolean b1 = response1.hasNext();
         boolean b2 = response2.hasNext();

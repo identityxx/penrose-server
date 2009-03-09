@@ -34,7 +34,6 @@ import javax.crypto.Cipher;
 public class SambaUtil {
 
     public static Logger log = LoggerFactory.getLogger(SambaUtil.class);
-    public static boolean debug = log.isDebugEnabled();
 
     public static String encryptNTPassword(String password) throws Exception {
         if (password == null) return null;

@@ -31,6 +31,7 @@ public class EntrySearchOperation extends PipelineSearchOperation {
     ) {
         super(parent);
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Creating default search result processor.");
 
         this.entry = entry;
@@ -46,6 +47,7 @@ public class EntrySearchOperation extends PipelineSearchOperation {
 
     public void add(SearchResult result) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Processing search result "+result.getDn()+".");
 
         if (lastResult == null) {
@@ -65,6 +67,7 @@ public class EntrySearchOperation extends PipelineSearchOperation {
     }
 
     public void returnLastSearchResult() throws Exception {
+        boolean debug = log.isDebugEnabled();
         try {
             if (debug) log.debug("Validating ACL.");
             entry.validatePermission(this, lastResult);
@@ -100,6 +103,7 @@ public class EntrySearchOperation extends PipelineSearchOperation {
 
     public void filterAttributes(SearchResult result) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         Attributes attributes = result.getAttributes();
         Collection<String> attributeNames = attributes.getNames();
 

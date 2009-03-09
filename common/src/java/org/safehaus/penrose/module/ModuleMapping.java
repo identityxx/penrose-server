@@ -33,7 +33,6 @@ public class ModuleMapping implements Serializable, Cloneable {
     }
 
     public static transient Logger log;
-    public static boolean debug = log.isDebugEnabled();
 
     public final static String OBJECT   = "OBJECT";
     public final static String ONELEVEL = "ONELEVEL";

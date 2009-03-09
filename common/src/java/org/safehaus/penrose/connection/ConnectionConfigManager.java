@@ -18,14 +18,18 @@ public class ConnectionConfigManager implements Serializable, Cloneable {
     }
 
     public static transient Logger log;
-    public static boolean debug = log.isDebugEnabled();
 
     private Map<String,ConnectionConfig> connectionConfigs = new LinkedHashMap<String,ConnectionConfig>();
 
-    public void addConnectionConfig(ConnectionConfig connectionConfig) {
-        String name = connectionConfig.getName();
-        //if (debug) log.debug("Adding connection "+name+".");
-        connectionConfigs.put(name, connectionConfig);
+    public void addConnectionConfig(ConnectionConfig connectionConfig) throws Exception {
+
+        String connectionName = connectionConfig.getName();
+
+        if (connectionConfigs.containsKey(connectionName)) {
+            throw new Exception("Connection "+connectionName+" already exists.");
+        }
+
+        connectionConfigs.put(connectionName, connectionConfig);
     }
 
     public ConnectionConfig getConnectionConfig(String name) {
@@ -48,8 +52,12 @@ public class ConnectionConfigManager implements Serializable, Cloneable {
 
     public void updateConnectionConfig(ConnectionConfig connectionConfig) throws Exception {
         String connectionName = connectionConfig.getName();
+
         ConnectionConfig oldConnectionConfig = connectionConfigs.get(connectionName);
-        if (oldConnectionConfig == null) throw new Exception("Connection "+connectionName+" not found.");
+        if (oldConnectionConfig == null) {
+            throw new Exception("Connection "+connectionName+" not found.");
+        }
+
         oldConnectionConfig.copy(connectionConfig);
     }
 

@@ -31,7 +31,6 @@ import java.util.*;
 public class NewSearchFilterBuilder {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     JDBCJoinSource joinSource;
 
@@ -109,6 +108,7 @@ public class NewSearchFilterBuilder {
             SimpleFilter filter
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Converting filter "+filter+".");
 
         String attributeName  = filter.getAttribute();
@@ -139,6 +139,7 @@ public class NewSearchFilterBuilder {
             SubstringFilter filter
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Converting filter "+filter+".");
 
         String attributeName = filter.getAttribute();
@@ -180,6 +181,7 @@ public class NewSearchFilterBuilder {
             PresentFilter filter
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Converting filter "+filter+".");
 
         String attributeName = filter.getAttribute();

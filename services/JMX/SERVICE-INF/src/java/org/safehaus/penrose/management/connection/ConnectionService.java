@@ -44,7 +44,7 @@ public class ConnectionService extends BaseService implements ConnectionServiceM
     }
 
     public void setConnectionConfig(ConnectionConfig connectionConfig) throws Exception {
-        getPartitionConfig().getConnectionConfigManager().addConnectionConfig(connectionConfig);
+        getPartitionConfig().getConnectionConfigManager().updateConnectionConfig(connectionConfig);
     }
 
     public Connection getConnection() {

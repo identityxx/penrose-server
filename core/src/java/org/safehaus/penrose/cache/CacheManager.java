@@ -13,8 +13,6 @@ import java.util.Date;
 public class CacheManager {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean warn = log.isWarnEnabled();
-    public boolean debug = log.isDebugEnabled();
 
     private int querySize  = 10;
     private int resultSize = 100;
@@ -48,6 +46,7 @@ public class CacheManager {
 
     public void add(Cache cache) {
 
+        boolean debug = log.isDebugEnabled();
         CacheKey key = cache.getKey();
         if (debug) log.debug("Adding cache key "+key.getEntryId()+".");
 
@@ -64,6 +63,7 @@ public class CacheManager {
     }
 
     public synchronized Cache get(CacheKey key) {
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Getting cache key "+key.getEntryId()+".");
         Cache cache = caches.get(key);
         if (cache == null) return null;
@@ -79,6 +79,7 @@ public class CacheManager {
     }
 
     public synchronized void purge() {
+        boolean debug = log.isDebugEnabled();
         if (querySize == 0) return;
 
         int counter = caches.size() - querySize;

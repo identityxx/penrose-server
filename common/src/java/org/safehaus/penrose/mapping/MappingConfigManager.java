@@ -18,7 +18,6 @@ public class MappingConfigManager implements Serializable, Cloneable {
     }
 
     public static transient Logger log;
-    public static boolean debug = log.isDebugEnabled();
 
     private Map<String,MappingConfig> mappingConfigs = new LinkedHashMap<String,MappingConfig>();
 

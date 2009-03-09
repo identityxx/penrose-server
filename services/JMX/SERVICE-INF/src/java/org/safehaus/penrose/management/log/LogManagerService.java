@@ -38,9 +38,9 @@ public class LogManagerService extends BaseService implements LogManagerServiceM
         return list;
     }
 
-    public Collection<String> getAppenderConfigNames() throws Exception {
+    public Collection<String> getAppenderNames() throws Exception {
         Collection<String> list = new ArrayList<String>();
-        list.addAll(logManager.getAppenderConfigNames());
+        list.addAll(logManager.getAppenderNames());
         return list;
     }
 
@@ -48,16 +48,16 @@ public class LogManagerService extends BaseService implements LogManagerServiceM
         return logManager.getAppenderConfig(appenderName);
     }
 
-    public void addAppenderConfig(AppenderConfig appenderConfig) throws Exception {
-        logManager.addAppenderConfig(appenderConfig);
+    public void addAppender(AppenderConfig appenderConfig) throws Exception {
+        logManager.addAppender(appenderConfig);
     }
 
-    public void updateAppenderConfig(String appenderName, AppenderConfig appenderConfig) throws Exception {
-        logManager.updateAppenderConfig(appenderName, appenderConfig);
+    public void updateAppender(String appenderName, AppenderConfig appenderConfig) throws Exception {
+        logManager.updateAppender(appenderName, appenderConfig);
     }
 
-    public AppenderConfig removeAppenderConfig(String appenderName) throws Exception {
-        return logManager.removeAppenderConfig(appenderName);
+    public void removeAppender(String appenderName) throws Exception {
+        logManager.removeAppender(appenderName);
     }
 
     public Collection<LoggerConfig> getLoggerConfigs() throws Exception {
@@ -66,9 +66,9 @@ public class LogManagerService extends BaseService implements LogManagerServiceM
         return list;
     }
 
-    public Collection<String> getLoggerConfigNames() throws Exception {
+    public Collection<String> getLoggerNames() throws Exception {
         Collection<String> list = new ArrayList<String>();
-        list.addAll(logManager.getLoggerConfigNames());
+        list.addAll(logManager.getLoggerNames());
         return list;
     }
 
@@ -76,24 +76,24 @@ public class LogManagerService extends BaseService implements LogManagerServiceM
         return logManager.getLoggerConfig(loggerName);
     }
 
-    public void addLoggerConfig(LoggerConfig loggerConfig) throws Exception {
-        logManager.addLoggerConfig(loggerConfig);
+    public void addLogger(LoggerConfig loggerConfig) throws Exception {
+        logManager.addLogger(loggerConfig);
     }
 
-    public void updateLoggerConfig(String loggerName, LoggerConfig loggerConfig) throws Exception {
-        logManager.updateLoggerConfig(loggerName, loggerConfig);
+    public void updateLogger(String loggerName, LoggerConfig loggerConfig) throws Exception {
+        logManager.updateLogger(loggerName, loggerConfig);
     }
 
-    public LoggerConfig removeLoggerConfig(String loggerName) throws Exception {
-        return logManager.removeLoggerConfig(loggerName);
+    public void removeLogger(String loggerName) throws Exception {
+        logManager.removeLogger(loggerName);
     }
 
     public RootLoggerConfig getRootLoggerConfig() throws Exception {
         return logManager.getRootLoggerConfig();
     }
 
-    public void setRootLoggerConfig(RootLoggerConfig rootLoggerConfig) throws Exception {
-        logManager.setRootLoggerConfig(rootLoggerConfig);
+    public void updateRootLogger(RootLoggerConfig rootLoggerConfig) throws Exception {
+        logManager.updateRootLogger(rootLoggerConfig);
     }
 
     public void store() throws Exception {

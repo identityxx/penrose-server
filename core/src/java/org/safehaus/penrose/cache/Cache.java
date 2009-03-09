@@ -1,6 +1,7 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.ldap.SearchResponse;
+import org.safehaus.penrose.Penrose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +36,7 @@ public class Cache {
             try {
                 wait();
             } catch (InterruptedException e) {
-                log.error(e.getMessage(), e);
+                Penrose.errorLog.error(e.getMessage(), e);
             }
         }
         return response;

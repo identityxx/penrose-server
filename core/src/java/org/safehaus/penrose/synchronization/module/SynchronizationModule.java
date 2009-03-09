@@ -298,6 +298,8 @@ public class SynchronizationModule extends Module implements SynchronizationMBea
 
     public boolean checkSearchResult(SearchResult result) throws Exception {
 
+        boolean warn = log.isWarnEnabled();
+
         Attributes attributes = result.getAttributes();
         Attribute objectClass = attributes.get("objectClass");
 
@@ -472,7 +474,7 @@ public class SynchronizationModule extends Module implements SynchronizationMBea
             log.debug("Loading "+targetDn);
 
             final DN sourceDn = targetDn.getPrefix(targetSuffix).append(sourceSuffix);
-            final int sourceDnSize = sourceDn.getSize();
+            final int sourceDnSize = sourceDn.getLength();
 
             SearchRequest request = new SearchRequest();
             request.setDn(sourceDn);
@@ -483,7 +485,7 @@ public class SynchronizationModule extends Module implements SynchronizationMBea
                     DN dn = result.getDn();
                     if (sourceDn.equals(dn)) return;
 
-                    int dnSize = dn.getSize();
+                    int dnSize = dn.getLength();
                     DN newDn = dn.getPrefix(dnSize - sourceDnSize).append(targetDn);
 
                     Attributes attributes = result.getAttributes();
@@ -560,6 +562,8 @@ public class SynchronizationModule extends Module implements SynchronizationMBea
 
     public Long getSourceCount(final DN sourceDn) throws Exception {
 
+        final boolean warn = log.isWarnEnabled();
+
         Session session = createAdminSession();
 
         try {
@@ -608,6 +612,8 @@ public class SynchronizationModule extends Module implements SynchronizationMBea
     }
 
     public Long getTargetCount(final DN targetDn) throws Exception {
+
+        final boolean warn = log.isWarnEnabled();
 
         Session session = createAdminSession();
 
@@ -692,6 +698,8 @@ public class SynchronizationModule extends Module implements SynchronizationMBea
     }
 
     public SynchronizationResult synchronize(final Session session, final DN targetDn) throws Exception {
+
+        final boolean warn = log.isWarnEnabled();
 
         long startTime = System.currentTimeMillis();
 

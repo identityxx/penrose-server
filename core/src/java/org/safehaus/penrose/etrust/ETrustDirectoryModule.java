@@ -21,6 +21,7 @@ import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.PenroseFactory;
+import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.directory.Directory;
 import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.session.Session;
@@ -141,10 +142,10 @@ public class ETrustDirectoryModule extends Module {
                     adminSession.add(dn, result.getAttributes());
 
                 } catch (Exception e) {
-                    log.error(e.getMessage(), e);
+                    Penrose.errorLog.error(e.getMessage(), e);
 
                 } finally {
-                    if (client != null) try { client.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+                    if (client != null) try { client.close(); } catch (Exception e) { Penrose.errorLog.error(e.getMessage(), e); }
                 }
 
             } else if ("REM".equals(action)) {
@@ -160,7 +161,7 @@ public class ETrustDirectoryModule extends Module {
                     adminSession.delete(dn);
 
                 } catch (Exception e) {
-                    log.error(e.getMessage(), e);
+                    Penrose.errorLog.error(e.getMessage(), e);
                 }
 
             } else if ("MOD".equals(action)) {
@@ -203,10 +204,10 @@ public class ETrustDirectoryModule extends Module {
                     adminSession.modify(dn, modifications);
 
                 } catch (Exception e) {
-                    log.error(e.getMessage(), e);
+                    Penrose.errorLog.error(e.getMessage(), e);
 
                 } finally {
-                    if (client != null) try { client.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+                    if (client != null) try { client.close(); } catch (Exception e) { Penrose.errorLog.error(e.getMessage(), e); }
                 }
 
             } else if ("MODDN".equals(action)) {
@@ -225,7 +226,7 @@ public class ETrustDirectoryModule extends Module {
                     adminSession.modrdn(dn, newRdn, true);
 
                 } catch (Exception e) {
-                    log.error(e.getMessage(), e);
+                    Penrose.errorLog.error(e.getMessage(), e);
                 }
             }
 

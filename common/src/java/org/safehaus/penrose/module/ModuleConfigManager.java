@@ -19,7 +19,6 @@ public class ModuleConfigManager implements Serializable, Cloneable {
     }
 
     public static transient Logger log;
-    public static boolean debug = log.isDebugEnabled();
 
     private Map<String,ModuleConfig> moduleConfigs = new LinkedHashMap<String,ModuleConfig>();
     private Map<String,Collection<ModuleMapping>> moduleMappings = new LinkedHashMap<String,Collection<ModuleMapping>>();
@@ -74,6 +73,7 @@ public class ModuleConfigManager implements Serializable, Cloneable {
     
     public void addModuleMapping(ModuleMapping moduleMapping) {
 
+        boolean debug = log.isDebugEnabled();
         String moduleName = moduleMapping.getModuleName();
 
         if (debug) log.debug("Adding module mapping "+moduleName+" => "+ moduleMapping.getBaseDn());

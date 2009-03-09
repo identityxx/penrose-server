@@ -9,6 +9,7 @@ import org.safehaus.penrose.jdbc.connection.*;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
+import org.safehaus.penrose.Penrose;
 
 import java.util.*;
 import java.sql.ResultSet;
@@ -40,6 +41,8 @@ public class JDBCJoinSource extends Source {
     }
 
     public void init() throws Exception {
+
+        boolean debug = log.isDebugEnabled();
         connection = (JDBCConnection)getConnection();
 
         SourceManager sourceManager = getSourceContext().getPartition().getSourceManager();
@@ -140,10 +143,11 @@ public class JDBCJoinSource extends Source {
             final AddResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Add "+getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Add "+getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         JDBCClient client = connection.getClient(session);
@@ -195,6 +199,8 @@ public class JDBCJoinSource extends Source {
             final CompareResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         SearchRequest newRequest = new SearchRequest();
         newRequest.setDn(request.getDn());
         newRequest.setScope(SearchRequest.SCOPE_BASE);
@@ -222,10 +228,11 @@ public class JDBCJoinSource extends Source {
             final DeleteResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Delete "+getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Delete "+getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         JDBCClient client = connection.getClient(session);
@@ -277,10 +284,11 @@ public class JDBCJoinSource extends Source {
             final ModifyResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Modify "+getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Modify "+getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         JDBCClient client = connection.getClient(session);
@@ -351,10 +359,11 @@ public class JDBCJoinSource extends Source {
             final ModRdnResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("ModRdn "+getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("ModRdn "+getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         JDBCClient client = connection.getClient(session);
@@ -410,10 +419,11 @@ public class JDBCJoinSource extends Source {
             final SearchResponse response
     ) throws Exception {
 
+        final boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Search "+getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Search "+getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         response.setSizeLimit(request.getSizeLimit());
@@ -493,6 +503,8 @@ public class JDBCJoinSource extends Source {
             ResultSet rs
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         Attributes attributes = new Attributes();
         RDNBuilder rb = new RDNBuilder();
 
@@ -538,10 +550,11 @@ public class JDBCJoinSource extends Source {
 
     public void create() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Create "+getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Create "+getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         JDBCClient client = connection.createClient();
@@ -624,10 +637,11 @@ public class JDBCJoinSource extends Source {
 
     public void rename(Source newSource) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Rename "+getName()+" to "+newSource.getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Rename "+getName()+" to "+newSource.getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         SourceConfig newSourceConfig = newSource.getSourceConfig();
@@ -650,10 +664,11 @@ public class JDBCJoinSource extends Source {
 
     public void clear(Session session) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Clear "+getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Clear "+getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         JDBCClient client = connection.getClient(session);
@@ -675,10 +690,11 @@ public class JDBCJoinSource extends Source {
 
     public void drop() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Drop "+getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Drop "+getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         JDBCClient client = connection.createClient();
@@ -697,10 +713,11 @@ public class JDBCJoinSource extends Source {
 
     public void status() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Status "+getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Status "+getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         JDBCClient client = connection.createClient();
@@ -717,7 +734,7 @@ public class JDBCJoinSource extends Source {
         QueryResponse response = new QueryResponse() {
             public void add(Object object) throws Exception {
                 ResultSet rs = (ResultSet)object;
-                log.error("Table "+tableName+": "+rs.getObject(1));
+                Penrose.errorLog.error("Table "+tableName+": "+rs.getObject(1));
             }
         };
 
@@ -754,7 +771,7 @@ public class JDBCJoinSource extends Source {
                 for (FieldConfig fieldConfig : sourceConfig.getFieldConfigs()) {
                     Object length = rs.getObject(index++);
                     int maxLength = fieldConfig.getLength();
-                    log.error(" - Field " + fieldConfig.getName() + ": " + length + (maxLength > 0 ? "/" + maxLength : ""));
+                    Penrose.errorLog.error(" - Field " + fieldConfig.getName() + ": " + length + (maxLength > 0 ? "/" + maxLength : ""));
                 }
             }
         };
@@ -766,10 +783,11 @@ public class JDBCJoinSource extends Source {
 
     public long getCount(Session session) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Count "+getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Count "+getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         final String tableName = connection.getTableName(sourceConfig);
@@ -796,7 +814,7 @@ public class JDBCJoinSource extends Source {
         }
 
         Long count = (Long)response.next();
-        log.error("Table "+tableName+": "+count);
+        Penrose.errorLog.error("Table "+tableName+": "+count);
 
         return count;
 /*
@@ -810,7 +828,7 @@ public class JDBCJoinSource extends Source {
             }
 
             Long count = (Long)response.next();
-            log.error("Table "+tableName+": "+count);
+            Penrose.errorLog.error("Table "+tableName+": "+count);
 
             return count;
 

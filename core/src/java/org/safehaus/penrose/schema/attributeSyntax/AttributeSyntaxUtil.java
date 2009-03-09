@@ -19,6 +19,7 @@ package org.safehaus.penrose.schema.attributeSyntax;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.safehaus.penrose.Penrose;
 
 import java.util.*;
 import java.io.BufferedReader;
@@ -30,7 +31,6 @@ import java.io.InputStreamReader;
 public class AttributeSyntaxUtil {
 
     public static Logger log = LoggerFactory.getLogger(AttributeSyntaxUtil.class);
-    public static boolean debug = log.isDebugEnabled();
 
     public static Map<String,AttributeSyntax> attributeSyntaxes = new TreeMap<String,AttributeSyntax>();
 
@@ -79,7 +79,7 @@ public class AttributeSyntaxUtil {
             in.close();
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
         }
     }
 

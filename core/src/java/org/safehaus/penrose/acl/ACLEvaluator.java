@@ -35,7 +35,6 @@ import java.util.*;
 public class ACLEvaluator {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     Partition partition;
 
@@ -70,6 +69,7 @@ public class ACLEvaluator {
 
         if (entry == null) return true;
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug("Checking ACL on \""+entry.getDn()+"\".");
             //log.debug("Bind DN: "+bindDn);
@@ -154,6 +154,7 @@ public class ACLEvaluator {
             String permission
     ) throws Exception {
     	
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Checking object \""+permission+"\" permission");
 
         int rc = LDAP.SUCCESS;
@@ -231,6 +232,8 @@ public class ACLEvaluator {
 
     public boolean checkSubject(DN bindDn, DN targetDn, ACI aci) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         String subject = aci.getSubject();
         if (debug) log.debug("   Checking bind DN ["+bindDn+"] with "+subject);
 
@@ -297,6 +300,8 @@ public class ACLEvaluator {
             Collection<String> grants,
             Collection<String> denies
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         if (entry == null) {
             //log.debug("ERROR: Entry is null.");
@@ -368,6 +373,8 @@ public class ACLEvaluator {
             Session session,
             SearchResult result
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         if (session == null || session.isRootUser()) {
             return;
