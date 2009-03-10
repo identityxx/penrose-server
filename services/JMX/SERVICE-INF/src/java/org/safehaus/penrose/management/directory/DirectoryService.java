@@ -81,9 +81,11 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
         return list;
     }
 
-    public String getEntryName(DN dn) throws Exception {
+    public Collection<String> getChildNames(String entryName) throws Exception {
+        Collection<String> list = new ArrayList<String>();
         DirectoryConfig directoryConfig = getDirectoryConfig();
-        return directoryConfig.getEntryNameByDn(dn);
+        list.addAll(directoryConfig.getChildNames(entryName));
+        return list;
     }
 
     public EntryService getEntryService(String entryId) throws Exception {
@@ -92,6 +94,18 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
         entryService.init();
 
         return entryService;
+    }
+
+    public String getEntryName(DN dn) throws Exception {
+        DirectoryConfig directoryConfig = getDirectoryConfig();
+        return directoryConfig.getEntryNameByDn(dn);
+    }
+
+    public DN getEntryDn(String entryName) throws Exception {
+        DirectoryConfig directoryConfig = getDirectoryConfig();
+        EntryConfig entryConfig = directoryConfig.getEntryConfig(entryName);
+        if (entryConfig == null) return null;
+        return entryConfig.getDn();
     }
 
     public String createEntry(EntryConfig entryConfig) throws Exception {

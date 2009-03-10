@@ -100,7 +100,10 @@ public class ModuleMapping implements Serializable, Cloneable {
     }
 
     public int hashCode() {
-        return moduleName.hashCode() + baseDn.hashCode() + scope.hashCode() + filter.hashCode();
+        return (moduleName == null ? 0 : moduleName.hashCode())
+                + (baseDn == null ? 0 : baseDn.hashCode())
+                + (scope == null ? 0 : scope.hashCode())
+                + (filter == null ? 0 : filter.hashCode());
     }
 
     public boolean equals(Object o1, Object o2) {

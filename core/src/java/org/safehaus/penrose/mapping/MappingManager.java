@@ -129,8 +129,8 @@ public class MappingManager {
         return mappingConfigManager;
     }
 
-    public void updateMappingConfig(String name, MappingConfig mappingConfig) throws Exception {
-        mappingConfigManager.updateMappingConfig(name, mappingConfig);
+    public void updateMappingConfig(String mappingName, MappingConfig mappingConfig) throws Exception {
+        mappingConfigManager.updateMappingConfig(mappingName, mappingConfig);
     }
 
     public MappingConfig removeMappingConfig(String name) {

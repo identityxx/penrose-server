@@ -101,7 +101,8 @@ public class ConnectionManager {
     public Connection createConnection(ConnectionConfig connectionConfig) throws Exception {
 
         boolean debug = log.isDebugEnabled();
-        if (debug) log.debug("Creating connection "+connectionConfig.getName()+".");
+        String connectionName = connectionConfig.getName();
+        if (debug) log.debug("Creating connection "+connectionName+".");
 
         PartitionContext partitionContext = partition.getPartitionContext();
         ClassLoader cl = partitionContext.getClassLoader();

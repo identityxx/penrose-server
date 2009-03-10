@@ -37,25 +37,30 @@ public class DirectoryConfig implements Serializable, Cloneable {
     public void addEntryConfig(EntryConfig entryConfig) throws Exception {
 
         boolean debug = log.isDebugEnabled();
+        String entryName = entryConfig.getName();
         DN dn = entryConfig.getDn();
+
         if (debug) log.debug("Adding entry \""+dn+"\".");
+
+        if (entryConfigByName.containsKey(entryName)) {
+            throw new Exception("Entry "+entryName+" already exists.");
+        }
 
         entryConfigs.add(entryConfig);
 
-        String name = entryConfig.getName();
-        if (name == null) {
+        if (entryName == null) {
             int counter = 0;
-            name = "entry"+counter;
-            while (entryConfigByName.containsKey(name)) {
+            entryName = "entry"+counter;
+            while (entryConfigByName.containsKey(entryName)) {
                 counter++;
-                name = "entry"+counter;
+                entryName = "entry"+counter;
             }
-            entryConfig.setName(name);
+            entryConfig.setName(entryName);
         }
-        if (debug) log.debug(" - ID: "+name);
+        if (debug) log.debug(" - ID: "+ entryName);
 
-        // index by name
-        entryConfigByName.put(name, entryConfig);
+        // index by entryName
+        entryConfigByName.put(entryName, entryConfig);
 
         // index by dn
         String normalizedDn = dn.getNormalizedDn();
@@ -106,7 +111,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
         }
 
         if (debug) log.debug(" - Add suffix \""+dn+"\"");
-        rootNames.add(name);
+        rootNames.add(entryName);
     }
 
     public boolean contains(EntryConfig entryConfig) {
@@ -396,39 +401,39 @@ public class DirectoryConfig implements Serializable, Cloneable {
         newList.add(entryConfig);
     }
 
-    public Collection<String> getChildNames(String parentName) {
-        Collection<String> children = childrenByName.get(parentName);
+    public Collection<String> getChildNames(String entryName) {
+        Collection<String> children = childrenByName.get(entryName);
         if (children == null) return EMPTY_IDS;
         return children;
     }
 
-    public void addChild(String parentName, String childName) {
+    public void addChild(String entryName, String childName) {
 
         boolean debug = log.isDebugEnabled();
-        if (debug) log.debug("Adding child "+childName+" to parent "+parentName+".");
+        if (debug) log.debug("Adding child "+childName+" to parent "+entryName+".");
 
-        Collection<String> children = childrenByName.get(parentName);
+        Collection<String> children = childrenByName.get(entryName);
         if (children == null) {
             children = new LinkedHashSet<String>();
-            childrenByName.put(parentName, children);
+            childrenByName.put(entryName, children);
         }
 
         children.add(childName);
-        parentByName.put(childName, parentName);
+        parentByName.put(childName, entryName);
     }
 
-    public void removeChild(String parentName, String childName) throws Exception {
+    public void removeChild(String entryName, String childName) throws Exception {
 
         boolean debug = log.isDebugEnabled();
-        if (debug) log.debug("Removing child "+childName+" from parent "+parentName+".");
+        if (debug) log.debug("Removing child "+childName+" from parent "+entryName+".");
 
         parentByName.remove(childName);
 
-        Collection<String> children = childrenByName.get(parentName);
+        Collection<String> children = childrenByName.get(entryName);
         if (children == null) return;
 
         children.remove(childName);
-        if (children.isEmpty()) childrenByName.remove(parentName);
+        if (children.isEmpty()) childrenByName.remove(entryName);
     }
 
     public Collection<EntryConfig> getChildren(EntryConfig parentConfig) {

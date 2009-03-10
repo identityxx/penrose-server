@@ -32,8 +32,8 @@ public class ConnectionConfigManager implements Serializable, Cloneable {
         connectionConfigs.put(connectionName, connectionConfig);
     }
 
-    public ConnectionConfig getConnectionConfig(String name) {
-        return connectionConfigs.get(name);
+    public ConnectionConfig getConnectionConfig(String connectionName) {
+        return connectionConfigs.get(connectionName);
     }
 
     public Collection<String> getConnectionNames() {

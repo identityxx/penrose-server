@@ -69,26 +69,18 @@ public class ModuleManagerClient extends BaseClient implements ModuleManagerServ
         );
     }
 
-    public void createModule(ModuleConfig moduleConfig, Collection<ModuleMapping> moduleMappings) throws Exception {
-        invoke(
-                "createModule",
-                new Object[] { moduleConfig, moduleMappings },
-                new String[] { ModuleConfig.class.getName(), Collection.class.getName() }
-        );
-    }
-
-    public void updateModule(String name, ModuleConfig moduleConfig) throws Exception {
+    public void updateModule(String moduleName, ModuleConfig moduleConfig) throws Exception {
         invoke(
                 "updateModule",
-                new Object[] { name, moduleConfig },
+                new Object[] { moduleName, moduleConfig },
                 new String[] { String.class.getName(), ModuleConfig.class.getName() }
         );
     }
 
-    public void removeModule(String name) throws Exception {
+    public void removeModule(String moduleName) throws Exception {
         invoke(
                 "removeModule",
-                new Object[] { name },
+                new Object[] { moduleName },
                 new String[] { String.class.getName() }
         );
     }

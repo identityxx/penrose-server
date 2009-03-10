@@ -21,16 +21,21 @@ public class ModuleConfigManager implements Serializable, Cloneable {
     public static transient Logger log;
 
     private Map<String,ModuleConfig> moduleConfigs = new LinkedHashMap<String,ModuleConfig>();
-    private Map<String,Collection<ModuleMapping>> moduleMappings = new LinkedHashMap<String,Collection<ModuleMapping>>();
+    //private Map<String,Collection<ModuleMapping>> moduleMappings = new LinkedHashMap<String,Collection<ModuleMapping>>();
 
-    public void addModuleConfig(ModuleConfig moduleConfig) {
-        String name = moduleConfig.getName();
-        //if (debug) log.debug("Adding module "+name+".");
-        moduleConfigs.put(name, moduleConfig);
+    public void addModuleConfig(ModuleConfig moduleConfig) throws Exception {
+
+        String moduleName = moduleConfig.getName();
+
+        if (moduleConfigs.containsKey(moduleName)) {
+            throw new Exception("Module "+moduleName+" already exists.");
+        }
+
+        moduleConfigs.put(moduleName, moduleConfig);
     }
 
-    public ModuleConfig getModuleConfig(String name) {
-        return moduleConfigs.get(name);
+    public ModuleConfig getModuleConfig(String moduleName) {
+        return moduleConfigs.get(moduleName);
     }
 
     public Collection<String> getModuleNames() {
@@ -41,83 +46,119 @@ public class ModuleConfigManager implements Serializable, Cloneable {
         return moduleConfigs.values();
     }
 
-    public void updateModuleConfig(String name, ModuleConfig moduleConfig) throws Exception {
+    public void updateModuleConfig(String moduleName, ModuleConfig newModuleConfig) throws Exception {
 
-        ModuleConfig origModuleConfig = moduleConfigs.get(name);
-        origModuleConfig.copy(moduleConfig);
+        ModuleConfig moduleConfig = moduleConfigs.get(moduleName);
 
-        if (!name.equals(moduleConfig.getName())) {
-            moduleConfigs.remove(name);
-            moduleConfigs.put(moduleConfig.getName(), moduleConfig);
+        if (moduleConfig == null) {
+            throw new Exception("Module "+moduleName+" not found.");
+        }
 
-            Collection<ModuleMapping> list = moduleMappings.remove(name);
+        moduleConfig.copy(newModuleConfig);
+/*
+        if (!moduleName.equals(newModuleConfig.getName())) {
+            moduleConfigs.remove(moduleName);
+            moduleConfigs.put(newModuleConfig.getName(), newModuleConfig);
+
+            Collection<ModuleMapping> list = moduleMappings.remove(moduleName);
             if (list != null) {
                 for (ModuleMapping moduleMapping : list) {
-                    moduleMapping.setModuleName(moduleConfig.getName());
+                    moduleMapping.setModuleName(newModuleConfig.getName());
                 }
-                moduleMappings.put(name, list);
+                moduleMappings.put(moduleName, list);
             }
         }
+*/
     }
 
     public ModuleConfig removeModuleConfig(String moduleName) {
-        moduleMappings.remove(moduleName);
+        //moduleMappings.remove(moduleName);
         return moduleConfigs.remove(moduleName);
     }
 
-    public void addModuleMappings(Collection<ModuleMapping> moduleMappings) {
+    public void addModuleMappings(Collection<ModuleMapping> moduleMappings) throws Exception {
         for (ModuleMapping moduleMapping : moduleMappings) {
             addModuleMapping(moduleMapping);
         }
     }
     
-    public void addModuleMapping(ModuleMapping moduleMapping) {
+    public void addModuleMapping(ModuleMapping moduleMapping) throws Exception {
 
         boolean debug = log.isDebugEnabled();
         String moduleName = moduleMapping.getModuleName();
 
         if (debug) log.debug("Adding module mapping "+moduleName+" => "+ moduleMapping.getBaseDn());
 
+        ModuleConfig moduleConfig = moduleConfigs.get(moduleName);
+        if (moduleConfig == null) {
+            throw new Exception("Module "+moduleName+" not found.");
+        }
+
+        moduleConfig.addModuleMapping(moduleMapping);
+/*
         Collection<ModuleMapping> c = moduleMappings.get(moduleMapping.getModuleName());
         if (c == null) {
             c = new ArrayList<ModuleMapping>();
             moduleMappings.put(moduleMapping.getModuleName(), c);
         }
         c.add(moduleMapping);
+*/
     }
 
     public Collection<ModuleMapping> getModuleMappings() {
         Collection<ModuleMapping> results = new ArrayList<ModuleMapping>();
-        for (Collection<ModuleMapping> list : moduleMappings.values()) {
-            results.addAll(list);
+        for (ModuleConfig moduleConfig : moduleConfigs.values()) {
+            results.addAll(moduleConfig.getModuleMappings());
         }
         return results;
     }
 
-    public Collection<ModuleMapping> getModuleMappings(String name) {
-        return moduleMappings.get(name);
+    public Collection<ModuleMapping> getModuleMappings(String moduleName) throws Exception {
+        ModuleConfig moduleConfig = moduleConfigs.get(moduleName);
+        if (moduleConfig == null) {
+            throw new Exception("Module "+moduleName+" not found.");
+        }
+
+        return moduleConfig.getModuleMappings();
+        //return moduleMappings.get(moduleName);
     }
 
-    public void removeModuleMapping(ModuleMapping mapping) {
-        if (mapping == null) return;
-        if (mapping.getModuleName() == null) return;
+    public void removeModuleMapping(ModuleMapping moduleMapping) throws Exception {
+        if (moduleMapping == null) return;
 
-        Collection<ModuleMapping> c = moduleMappings.get(mapping.getModuleName());
-        if (c != null) c.remove(mapping);
+        String moduleName = moduleMapping.getModuleName();
+        if (moduleName == null) return;
+
+        ModuleConfig moduleConfig = moduleConfigs.get(moduleName);
+        if (moduleConfig == null) {
+            throw new Exception("Module "+moduleName+" not found.");
+        }
+
+        moduleConfig.removeModuleMapping(moduleMapping);
+        //Collection<ModuleMapping> c = moduleMappings.get(moduleName);
+        //if (c != null) c.remove(moduleMapping);
     }
 
-    public Collection<ModuleMapping> removeModuleMapping(String moduleName) {
-        return moduleMappings.remove(moduleName);
+    public void removeModuleMapping(String moduleName) throws Exception {
+
+        ModuleConfig moduleConfig = moduleConfigs.get(moduleName);
+        if (moduleConfig == null) {
+            throw new Exception("Module "+moduleName+" not found.");
+        }
+
+        moduleConfig.removeModuleMappings();
+        // moduleMappings.remove(moduleName);
     }
 
     public Object clone() throws CloneNotSupportedException {
         ModuleConfigManager modules = (ModuleConfigManager)super.clone();
 
         modules.moduleConfigs = new LinkedHashMap<String,ModuleConfig>();
+/*
         modules.moduleMappings = new LinkedHashMap<String,Collection<ModuleMapping>>();
 
         for (ModuleConfig moduleConfig : moduleConfigs.values()) {
-            modules.addModuleConfig((ModuleConfig)moduleConfig.clone());
+            modules.moduleConfigs.put(moduleConfig.getName(), (ModuleConfig)moduleConfig.clone());
 
             Collection<ModuleMapping> list = moduleMappings.get(moduleConfig.getName());
             if (list == null) continue;
@@ -126,7 +167,7 @@ public class ModuleConfigManager implements Serializable, Cloneable {
                 modules.addModuleMapping((ModuleMapping)moduleMapping.clone());
             }
         }
-
+*/
         return modules;
     }
 }

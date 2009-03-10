@@ -21,8 +21,15 @@ public class MappingConfigManager implements Serializable, Cloneable {
 
     private Map<String,MappingConfig> mappingConfigs = new LinkedHashMap<String,MappingConfig>();
 
-    public void addMappingConfig(MappingConfig mappingConfig) {
-        mappingConfigs.put(mappingConfig.getName(), mappingConfig);
+    public void addMappingConfig(MappingConfig mappingConfig) throws Exception {
+
+        String mappingName = mappingConfig.getName();
+
+        if (mappingConfigs.containsKey(mappingName)) {
+            throw new Exception("Mapping "+mappingName+" already exists.");
+        }
+
+        mappingConfigs.put(mappingName, mappingConfig);
     }
 
     public MappingConfig getMappingConfig(String name) {

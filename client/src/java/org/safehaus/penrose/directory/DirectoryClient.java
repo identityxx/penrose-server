@@ -75,6 +75,18 @@ public class DirectoryClient extends BaseClient implements DirectoryServiceMBean
         return (Collection<String>)getAttribute("EntryNames");
     }
 
+    public Collection<String> getChildNames(String entryName) throws Exception {
+        return (Collection<String>)invoke(
+                "getChildNames",
+                new Object[] { entryName },
+                new String[] { String.class.getName() }
+        );
+    }
+
+    public EntryClient getEntryClient(String entryName) throws Exception {
+        return new EntryClient(client, partitionName, entryName);
+    }
+
     public String getEntryName(DN dn) throws Exception {
         return (String)invoke(
                 "getEntryName",
@@ -83,8 +95,12 @@ public class DirectoryClient extends BaseClient implements DirectoryServiceMBean
         );
     }
 
-    public EntryClient getEntryClient(String entryName) throws Exception {
-        return new EntryClient(client, partitionName, entryName);
+    public DN getEntryDn(String entryName) throws Exception {
+        return (DN)invoke(
+                "getEntryDn",
+                new Object[] { entryName },
+                new String[] { String.class.getName() }
+        );
     }
 
     public String createEntry(EntryConfig entryConfig) throws Exception {
