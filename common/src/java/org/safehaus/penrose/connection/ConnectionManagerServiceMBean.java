@@ -16,7 +16,7 @@ public interface ConnectionManagerServiceMBean {
     public Collection<DN> getNamingContexts(ConnectionConfig connectionConfig) throws Exception;
 
     public void createConnection(ConnectionConfig connectionConfig) throws Exception;
-    public void renameConnection(String name, String newName) throws Exception;
-    public void updateConnection(ConnectionConfig connectionConfig) throws Exception;
-    public void removeConnection(String name) throws Exception;
+    public void renameConnection(String connectionName, String newConnectionName) throws Exception;
+    public void updateConnection(String connectionName, ConnectionConfig connectionConfig) throws Exception;
+    public void removeConnection(String connectionName) throws Exception;
 }

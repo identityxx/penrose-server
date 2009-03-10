@@ -3,6 +3,7 @@ package org.safehaus.penrose.module;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.Penrose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +18,6 @@ import java.util.Map;
 public class ModuleManager {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     protected Partition partition;
     protected ModuleConfigManager moduleConfigManager;
@@ -41,7 +41,11 @@ public class ModuleManager {
             ModuleConfig moduleConfig = getModuleConfig(moduleName);
             if (!moduleConfig.isEnabled()) continue;
 
-            startModule(moduleName);
+            try {
+                startModule(moduleName);
+            } catch (Exception e) {
+                Penrose.errorLog.error("Failed creating module "+moduleName+" in partition "+partition.getName()+".", e);
+            }
         }
     }
 
@@ -50,8 +54,12 @@ public class ModuleManager {
         Collection<String> moduleNames = new ArrayList<String>();
         moduleNames.addAll(modules.keySet());
 
-        for (String name : moduleNames) {
-            stopModule(name);
+        for (String moduleName : moduleNames) {
+            try {
+                stopModule(moduleName);
+            } catch (Exception e) {
+                Penrose.errorLog.error("Failed removing module "+moduleName+" in partition "+partition.getName()+".", e);
+            }
         }
     }
 
@@ -65,6 +73,7 @@ public class ModuleManager {
 
     public void startModule(String moduleName) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Starting module "+moduleName+".");
 
         ModuleConfig moduleConfig = getModuleConfig(moduleName);
@@ -85,6 +94,7 @@ public class ModuleManager {
 
     public void stopModule(String moduleName) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Stopping module "+moduleName+".");
 
         Module module = modules.remove(moduleName);

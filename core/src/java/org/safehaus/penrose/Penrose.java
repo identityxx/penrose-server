@@ -18,7 +18,6 @@
 package org.safehaus.penrose;
 
 import org.safehaus.penrose.config.DefaultPenroseConfig;
-import org.safehaus.penrose.PenroseConfig;
 import org.safehaus.penrose.log.log4j.AppenderConfig;
 import org.safehaus.penrose.config.PenroseConfigReader;
 import org.safehaus.penrose.config.PenroseConfigWriter;
@@ -43,8 +42,9 @@ import java.io.File;
 public class Penrose {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public Logger errorLog = org.safehaus.penrose.log.Error.log;
-    public boolean debug = log.isDebugEnabled();
+
+    public static Logger accessLog = org.safehaus.penrose.log.Access.log;
+    public static Logger errorLog = org.safehaus.penrose.log.Error.log;
 
     public static String PRODUCT_NAME;
     public static String PRODUCT_VERSION;

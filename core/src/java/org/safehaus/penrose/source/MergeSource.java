@@ -43,6 +43,7 @@ public class MergeSource extends Source {
             AddResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Adding "+request.getDn()+".");
 
         SourceManager sourceManager = partition.getSourceManager();
@@ -71,6 +72,7 @@ public class MergeSource extends Source {
             BindResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Binding "+request.getDn()+".");
 
         SourceManager sourceManager = partition.getSourceManager();
@@ -104,6 +106,7 @@ public class MergeSource extends Source {
             CompareResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Comparing "+request.getDn()+".");
 
         SourceManager sourceManager = partition.getSourceManager();
@@ -141,6 +144,7 @@ public class MergeSource extends Source {
             DeleteResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Deleting "+request.getDn()+".");
 
         SourceManager sourceManager = partition.getSourceManager();
@@ -169,6 +173,7 @@ public class MergeSource extends Source {
             ModifyResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Modifying "+request.getDn()+".");
 
         SourceManager sourceManager = partition.getSourceManager();
@@ -233,6 +238,7 @@ public class MergeSource extends Source {
             ModRdnResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Renaming "+request.getDn()+".");
 
         SourceManager sourceManager = partition.getSourceManager();
@@ -261,6 +267,7 @@ public class MergeSource extends Source {
             SearchResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Searching "+request.getDn()+".");
 
         Filter filter = request.getFilter();
@@ -337,6 +344,7 @@ public class MergeSource extends Source {
             UnbindResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Unbinding "+request.getDn()+".");
 
         SourceManager sourceManager = partition.getSourceManager();

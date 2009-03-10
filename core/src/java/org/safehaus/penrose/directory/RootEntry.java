@@ -44,18 +44,20 @@ public class RootEntry extends Entry {
             SearchOperation operation
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         final DN baseDn     = operation.getDn();
         final Filter filter = operation.getFilter();
         final int scope     = operation.getScope();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("ROOT DSE SEARCH", 80));
-            log.debug(TextUtil.displayLine("Entry  : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("Base   : "+baseDn, 80));
-            log.debug(TextUtil.displayLine("Filter : "+filter, 80));
-            log.debug(TextUtil.displayLine("Scope  : "+ LDAP.getScope(scope), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("ROOT DSE SEARCH", 70));
+            log.debug(TextUtil.displayLine("Entry  : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("Base   : "+baseDn, 70));
+            log.debug(TextUtil.displayLine("Filter : "+filter, 70));
+            log.debug(TextUtil.displayLine("Scope  : "+ LDAP.getScope(scope), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         EntrySearchOperation op = new EntrySearchOperation(operation, this);

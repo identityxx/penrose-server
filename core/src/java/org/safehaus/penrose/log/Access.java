@@ -16,10 +16,10 @@ import java.util.Collection;
 public class Access {
 
     public static Logger log = LoggerFactory.getLogger(Access.class);
-    public static boolean warn = log.isWarnEnabled();
 
     public static void log(Session session, ConnectRequest request) {
 
+        boolean warn = log.isWarnEnabled();
         if (warn) {
             StringBuilder sb = new StringBuilder();
 
@@ -51,6 +51,7 @@ public class Access {
 
     public static void log(Session session, DisconnectRequest request) {
 
+        boolean warn = log.isWarnEnabled();
         if (warn) {
             StringBuilder sb = new StringBuilder();
 
@@ -64,6 +65,7 @@ public class Access {
 
     public static void log(Session session, AbandonRequest request) {
 
+        boolean warn = log.isWarnEnabled();
         if (warn) {
             StringBuilder sb = new StringBuilder();
 
@@ -88,6 +90,7 @@ public class Access {
 
     public static void log(Session session, AbandonResponse response) {
 
+        boolean warn = log.isWarnEnabled();
         if (warn) {
             StringBuilder sb = new StringBuilder();
 
@@ -113,6 +116,7 @@ public class Access {
 
     public static void log(Session session, AddRequest request) {
 
+        boolean warn = log.isWarnEnabled();
         if (warn) {
             StringBuilder sb = new StringBuilder();
 
@@ -137,6 +141,7 @@ public class Access {
 
     public static void log(Session session, AddResponse response) {
 
+        boolean warn = log.isWarnEnabled();
         if (warn) {
             StringBuilder sb = new StringBuilder();
 
@@ -161,6 +166,7 @@ public class Access {
 
     public static void log(Session session, BindRequest request) {
 
+        boolean warn = log.isWarnEnabled();
         if (warn) {
             StringBuilder sb = new StringBuilder();
 
@@ -185,6 +191,7 @@ public class Access {
 
     public static void log(Session session, BindResponse response) {
 
+        boolean warn = log.isWarnEnabled();
         if (warn) {
             StringBuilder sb = new StringBuilder();
 
@@ -215,6 +222,7 @@ public class Access {
 
     public static void log(Session session, CompareRequest request) {
 
+        boolean warn = log.isWarnEnabled();
         if (warn) {
             StringBuilder sb = new StringBuilder();
 
@@ -241,6 +249,7 @@ public class Access {
 
     public static void log(Session session, CompareResponse response) {
 
+        boolean warn = log.isWarnEnabled();
         if (warn) {
             StringBuilder sb = new StringBuilder();
 
@@ -265,6 +274,7 @@ public class Access {
 
     public static void log(Session session, DeleteRequest request) {
 
+        boolean warn = log.isWarnEnabled();
         if (warn) {
             StringBuilder sb = new StringBuilder();
 
@@ -289,6 +299,7 @@ public class Access {
 
     public static void log(Session session, DeleteResponse response) {
 
+        boolean warn = log.isWarnEnabled();
         if (warn) {
             StringBuilder sb = new StringBuilder();
 
@@ -313,6 +324,7 @@ public class Access {
 
     public static void log(Session session, ModifyRequest request) {
 
+        boolean warn = log.isWarnEnabled();
         if (warn) {
             StringBuilder sb = new StringBuilder();
 
@@ -337,6 +349,7 @@ public class Access {
 
     public static void log(Session session, ModifyResponse response) {
 
+        boolean warn = log.isWarnEnabled();
         if (warn) {
             StringBuilder sb = new StringBuilder();
 
@@ -361,6 +374,7 @@ public class Access {
 
     public static void log(Session session, ModRdnRequest request) {
 
+        boolean warn = log.isWarnEnabled();
         if (warn) {
             StringBuilder sb = new StringBuilder();
 
@@ -389,6 +403,7 @@ public class Access {
 
     public static void log(Session session, ModRdnResponse response) {
 
+        boolean warn = log.isWarnEnabled();
         if (warn) {
             StringBuilder sb = new StringBuilder();
 
@@ -413,6 +428,7 @@ public class Access {
 
     public static void log(SearchOperation operation) {
 
+        boolean warn = log.isWarnEnabled();
         if (warn) {
 
             StringBuilder sb = new StringBuilder();
@@ -455,6 +471,7 @@ public class Access {
 
     public static void log(SearchOperation searchOperation, long elapsedTime) {
 
+        boolean warn = log.isWarnEnabled();
         if (warn) {
 
             SearchResponse response = searchOperation.getSearchResponse();
@@ -479,6 +496,7 @@ public class Access {
 
     public static void log(Session session, UnbindRequest request) {
 
+        boolean warn = log.isWarnEnabled();
         if (warn) {
             StringBuilder sb = new StringBuilder();
 

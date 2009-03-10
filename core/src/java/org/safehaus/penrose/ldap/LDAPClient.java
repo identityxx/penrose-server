@@ -32,9 +32,6 @@ import java.util.*;
 public class LDAPClient implements Cloneable, LDAPAuthHandler {
 
     public Logger log    = LoggerFactory.getLogger(getClass());
-    public boolean warn  = log.isWarnEnabled();
-    public boolean info  = log.isInfoEnabled();
-    public boolean debug = log.isDebugEnabled();
 
     public final static Collection<String> DEFAULT_BINARY_ATTRIBUTES = Arrays.asList(
         "photo", "personalSignature", "audio", "jpegPhoto", "javaSerializedData",
@@ -171,7 +168,10 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             AddResponse response
     ) throws Exception {
 
-        if (log.isDebugEnabled()) {
+        boolean debug = log.isDebugEnabled();
+        boolean warn = log.isWarnEnabled();
+
+        if (debug) {
             log.debug(TextUtil.displaySeparator(70));
             log.debug(TextUtil.displayLine("LDAP ADD", 70));
             log.debug(TextUtil.displaySeparator(70));
@@ -249,7 +249,11 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             BindResponse response
     ) throws Exception {
 
-        if (log.isDebugEnabled()) {
+        boolean warn = log.isWarnEnabled();
+        boolean info  = log.isInfoEnabled();
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) {
             log.debug(TextUtil.displaySeparator(70));
             log.debug(TextUtil.displayLine("LDAP BIND", 70));
             log.debug(TextUtil.displaySeparator(70));
@@ -298,7 +302,10 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             CompareResponse response
     ) throws Exception {
 
-        if (log.isDebugEnabled()) {
+        boolean warn = log.isWarnEnabled();
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) {
             log.debug(TextUtil.displaySeparator(70));
             log.debug(TextUtil.displayLine("LDAP COMPARE", 70));
             log.debug(TextUtil.displaySeparator(70));
@@ -373,7 +380,10 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             DeleteResponse response
     ) throws Exception {
 
-        if (log.isDebugEnabled()) {
+        boolean warn = log.isWarnEnabled();
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) {
             log.debug(TextUtil.displaySeparator(70));
             log.debug(TextUtil.displayLine("LDAP DELETE", 70));
             log.debug(TextUtil.displaySeparator(70));
@@ -450,7 +460,10 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             ModifyResponse response
     ) throws Exception {
 
-        if (log.isDebugEnabled()) {
+        boolean warn = log.isWarnEnabled();
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) {
             log.debug(TextUtil.displaySeparator(70));
             log.debug(TextUtil.displayLine("LDAP MODIFY", 70));
             log.debug(TextUtil.displaySeparator(70));
@@ -543,7 +556,10 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             ModRdnResponse response
     ) throws Exception {
 
-        if (log.isDebugEnabled()) {
+        boolean warn = log.isWarnEnabled();
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) {
             log.debug(TextUtil.displaySeparator(70));
             log.debug(TextUtil.displayLine("LDAP MODRDN", 70));
             log.debug(TextUtil.displaySeparator(70));
@@ -599,8 +615,9 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             SearchResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         try {
-            if (log.isDebugEnabled()) {
+            if (debug) {
                 log.debug(TextUtil.displaySeparator(70));
                 log.debug(TextUtil.displayLine("LDAP SEARCH", 70));
                 log.debug(TextUtil.displaySeparator(70));
@@ -758,7 +775,8 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             UnbindResponse response
     ) throws Exception {
 
-        if (log.isDebugEnabled()) {
+        boolean debug = log.isDebugEnabled();
+        if (debug) {
             log.debug(TextUtil.displaySeparator(70));
             log.debug(TextUtil.displayLine("LDAP UNBIND", 70));
             log.debug(TextUtil.displaySeparator(70));
@@ -798,6 +816,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             LDAPEntry entry
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         String dn = entry.getDN();
 
         Attributes attributes = new Attributes();
@@ -862,6 +881,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
 
     public SearchResult getRootDSE() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (rootDSE != null) return rootDSE;
 
         if (debug) log.debug("Searching Root DSE ...");
@@ -885,6 +905,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
 
     public Schema getSchema() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (schema != null) return schema;
 
         getRootDSE();
@@ -942,6 +963,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
 
     public Collection<SearchResult> findChildren(DN baseDn) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         Collection<SearchResult> results = new ArrayList<SearchResult>();
 
         DNBuilder db = new DNBuilder();
@@ -1076,6 +1098,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
     }
 
     public String escape(String string) {
+        boolean debug = log.isDebugEnabled();
         String s = string.replaceAll("/", "\\\\/");
         if (debug) log.debug("Escape ["+string+"] => ["+s+"].");
         return s;

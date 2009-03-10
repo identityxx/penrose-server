@@ -99,30 +99,13 @@ public class ModuleManagerService extends BaseService implements ModuleManagerSe
 
     public void createModule(ModuleConfig moduleConfig) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         String moduleName = moduleConfig.getName();
+        if (debug) log.debug("Creating module "+moduleName+".");
 
         PartitionConfig partitionConfig = getPartitionConfig();
         ModuleConfigManager moduleConfigManager = partitionConfig.getModuleConfigManager();
         moduleConfigManager.addModuleConfig(moduleConfig);
-
-        Partition partition = getPartition();
-        if (partition != null) {
-            ModuleManager moduleManager = partition.getModuleManager();
-            moduleManager.startModule(moduleName);
-        }
-
-        ModuleService moduleService = getModuleService(moduleName);
-        moduleService.register();
-    }
-
-    public void createModule(ModuleConfig moduleConfig, Collection<ModuleMapping> moduleMappings) throws Exception {
-
-        String moduleName = moduleConfig.getName();
-
-        PartitionConfig partitionConfig = getPartitionConfig();
-        ModuleConfigManager moduleConfigManager = partitionConfig.getModuleConfigManager();
-        moduleConfigManager.addModuleConfig(moduleConfig);
-        moduleConfigManager.addModuleMappings(moduleMappings);
 
         Partition partition = getPartition();
         if (partition != null) {
@@ -135,6 +118,9 @@ public class ModuleManagerService extends BaseService implements ModuleManagerSe
     }
 
     public void updateModule(String moduleName, ModuleConfig moduleConfig) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Updating module "+moduleName+".");
 
         Partition partition = getPartition();
 
@@ -159,20 +145,23 @@ public class ModuleManagerService extends BaseService implements ModuleManagerSe
         newModuleService.register();
     }
 
-    public void removeModule(String name) throws Exception {
+    public void removeModule(String moduleName) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Removing module "+moduleName+".");
 
         Partition partition = getPartition();
 
         if (partition != null) {
             ModuleManager moduleManager = partition.getModuleManager();
-            moduleManager.stopModule(name);
+            moduleManager.stopModule(moduleName);
         }
 
         PartitionConfig partitionConfig = getPartitionConfig();
         ModuleConfigManager moduleConfigManager = partitionConfig.getModuleConfigManager();
-        moduleConfigManager.removeModuleConfig(name);
+        moduleConfigManager.removeModuleConfig(moduleName);
 
-        ModuleService moduleService = getModuleService(name);
+        ModuleService moduleService = getModuleService(moduleName);
         moduleService.unregister();
     }
 

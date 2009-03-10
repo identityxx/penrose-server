@@ -73,6 +73,7 @@ public class NISModule extends Module {
 
     public void scan(String hostname, String[] paths) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Scanning "+hostname);
 
         PrintWriter out = new PrintWriter(System.out, true);
@@ -124,6 +125,7 @@ public class NISModule extends Module {
 
     public int execute(PrintWriter out, PrintWriter err, String[] command) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
             StringBuilder sb = new StringBuilder();
             for (String s : command) {
@@ -131,12 +133,12 @@ public class NISModule extends Module {
                 sb.append(s);
             }
 
-            log.debug(TextUtil.displaySeparator(80));
-            Collection<String> lines = TextUtil.split(sb.toString(), 80);
+            log.debug(TextUtil.displaySeparator(70));
+            Collection<String> lines = TextUtil.split(sb.toString(), 70);
             for (String line : lines) {
-                log.debug(TextUtil.displayLine(line, 80));
+                log.debug(TextUtil.displayLine(line, 70));
             }
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         Runtime rt = Runtime.getRuntime();
@@ -150,9 +152,9 @@ public class NISModule extends Module {
         p.getOutputStream().close();
         
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("RC: "+rc, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("RC: "+rc, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         return rc;

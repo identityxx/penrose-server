@@ -17,8 +17,6 @@ import java.util.Collection;
 public class BasicOperation implements Operation {
 
     protected Logger log = LoggerFactory.getLogger(getClass());
-    protected boolean warn = log.isWarnEnabled();
-    protected boolean debug = log.isDebugEnabled();
 
     protected Session session;
     protected Penrose penrose;

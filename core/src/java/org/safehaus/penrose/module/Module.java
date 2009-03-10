@@ -34,8 +34,6 @@ import java.util.Collection;
 public class Module {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean warn = log.isWarnEnabled();
-    public boolean debug = log.isDebugEnabled();
 
     public ModuleConfig moduleConfig;
     public ModuleContext moduleContext;
@@ -64,6 +62,7 @@ public class Module {
 
     public void init(ModuleConfig moduleConfig, ModuleContext moduleContext) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Initializing module "+moduleConfig.getName()+".");
 
         this.moduleConfig = moduleConfig;

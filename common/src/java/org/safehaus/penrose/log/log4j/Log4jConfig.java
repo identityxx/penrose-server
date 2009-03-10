@@ -54,6 +54,13 @@ public class Log4jConfig implements Serializable, Cloneable {
         appenderConfigs.put(appenderConfig.getName(), appenderConfig);
     }
 
+    public void updateAppenderConfig(String appenderName, AppenderConfig newAppenderConfig) throws Exception {
+        AppenderConfig appenderConfig = appenderConfigs.get(appenderName);
+        if (appenderConfig == null) throw new Exception("Unknown appender "+appenderName+".");
+
+        appenderConfig.copy(newAppenderConfig);
+    }
+
     public AppenderConfig getAppenderConfig(String name) {
         return appenderConfigs.get(name);
     }
@@ -80,6 +87,13 @@ public class Log4jConfig implements Serializable, Cloneable {
 
     public void addLoggerConfig(LoggerConfig loggerConfig) {
         loggerConfigs.put(loggerConfig.getName(), loggerConfig);
+    }
+
+    public void updateLoggerConfig(String loggerName, LoggerConfig newLoggerConfig) throws Exception {
+        LoggerConfig loggerConfig = loggerConfigs.get(loggerName);
+        if (loggerConfig == null) throw new Exception("Unknown logger "+loggerName+".");
+
+        loggerConfig.copy(newLoggerConfig);
     }
 
     public LoggerConfig getLoggerConfig(String name) {

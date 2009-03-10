@@ -37,8 +37,6 @@ import java.util.*;
 public class PenroseServer {
 
     public static Logger log = Logger.getLogger(PenroseServer.class);
-    public static org.slf4j.Logger errorLog = org.safehaus.penrose.log.Error.log;
-    public static boolean debug = log.isDebugEnabled();
 
     public static String PRODUCT_NAME;
     public static String PRODUCT_VERSION;
@@ -143,7 +141,7 @@ public class PenroseServer {
                 serviceManager.startService(serviceName);
 
             } catch (Exception e) {
-                errorLog.error(e.getMessage(), e);
+                Penrose.errorLog.error(e.getMessage(), e);
             }
         }
 
@@ -168,7 +166,7 @@ public class PenroseServer {
                 serviceManager.unloadService(serviceName);
 
             } catch (Exception e) {
-                errorLog.error(e.getMessage(), e);
+                Penrose.errorLog.error(e.getMessage(), e);
             }
         }
 
@@ -328,7 +326,7 @@ public class PenroseServer {
                     try {
                         penroseServer.stop();
                     } catch (Exception e) {
-                        errorLog.error(e.getMessage(), e);
+                        Penrose.errorLog.error(e.getMessage(), e);
                     }
                 }
             });

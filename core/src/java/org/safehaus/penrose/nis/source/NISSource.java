@@ -11,6 +11,7 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.nis.connection.NISConnection;
 import org.safehaus.penrose.nis.NISClient;
 import org.safehaus.penrose.nis.NIS;
+import org.safehaus.penrose.Penrose;
 
 import java.util.*;
 
@@ -44,14 +45,13 @@ public class NISSource extends Source {
         String serviceName = getParameter(NIS.PAM);
 
         if (serviceName == null || serviceName.equals("")) {
-            log.error("Missing PAM service name.");
+            Penrose.errorLog.error("Missing PAM service name.");
             throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
         }
 
         RDN rdn = request.getDn().getRdn();
-        String name = rdn.getNames().iterator().next();
 
-        String username = (String)rdn.get(name);
+        String username = (String)rdn.getValue();
         byte[] password = request.getPassword();
 
         NISClient client = connection.createClient();
@@ -69,17 +69,19 @@ public class NISSource extends Source {
             final SearchResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         final DN baseDn = request.getDn();
         final Filter filter = request.getFilter();
         final int scope = request.getScope();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Search "+getName(), 80));
-            log.debug(TextUtil.displayLine(" - Base   : "+baseDn, 80));
-            log.debug(TextUtil.displayLine(" - Filter : "+filter, 80));
-            log.debug(TextUtil.displayLine(" - Scope  : "+LDAP.getScope(scope), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Search "+getName(), 70));
+            log.debug(TextUtil.displayLine(" - Base   : "+baseDn, 70));
+            log.debug(TextUtil.displayLine(" - Filter : "+filter, 70));
+            log.debug(TextUtil.displayLine(" - Scope  : "+LDAP.getScope(scope), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         final Map<DN,SearchResult> entries = new LinkedHashMap<DN,SearchResult>();
@@ -164,11 +166,12 @@ public class NISSource extends Source {
             final SearchResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Search Automount Maps", 80));
-            log.debug(TextUtil.displayLine(" - Map : "+automountMapName, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Search Automount Maps", 70));
+            log.debug(TextUtil.displayLine(" - Map : "+automountMapName, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         if (automountMapName == null) {
@@ -228,6 +231,8 @@ public class NISSource extends Source {
             final String base,
             final Collection<String> list
     ) throws Exception {
+
+        final boolean debug = log.isDebugEnabled();
 
         SearchResponse newResponse = new SearchResponse() {
             public void add(SearchResult result) throws Exception {
@@ -300,12 +305,13 @@ public class NISSource extends Source {
             SearchResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Search Automount Entries", 80));
-            log.debug(TextUtil.displayLine(" - Key : "+automountKey, 80));
-            log.debug(TextUtil.displayLine(" - Map : "+automountMapName, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Search Automount Entries", 70));
+            log.debug(TextUtil.displayLine(" - Key : "+automountKey, 70));
+            log.debug(TextUtil.displayLine(" - Map : "+automountMapName, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         if (automountMapName == null) {
@@ -467,6 +473,7 @@ public class NISSource extends Source {
             final Collection<String> names
     ) throws Exception {
 
+        final boolean debug = log.isDebugEnabled();
         if (names.contains(base)) return;
 
         names.add(base);

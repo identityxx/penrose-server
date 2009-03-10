@@ -69,10 +69,11 @@ public class LDIFSource extends Source {
             AddResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Add "+ getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Add "+ getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         DNBuilder db = new DNBuilder();
@@ -121,10 +122,11 @@ public class LDIFSource extends Source {
             BindResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Bind "+getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Bind "+getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         DNBuilder db = new DNBuilder();
@@ -161,10 +163,11 @@ public class LDIFSource extends Source {
             CompareResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Compare "+ getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Compare "+ getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         DNBuilder db = new DNBuilder();
@@ -201,10 +204,11 @@ public class LDIFSource extends Source {
             DeleteResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Delete "+ getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Delete "+ getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         DNBuilder db = new DNBuilder();
@@ -241,10 +245,11 @@ public class LDIFSource extends Source {
             ModifyResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Modify "+getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Modify "+getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         DNBuilder db = new DNBuilder();
@@ -281,10 +286,11 @@ public class LDIFSource extends Source {
             ModRdnResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("ModRdn "+getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("ModRdn "+getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         DNBuilder db = new DNBuilder();
@@ -319,10 +325,11 @@ public class LDIFSource extends Source {
             final SearchResponse response
     ) throws Exception {
 
+        final boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Search "+getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Search "+getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         final DN baseDn = createBaseDn(request);
@@ -553,6 +560,7 @@ public class LDIFSource extends Source {
             SearchResult sr
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         DN dn = sr.getDn();
         DN newDn = dn.getPrefix(baseDn);
         if (debug) log.debug("Creating search result ["+newDn+"]");
@@ -601,28 +609,31 @@ public class LDIFSource extends Source {
 
     public void create() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Create "+getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Create "+getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
     }
 
     public void rename(Source newSource) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Rename "+getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Rename "+getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
     }
 
     public void clear(Session session) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Clear "+getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Clear "+getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         final ArrayList<DN> dns = new ArrayList<DN>();
@@ -647,19 +658,21 @@ public class LDIFSource extends Source {
 
     public void drop() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Drop "+getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Drop "+getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
     }
 
     public long getCount(Session session) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Count "+sourceConfig.getName(), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Count "+sourceConfig.getName(), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         SearchRequest request = new SearchRequest();

@@ -67,7 +67,7 @@ public class Attribute implements Serializable, Cloneable {
     }
 
     public Object getValue(Object value) {
-        //Logger log = LoggerFactory.getLogger(getClass());
+        //Logger log = LoggerFactory.getLoggerConfig(getClass());
 
         if (value == null) return null;
 

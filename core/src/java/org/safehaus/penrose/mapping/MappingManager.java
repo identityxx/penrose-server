@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.PartitionContext;
+import org.safehaus.penrose.Penrose;
 
 import java.util.Map;
 import java.util.LinkedHashMap;
@@ -17,7 +18,6 @@ import java.util.ArrayList;
 public class MappingManager {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     protected Partition partition;
     protected MappingConfigManager mappingConfigManager;
@@ -36,12 +36,16 @@ public class MappingManager {
         Collection<String> mappingNames = new ArrayList<String>();
         mappingNames.addAll(getMappingNames());
 
-        for (String moduleName : mappingNames) {
+        for (String mappingName : mappingNames) {
 
-            MappingConfig mappingConfig = getMappingConfig(moduleName);
+            MappingConfig mappingConfig = getMappingConfig(mappingName);
             if (!mappingConfig.isEnabled()) continue;
 
-            startMapping(moduleName);
+            try {
+                startMapping(mappingName);
+            } catch (Exception e) {
+                Penrose.errorLog.error("Failed creating mapping "+mappingName+" in partition "+partition.getName()+".", e);
+            }
         }
     }
 
@@ -50,8 +54,12 @@ public class MappingManager {
         Collection<String> mappingNames = new ArrayList<String>();
         mappingNames.addAll(mappings.keySet());
 
-        for (String name : mappingNames) {
-            stopMapping(name);
+        for (String mappingName : mappingNames) {
+            try {
+                stopMapping(mappingName);
+            } catch (Exception e) {
+                Penrose.errorLog.error("Failed removing mapping "+mappingName+" in partition "+partition.getName()+".", e);
+            }
         }
     }
 
@@ -65,6 +73,7 @@ public class MappingManager {
 
     public void startMapping(String mappingName) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Starting mapping "+mappingName+".");
 
         MappingConfig mappingConfig = getMappingConfig(mappingName);
@@ -92,6 +101,7 @@ public class MappingManager {
 
     public void stopMapping(String mappingName) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Stopping mapping "+mappingName+".");
 
         Mapping mapping = mappings.remove(mappingName);
@@ -119,8 +129,8 @@ public class MappingManager {
         return mappingConfigManager;
     }
 
-    public void updateMappingConfig(String name, MappingConfig mappingConfig) throws Exception {
-        mappingConfigManager.updateMappingConfig(name, mappingConfig);
+    public void updateMappingConfig(String mappingName, MappingConfig mappingConfig) throws Exception {
+        mappingConfigManager.updateMappingConfig(mappingName, mappingConfig);
     }
 
     public MappingConfig removeMappingConfig(String name) {

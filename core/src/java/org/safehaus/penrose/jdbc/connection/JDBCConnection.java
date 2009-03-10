@@ -167,6 +167,7 @@ public class JDBCConnection extends Connection {
 
     public JDBCClient createClient() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Creating new JDBC client.");
 
         return new JDBCPoolableClient(connectionPool, connectionFactory);
@@ -174,6 +175,7 @@ public class JDBCConnection extends Connection {
 
     public synchronized JDBCClient getClient(final Session session) throws Exception {
 
+        final boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Getting LDAP client from session.");
         final String attributeName = getPartition().getName()+".connection."+getName();
 
@@ -243,10 +245,11 @@ public class JDBCConnection extends Connection {
 
     public Collection<String> getCatalogs() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Get Catalog", 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Get Catalog", 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         JDBCClient client = createClient();
@@ -261,10 +264,11 @@ public class JDBCConnection extends Connection {
     
     public Collection<String> getSchemas() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Get Schemas", 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Get Schemas", 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         JDBCClient client = createClient();
@@ -279,10 +283,11 @@ public class JDBCConnection extends Connection {
     
     public Collection<Table> getTables(String catalog, String schema) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Get Tables for "+catalog+"."+schema, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Get Tables for "+catalog+"."+schema, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         JDBCClient client = createClient();
@@ -297,10 +302,11 @@ public class JDBCConnection extends Connection {
     
     public Collection<FieldConfig> getColumns(String catalog, String schema, String table) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Get Columns for "+catalog+"."+schema+"."+table, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("Get Columns for "+catalog+"."+schema+"."+table, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         JDBCClient client = createClient();

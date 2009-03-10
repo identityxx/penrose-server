@@ -62,6 +62,7 @@ public class LDIFConnection extends Connection {
 
     public LDIFClient createClient() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Creating new LDIF client.");
 
         return new LDIFClient(this);
@@ -69,6 +70,7 @@ public class LDIFConnection extends Connection {
 
     public LDIFClient getClient(final Session session) throws Exception {
 
+        final boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Getting LDIF client from session.");
         final String attributeName = getPartition().getName()+".connection."+getName();
 

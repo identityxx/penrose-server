@@ -29,7 +29,6 @@ import java.util.TreeMap;
 public class OrderingMatchingRule {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     public final static String CASE_IGNORE        = "caseIgnoreOrderingMatch";
     public final static String CASE_EXACT         = "caseExactOrderingMatch";
@@ -60,6 +59,7 @@ public class OrderingMatchingRule {
 
     public int compare(Object object1, Object object2) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug("Comparing:");
             log.debug(" - "+object1+" ("+object1.getClass().getSimpleName()+")");

@@ -3,6 +3,7 @@ package org.safehaus.penrose.scheduler.quartz;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.safehaus.penrose.scheduler.Job;
+import org.safehaus.penrose.Penrose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +26,7 @@ public class QuartzJob implements org.quartz.Job {
             }
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
             throw new JobExecutionException(e);
         }
     }

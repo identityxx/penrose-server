@@ -1,6 +1,5 @@
 package org.safehaus.penrose.ldap.scheduler;
 
-import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.directory.Directory;
 import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.filter.AndFilter;
@@ -9,7 +8,6 @@ import org.safehaus.penrose.filter.NotFilter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.jdbc.QueryResponse;
-import org.safehaus.penrose.jdbc.connection.JDBCConnection;
 import org.safehaus.penrose.jdbc.source.JDBCSource;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.partition.Partition;
@@ -439,6 +437,8 @@ public class LDAPSyncJob extends Job {
 */
     public void synchronize() throws Exception {
 
+    boolean debug = log.isDebugEnabled();
+
         log.debug("============================================================================================");
         log.debug("Synchronizing cache...");
 
@@ -583,6 +583,7 @@ public class LDAPSyncJob extends Job {
 
     public void process(Session session, Attributes attributes) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         DN targetDn = new DN((String)attributes.getValue("targetDN"));
 
         String changeType = (String)attributes.getValue("changeType");
@@ -649,6 +650,8 @@ public class LDAPSyncJob extends Job {
     }
 
     public Attributes parseAttributes(String changes) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
         Attributes attributes = new Attributes();
 
         BufferedReader in = new BufferedReader(new StringReader(changes));
@@ -701,6 +704,8 @@ public class LDAPSyncJob extends Job {
     }
 
     public Collection<Modification> parseModifications(String changes) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
         Collection<Modification> modifications = new ArrayList<Modification>();
 
         BufferedReader in = new BufferedReader(new StringReader(changes));
@@ -771,6 +776,7 @@ public class LDAPSyncJob extends Job {
 
     public void synchronize(DN dn) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         Session session = createAdminSession();
 
         try {

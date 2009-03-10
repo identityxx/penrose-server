@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 public class LDAPPassword {
 
     public static Logger log = LoggerFactory.getLogger(LDAPPassword.class);
-    public static boolean debug = log.isDebugEnabled();
 
     public static boolean validate(String password, String digest) throws Exception {
 

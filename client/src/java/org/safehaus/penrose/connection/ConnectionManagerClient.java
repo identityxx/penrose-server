@@ -87,26 +87,26 @@ public class ConnectionManagerClient extends BaseClient implements ConnectionMan
         );
     }
 
-    public void renameConnection(String name, String newName) throws Exception {
+    public void renameConnection(String connectionName, String newConnectionName) throws Exception {
         invoke(
                 "renameConnection",
-                new Object[] { name, newName },
+                new Object[] { connectionName, newConnectionName },
                 new String[] { String.class.getName(), String.class.getName() }
         );
     }
 
-    public void updateConnection(ConnectionConfig connectionConfig) throws Exception {
+    public void updateConnection(String connectionName, ConnectionConfig connectionConfig) throws Exception {
         invoke(
                 "updateConnection",
-                new Object[] { connectionConfig },
-                new String[] { ConnectionConfig.class.getName() }
+                new Object[] { connectionName, connectionConfig },
+                new String[] { String.class.getName(), ConnectionConfig.class.getName() }
         );
     }
 
-    public void removeConnection(String name) throws Exception {
+    public void removeConnection(String connectionName) throws Exception {
         invoke(
                 "removeConnection",
-                new Object[] { name },
+                new Object[] { connectionName },
                 new String[] { String.class.getName() }
         );
     }

@@ -35,7 +35,6 @@ import java.rmi.server.RemoteServer;
 public class PenroseAuthenticator implements JMXAuthenticator {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    boolean debug = log.isDebugEnabled();
 
     private Penrose penrose;
 
@@ -45,6 +44,7 @@ public class PenroseAuthenticator implements JMXAuthenticator {
 
     public Subject authenticate(Object credentials) {
 
+        boolean debug = log.isDebugEnabled();
         if (credentials == null) {
             if (debug) log.debug("Credential is null.");
             throw new SecurityException("Authentication failed.");

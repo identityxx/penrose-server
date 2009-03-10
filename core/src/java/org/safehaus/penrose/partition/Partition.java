@@ -50,7 +50,6 @@ import java.lang.reflect.Constructor;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-import java.io.File;
 
 /**
  * @author Endi S. Dewata
@@ -58,8 +57,6 @@ import java.io.File;
 public class Partition implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
-    public boolean info = log.isInfoEnabled();
 
     public final static String     STARTING = "STARTING";
     public final static String     STARTED  = "STARTED";
@@ -385,6 +382,7 @@ public class Partition implements Cloneable {
 
     public void validatePermission(Session session, AddRequest request, Entry entry) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         DN dn = request.getDn();
         DN parentDn = dn.getParentDn();
         Entry parent = entry.getParent();
@@ -398,6 +396,7 @@ public class Partition implements Cloneable {
 
     public void validatePermission(Session session, CompareRequest request, Entry entry) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         DN dn = request.getDn();
 
         int rc = aclEvaluator.checkRead(session, entry, dn);
@@ -409,6 +408,7 @@ public class Partition implements Cloneable {
 
     public void validatePermission(Session session, DeleteRequest request, Entry entry) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         DN dn = request.getDn();
 
         int rc = aclEvaluator.checkDelete(session, entry, dn);
@@ -420,6 +420,7 @@ public class Partition implements Cloneable {
 
     public void validatePermission(Session session, ModifyRequest request, Entry entry) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         DN dn = request.getDn();
 
         int rc = aclEvaluator.checkWrite(session, entry, dn);
@@ -431,6 +432,7 @@ public class Partition implements Cloneable {
 
     public void validatePermission(Session session, ModRdnRequest request, Entry entry) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         DN dn = request.getDn();
 
         int rc = aclEvaluator.checkWrite(session, entry, dn);
@@ -442,6 +444,7 @@ public class Partition implements Cloneable {
 
     public void validatePermission(SearchOperation operation, Entry entry) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         DN dn = operation.getDn();
 
         int rc = aclEvaluator.checkSearch(operation.getSession(), entry, dn);
@@ -453,6 +456,7 @@ public class Partition implements Cloneable {
 
     public void validatePermission(SearchOperation operation, SearchResult result) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         DN dn = result.getDn();
         String entryId = result.getEntryName();
         Entry entry = directory.getEntry(entryId);
@@ -618,6 +622,7 @@ public class Partition implements Cloneable {
             AddResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         try {
             normalize(request);
 
@@ -666,6 +671,7 @@ public class Partition implements Cloneable {
             BindResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         try {
             normalize(request);
 
@@ -698,7 +704,7 @@ public class Partition implements Cloneable {
                     exception = e;
 
                 } catch (Exception e) {
-                    log.error(e.getMessage(), e);
+                    Penrose.errorLog.error(e.getMessage(), e);
                     exception = e;
                 }
             }
@@ -722,6 +728,7 @@ public class Partition implements Cloneable {
             CompareResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         try {
             normalize(request);
 
@@ -770,6 +777,7 @@ public class Partition implements Cloneable {
             DeleteResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         try {
             normalize(request);
 
@@ -818,6 +826,7 @@ public class Partition implements Cloneable {
     
     public SearchResult find(Session session, DN dn) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Finding "+dn);
 
         SearchRequest request = new SearchRequest();
@@ -855,6 +864,7 @@ public class Partition implements Cloneable {
             ModifyResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         try {
             normalize(request);
 
@@ -903,6 +913,7 @@ public class Partition implements Cloneable {
             ModRdnResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         try {
             normalize(request);
 
@@ -966,6 +977,7 @@ public class Partition implements Cloneable {
             SearchOperation operation
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         DN dn = operation.getDn();
         Collection<String> requestedAttributes = operation.getAttributes();
 
@@ -996,6 +1008,8 @@ public class Partition implements Cloneable {
             final SearchOperation operation,
             final Entry entry
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         SearchOperation op = new PipelineSearchOperation(operation) {
             public void add(SearchResult result) throws Exception {
@@ -1042,6 +1056,7 @@ public class Partition implements Cloneable {
             boolean wait
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         final ParallelSearchOperation op = new ParallelSearchOperation(operation, entries.size());
 
         if (threadManager == null) {
@@ -1067,11 +1082,11 @@ public class Partition implements Cloneable {
                         searchEntry(op, entry);
 
                     } catch (Throwable e) {
-                        log.error(e.getMessage(), e);
+                        Penrose.errorLog.error(e.getMessage(), e);
                         op.setException(LDAP.createException(e));
 
                     } finally {
-                        try { op.close(entry); } catch (Exception e) { log.error(e.getMessage(), e); }
+                        try { op.close(entry); } catch (Exception e) { Penrose.errorLog.error(e.getMessage(), e); }
                     }
                 }
             };
@@ -1098,6 +1113,8 @@ public class Partition implements Cloneable {
             UnbindRequest request,
             UnbindResponse response
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         try {
             DN dn = session.getBindDn();

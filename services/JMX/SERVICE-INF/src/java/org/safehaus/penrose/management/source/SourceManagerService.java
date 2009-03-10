@@ -111,7 +111,7 @@ public class SourceManagerService extends BaseService implements SourceManagerSe
         Partition partition = getPartition();
         if (partition != null) {
             SourceManager sourceManager = partition.getSourceManager();
-            sourceManager.createSource(sourceConfig);
+            sourceManager.startSource(sourceName);
         }
 
         SourceService sourceService = getSourceService(sourceName);
@@ -120,6 +120,7 @@ public class SourceManagerService extends BaseService implements SourceManagerSe
 
     public void renameSource(String name, String newName) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug(TextUtil.repeat("-", 70));
             log.debug("Renaming source "+name+" to "+newName+".");
@@ -150,15 +151,26 @@ public class SourceManagerService extends BaseService implements SourceManagerSe
         newSourceService.register();
     }
 
-    public void updateSource(String name, SourceConfig sourceConfig) throws Exception {
+    public void updateSource(String sourceName, SourceConfig sourceConfig) throws Exception {
 
-        String sourceName = sourceConfig.getName();
+        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(TextUtil.repeat("-", 70));
             log.debug("Updating source "+sourceName+".");
         }
 
+        Partition partition = getPartition();
+        if (partition == null) {
+            PartitionConfig partitionConfig = getPartitionConfig();
+            SourceConfigManager sourceConfigManager = partitionConfig.getSourceConfigManager();
+            sourceConfigManager.updateSourceConfig(sourceConfig);
+
+        } else {
+            SourceManager sourceManager = partition.getSourceManager();
+            sourceManager.updateSource(sourceConfig);
+        }
+/*
         Partition partition = getPartition();
         boolean running = false;
 
@@ -176,6 +188,7 @@ public class SourceManagerService extends BaseService implements SourceManagerSe
             SourceManager sourceManager = partition.getSourceManager();
             if (running) sourceManager.startSource(sourceName);
         }
+*/
     }
 
     public void removeSource(String name) throws Exception {

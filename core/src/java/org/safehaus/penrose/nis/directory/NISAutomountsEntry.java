@@ -13,6 +13,7 @@ import org.safehaus.penrose.nis.source.NISAutomountsSource;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.operation.SearchOperation;
 import org.safehaus.penrose.util.TextUtil;
+import org.safehaus.penrose.Penrose;
 
 import java.util.*;
 
@@ -37,10 +38,10 @@ public class NISAutomountsEntry extends DynamicEntry {
 
         DN entryDn = getDn();
 
-        if (entryDn.getSize() == dn.getSize()) {
+        if (entryDn.getLength() == dn.getLength()) {
             return entryDn.matches(dn);
 
-        } else if (entryDn.getSize() < dn.getSize()) {
+        } else if (entryDn.getLength() < dn.getLength()) {
             return entryDn.endsWith(dn);
         }
 
@@ -49,6 +50,7 @@ public class NISAutomountsEntry extends DynamicEntry {
 
     public Collection<Entry> findEntries(DN dn) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (dn == null) return EMPTY_ENTRIES;
 
         DN entryDn = getDn();
@@ -73,18 +75,20 @@ public class NISAutomountsEntry extends DynamicEntry {
             SearchOperation operation
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         final DN baseDn     = operation.getDn();
         final Filter filter = operation.getFilter();
         final int scope     = operation.getScope();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("AUTOMOUNTS SEARCH", 80));
-            log.debug(TextUtil.displayLine("Entry  : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("Base   : "+baseDn, 80));
-            log.debug(TextUtil.displayLine("Filter : "+filter, 80));
-            log.debug(TextUtil.displayLine("Scope  : "+ LDAP.getScope(scope), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("AUTOMOUNTS SEARCH", 70));
+            log.debug(TextUtil.displayLine("Entry  : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("Base   : "+baseDn, 70));
+            log.debug(TextUtil.displayLine("Filter : "+filter, 70));
+            log.debug(TextUtil.displayLine("Scope  : "+ LDAP.getScope(scope), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         EntrySearchOperation op = new EntrySearchOperation(operation, this);
@@ -114,7 +118,7 @@ public class NISAutomountsEntry extends DynamicEntry {
         DN baseDn = operation.getDn();
         DN entryDn = getDn();
 
-        int level = baseDn.getSize() - entryDn.getSize();
+        int level = baseDn.getLength() - entryDn.getLength();
 
         if (level < -1 && entryDn.endsWith(baseDn)) {
             searchAncestor(operation);
@@ -133,6 +137,8 @@ public class NISAutomountsEntry extends DynamicEntry {
     public void searchAncestor(
             SearchOperation operation
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         Session session = operation.getSession();
 
@@ -176,6 +182,8 @@ public class NISAutomountsEntry extends DynamicEntry {
     public void searchParent(
             SearchOperation operation
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         Session session = operation.getSession();
 
@@ -221,6 +229,8 @@ public class NISAutomountsEntry extends DynamicEntry {
     public void searchEntry(
             SearchOperation operation
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         Session session = operation.getSession();
 
@@ -273,6 +283,7 @@ public class NISAutomountsEntry extends DynamicEntry {
             SearchOperation operation
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Searching children");
 
         DN baseDn = operation.getDn();
@@ -293,7 +304,7 @@ public class NISAutomountsEntry extends DynamicEntry {
         }
 
         if (baseDn.endsWith(automountEntryDn)) {
-            log.error("Entry "+baseDn+" not found.");
+            Penrose.errorLog.error("Entry "+baseDn+" not found.");
             throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
         }
     }
@@ -336,6 +347,8 @@ public class NISAutomountsEntry extends DynamicEntry {
     }
 
     public Map<String,NISMap> getAutomountMaps(Session session) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         Map<String,NISMap> maps = new LinkedHashMap<String,NISMap>();
 
@@ -386,6 +399,8 @@ public class NISAutomountsEntry extends DynamicEntry {
             SearchOperation operation
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         Session session = operation.getSession();
         SearchResponse response = operation.getSearchResponse();
 
@@ -399,7 +414,7 @@ public class NISAutomountsEntry extends DynamicEntry {
         NISMap map = automountsSource.getAutomountMap(session, automountMapName);
 
         if (map == null) {
-            log.error("Automount map "+automountMapName+" not found.");
+            Penrose.errorLog.error("Automount map "+automountMapName+" not found.");
             throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
         }
 
@@ -427,6 +442,8 @@ public class NISAutomountsEntry extends DynamicEntry {
             SearchOperation operation
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         Session session = operation.getSession();
 
         DN automountMapEntryDn = operation.getDn();
@@ -444,7 +461,7 @@ public class NISAutomountsEntry extends DynamicEntry {
         NISMap map = automountsSource.getAutomountMap(session, mapName);
 
         if (map == null) {
-            log.error("Automount map "+mapName+" not found.");
+            Penrose.errorLog.error("Automount map "+mapName+" not found.");
             throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
         }
 
@@ -455,7 +472,7 @@ public class NISAutomountsEntry extends DynamicEntry {
         NISObject object = map.getObject(name);
 
         if (object == null) {
-            log.error("Automount map entry "+name+" not found.");
+            Penrose.errorLog.error("Automount map entry "+name+" not found.");
             throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
         }
 

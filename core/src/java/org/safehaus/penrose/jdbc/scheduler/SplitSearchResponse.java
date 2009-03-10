@@ -6,6 +6,7 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.source.Field;
 import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.Penrose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,8 +18,6 @@ import java.util.Collection;
 public class SplitSearchResponse extends SearchResponse {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public Logger errorLog = org.safehaus.penrose.log.Error.log;
-    public boolean debug = log.isDebugEnabled();
 
     Session session;
     Collection<Source> targets;
@@ -35,6 +34,9 @@ public class SplitSearchResponse extends SearchResponse {
     }
 
     public void add(SearchResult result) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
         SourceAttributes sourceValues = result.getSourceAttributes();
 
         interpreter.set(sourceValues);
@@ -90,7 +92,7 @@ public class SplitSearchResponse extends SearchResponse {
                 try {
                     target.add(session, newDn, attributes);
                 } catch (Exception e) {
-                    errorLog.error(e.getMessage());
+                    Penrose.errorLog.error(e.getMessage());
                 }
             }
         }

@@ -22,6 +22,7 @@ import java.util.*;
 
 import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.util.TextUtil;
+import org.safehaus.penrose.Penrose;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -29,7 +30,6 @@ import org.slf4j.Logger;
 public class JDBCClient {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     public JDBCConnectionFactory connectionFactory;
     public Connection connection;
@@ -115,7 +115,7 @@ public class JDBCClient {
             }
 
         } finally {
-            if (rs != null) try { rs.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+            if (rs != null) try { rs.close(); } catch (Exception e) { Penrose.errorLog.error(e.getMessage(), e); }
         }
 
         rs = null;
@@ -130,7 +130,7 @@ public class JDBCClient {
             }
 
         } finally {
-            if (rs != null) try { rs.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+            if (rs != null) try { rs.close(); } catch (Exception e) { Penrose.errorLog.error(e.getMessage(), e); }
         }
 
         Collection<FieldConfig> results = new ArrayList<FieldConfig>();
@@ -159,7 +159,7 @@ public class JDBCClient {
             }
 
         } finally {
-            if (rs != null) try { rs.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+            if (rs != null) try { rs.close(); } catch (Exception e) { Penrose.errorLog.error(e.getMessage(), e); }
         }
 
         return catalogs;
@@ -186,7 +186,7 @@ public class JDBCClient {
             }
 
         } finally {
-            if (rs != null) try { rs.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+            if (rs != null) try { rs.close(); } catch (Exception e) { Penrose.errorLog.error(e.getMessage(), e); }
         }
 
         return schemas;
@@ -226,7 +226,7 @@ public class JDBCClient {
             }
 
         } finally {
-            if (rs != null) try { rs.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+            if (rs != null) try { rs.close(); } catch (Exception e) { Penrose.errorLog.error(e.getMessage(), e); }
         }
 
         return tables;
@@ -264,22 +264,24 @@ public class JDBCClient {
             UpdateResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            Collection<String> lines = TextUtil.split(sql, 80);
+            log.debug(TextUtil.displaySeparator(70));
+            Collection<String> lines = TextUtil.split(sql, 70);
             for (String line : lines) {
-                log.debug(TextUtil.displayLine(line, 80));
+                log.debug(TextUtil.displayLine(line, 70));
             }
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
 
             if (parameters != null && !parameters.isEmpty()) {
-                log.debug(TextUtil.displayLine("Parameters:", 80));
+                log.debug(TextUtil.displayLine("Parameters:", 70));
                 int counter = 1;
                 for (Object value : parameters) {
-                    log.debug(TextUtil.displayLine(" - "+counter+" = "+value, 80));
+                    log.debug(TextUtil.displayLine(" - "+counter+" = "+value, 70));
                     counter++;
                 }
-                log.debug(TextUtil.displaySeparator(80));
+                log.debug(TextUtil.displaySeparator(70));
             }
         }
 
@@ -302,7 +304,7 @@ public class JDBCClient {
             response.setRowCount(count);
 
         } finally {
-            if (ps != null) try { ps.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+            if (ps != null) try { ps.close(); } catch (Exception e) { Penrose.errorLog.error(e.getMessage(), e); }
         }
     }
 
@@ -324,16 +326,17 @@ public class JDBCClient {
             QueryResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            Collection<String> lines = TextUtil.split(sql, 80);
+            log.debug(TextUtil.displaySeparator(70));
+            Collection<String> lines = TextUtil.split(sql, 70);
             for (String line : lines) {
-                log.debug(TextUtil.displayLine(line, 80));
+                log.debug(TextUtil.displayLine(line, 70));
             }
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
 
            if (parameters != null && !parameters.isEmpty()) {
-                log.debug(TextUtil.displayLine("Parameters:", 80));
+                log.debug(TextUtil.displayLine("Parameters:", 70));
                 int counter = 1;
                 for (Object value : parameters) {
 
@@ -344,11 +347,11 @@ public class JDBCClient {
                         v = value.toString();
                     }
 
-                    log.debug(TextUtil.displayLine(" - "+counter+" = "+v, 80));
+                    log.debug(TextUtil.displayLine(" - "+counter+" = "+v, 70));
 
                     counter++;
                 }
-                log.debug(TextUtil.displaySeparator(80));
+                log.debug(TextUtil.displaySeparator(70));
            }
         }
 
@@ -386,8 +389,8 @@ public class JDBCClient {
             }
 
         } finally {
-            if (rs != null) try { rs.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
-            if (ps != null) try { ps.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+            if (rs != null) try { rs.close(); } catch (Exception e) { Penrose.errorLog.error(e.getMessage(), e); }
+            if (ps != null) try { ps.close(); } catch (Exception e) { Penrose.errorLog.error(e.getMessage(), e); }
 
             response.close();
         }

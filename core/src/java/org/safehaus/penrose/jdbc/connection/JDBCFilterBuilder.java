@@ -19,7 +19,6 @@ import java.util.Map;
 public class JDBCFilterBuilder {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     protected Map<String,StatementSource> sources = new LinkedHashMap<String,StatementSource>(); // need to maintain order
 
@@ -69,6 +68,8 @@ public class JDBCFilterBuilder {
             SubstringFilter filter,
             StringBuilder sb
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         String name = filter.getAttribute();
         Collection<Object> substrings = filter.getSubstrings();
@@ -194,6 +195,8 @@ public class JDBCFilterBuilder {
             SimpleFilter filter,
             StringBuilder sb
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         String name = filter.getAttribute();
         String operator = filter.getOperator();

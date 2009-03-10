@@ -3,17 +3,15 @@ package org.safehaus.penrose.monitor.directory;
 import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.directory.EntryConfig;
 import org.safehaus.penrose.directory.EntrySearchOperation;
+import org.safehaus.penrose.directory.EntryContext;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.operation.SearchOperation;
-import org.safehaus.penrose.operation.PipelineSearchOperation;
 import org.safehaus.penrose.util.TextUtil;
 
 import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
-import java.util.Collection;
 
 /**
  * @author Endi Sukma Dewata
@@ -21,8 +19,6 @@ import java.util.Collection;
 public class MonitorEntry extends Entry {
 
     protected MBeanServer mbeanServer;
-
-    protected Collection<Entry> children = new ArrayList<Entry>();
 
     public void init() throws Exception {
 
@@ -32,70 +28,73 @@ public class MonitorEntry extends Entry {
 
         DN partitionsDn = new RDN("cn=Partitions").append(entryDn);
 
-        EntryConfig partitionsEntryConfig = new EntryConfig(partitionsDn);
+        EntryConfig partitionsEntryConfig = new EntryConfig();
+        partitionsEntryConfig.setName(getName()+"_partitions");
+        partitionsEntryConfig.setDn(partitionsDn);
         partitionsEntryConfig.addObjectClass("monitoredObject");
         partitionsEntryConfig.addAttributesFromRdn();
 
-        PartitionsMonitorEntry partitionsEntry = new PartitionsMonitorEntry();
-        partitionsEntry.init(partitionsEntryConfig, entryContext);
+        EntryContext partitionsEntryContext = new EntryContext();
+        partitionsEntryContext.setDirectory(directory);
+        partitionsEntryContext.setParent(this);
 
-        children.add(partitionsEntry);
+        PartitionsEntry partitionsEntry = new PartitionsEntry();
+        partitionsEntry.init(partitionsEntryConfig, partitionsEntryContext);
+
+        addChild(partitionsEntry);
 
         DN memoryDn = new RDN("cn=Memory").append(entryDn);
 
-        EntryConfig memoryEntryConfig = new EntryConfig(memoryDn);
+        EntryConfig memoryEntryConfig = new EntryConfig();
+        memoryEntryConfig.setName(getName()+"_memory");
+        memoryEntryConfig.setDn(memoryDn);
         memoryEntryConfig.addObjectClass("monitoredObject");
         memoryEntryConfig.addAttributesFromRdn();
 
-        MemoryMonitorEntry memoryEntry = new MemoryMonitorEntry();
-        memoryEntry.init(memoryEntryConfig, entryContext);
+        EntryContext memoryEntryContext = new EntryContext();
+        memoryEntryContext.setDirectory(directory);
+        memoryEntryContext.setParent(this);
 
-        children.add(memoryEntry);
+        MemoryEntry memoryEntry = new MemoryEntry();
+        memoryEntry.init(memoryEntryConfig, memoryEntryContext);
+
+        addChild(memoryEntry);
 
         DN runtimeDn = new RDN("cn=Runtime").append(entryDn);
 
-        EntryConfig runtimeEntryConfig = new EntryConfig(runtimeDn);
+        EntryConfig runtimeEntryConfig = new EntryConfig();
+        runtimeEntryConfig.setName(getName()+"_runtime");
+        runtimeEntryConfig.setDn(runtimeDn);
         runtimeEntryConfig.addObjectClass("monitoredObject");
         runtimeEntryConfig.addAttributesFromRdn();
 
-        RuntimeMonitorEntry runtimeEntry = new RuntimeMonitorEntry();
-        runtimeEntry.init(runtimeEntryConfig, entryContext);
+        EntryContext runtimeEntryContext = new EntryContext();
+        runtimeEntryContext.setDirectory(directory);
+        runtimeEntryContext.setParent(this);
 
-        children.add(runtimeEntry);
+        RuntimeEntry runtimeEntry = new RuntimeEntry();
+        runtimeEntry.init(runtimeEntryConfig, runtimeEntryContext);
+
+        addChild(runtimeEntry);
+        
+        DN sessionsDn = new RDN("cn=Sessions").append(entryDn);
+
+        EntryConfig sessionsEntryConfig = new EntryConfig();
+        sessionsEntryConfig.setName(getName()+"_sessions");
+        sessionsEntryConfig.setDn(sessionsDn);
+        sessionsEntryConfig.addObjectClass("monitoredObject");
+        sessionsEntryConfig.addAttributesFromRdn();
+
+        EntryContext sessionsEntryContext = new EntryContext();
+        sessionsEntryContext.setDirectory(directory);
+        sessionsEntryContext.setParent(this);
+
+        SessionsEntry sessionsEntry = new SessionsEntry();
+        sessionsEntry.init(sessionsEntryConfig, sessionsEntryContext);
+
+        addChild(sessionsEntry);
 
         super.init();
-    }
-
-    public boolean contains(DN dn) throws Exception {
-
-        DN entryDn = getDn();
-
-        if (entryDn.getSize() == dn.getSize()) {
-            return entryDn.matches(dn);
-
-        } else if (entryDn.getSize() < dn.getSize()) {
-            return entryDn.endsWith(dn);
-        }
-
-        return false;
-    }
-
-    public Collection<Entry> findEntries(DN dn) throws Exception {
-
-        if (dn == null) return EMPTY_ENTRIES;
-
-        DN entryDn = getDn();
-
-        if (!dn.endsWith(entryDn)) {
-            return EMPTY_ENTRIES;
-        }
-
-        Collection<Entry> results = new ArrayList<Entry>();
-
-        if (debug) log.debug("Found entry \""+entryDn+"\".");
-        results.add(this);
-
-        return results;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -118,18 +117,20 @@ public class MonitorEntry extends Entry {
             SearchOperation operation
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         final DN baseDn     = operation.getDn();
         final Filter filter = operation.getFilter();
         final int scope     = operation.getScope();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("MONITOR SEARCH", 80));
-            log.debug(TextUtil.displayLine("Entry  : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("Base   : "+baseDn, 80));
-            log.debug(TextUtil.displayLine("Filter : "+filter, 80));
-            log.debug(TextUtil.displayLine("Scope  : "+ LDAP.getScope(scope), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("MONITOR SEARCH", 70));
+            log.debug(TextUtil.displayLine("Entry  : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("Base   : "+baseDn, 70));
+            log.debug(TextUtil.displayLine("Filter : "+filter, 70));
+            log.debug(TextUtil.displayLine("Scope  : "+ LDAP.getScope(scope), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         EntrySearchOperation op = new EntrySearchOperation(operation, this);
@@ -148,112 +149,28 @@ public class MonitorEntry extends Entry {
             SearchOperation operation
     ) throws Exception {
 
-        DN baseDn = operation.getDn();
         DN entryDn = getDn();
-
-        if (baseDn.matches(entryDn)) {
-            searchBaseEntry(operation);
-            return;
-        }
-/*
-        DN memoryMonitorDn = createMemoryMonitorDN(entryDn);
-
-        if (baseDn.matches(memoryMonitorDn)) {
-            searchMemoryMonitor(session, request, response);
-            return;
-        }
-
-        DN runtimeMonitorDn = createRuntimeMonitorDN(entryDn);
-
-        if (baseDn.matches(runtimeMonitorDn)) {
-            searchRuntimeMonitor(session, request, response);
-            return;
-        }
-*/
-        if (baseDn.endsWith(entryDn)) {
-            log.error("Entry "+baseDn+" not found.");
-            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
-        }
-    }
-
-    public void searchBaseEntry(
-            SearchOperation operation
-    ) throws Exception {
 
         DN baseDn = operation.getDn();
         int scope = operation.getScope();
 
-        if (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB) {
-            SearchResult result = createBaseSearchResult(baseDn);
+        int baseLength = baseDn.getLength();
+        int entryLength = entryDn.getLength();
+
+        if (baseLength < entryLength && scope == SearchRequest.SCOPE_SUB
+                || baseLength == entryLength-1 && scope == SearchRequest.SCOPE_ONE
+                || baseDn.matches(entryDn) && (scope == SearchRequest.SCOPE_SUB || scope == SearchRequest.SCOPE_BASE)) {
+
+            SearchResult result = createSearchResult(operation);
             operation.add(result);
         }
-
-        if (scope == SearchRequest.SCOPE_ONE || scope == SearchRequest.SCOPE_SUB) {
-
-            SearchOperation op = new PipelineSearchOperation(operation) {
-                public void add(SearchResult result) throws Exception {
-                    log.debug("Returning "+result.getDn());
-                    super.add(result);
-                }
-                public void close() throws Exception {
-                    //super.close();
-                }
-            };
-
-            for (Entry entry : children) {
-                log.debug("Searching "+entry.getDn());
-                
-                entry.search(op);
-            }
-        }
-/*
-        DN memoryDn = createMemoryMonitorDN(baseDn);
-
-        if (scope == SearchRequest.SCOPE_ONE || scope == SearchRequest.SCOPE_SUB) {
-            SearchResult result = createMemoryMonitorSearchResult(memoryDn);
-            response.add(result);
-        }
-
-        DN runtimeDn = createRuntimeMonitorDN(baseDn);
-
-        if (scope == SearchRequest.SCOPE_ONE || scope == SearchRequest.SCOPE_SUB) {
-            SearchResult result = createRuntimeMonitorSearchResult(runtimeDn);
-            response.add(result);
-        }
-*/
     }
-/*
-    public void searchMemoryMonitor(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+
+    public SearchResult createSearchResult(
+            SearchOperation operation
     ) throws Exception {
 
-        DN memoryMonitorDn = request.getDn();
-        int scope = request.getScope();
-
-        if (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB) {
-            SearchResult result = createMemoryMonitorSearchResult(memoryMonitorDn);
-            response.add(result);
-        }
-    }
-
-    public void searchRuntimeMonitor(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
-    ) throws Exception {
-
-        DN runtimeMonitorDn = request.getDn();
-        int scope = request.getScope();
-
-        if (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB) {
-            SearchResult result = createRuntimeMonitorSearchResult(runtimeMonitorDn);
-            response.add(result);
-        }
-    }
-*/
-    public SearchResult createBaseSearchResult(DN baseDn) throws Exception {
+        DN baseDn = operation.getDn();
 
         Interpreter interpreter = partition.newInterpreter();
 
@@ -264,64 +181,4 @@ public class MonitorEntry extends Entry {
 
         return result;
     }
-/*
-    public DN createMemoryMonitorDN(DN monitorDn) throws Exception {
-        return new DN("cn=Memory").append(monitorDn);
-    }
-
-    public SearchResult createMemoryMonitorSearchResult(DN memoryMonitorDn) throws Exception {
-
-        ObjectName memoryMBean = ObjectName.getInstance("java.lang:type=Memory");
-        CompositeDataSupport heapMemoryUsage = (CompositeDataSupport)mbeanServer.getAttribute(memoryMBean, "HeapMemoryUsage");
-
-        Attributes attributes = new Attributes();
-        attributes.addValue("objectClass", "monitoredObject");
-
-        Long committed = (Long)heapMemoryUsage.get("committed");
-        attributes.addValue("committed", committed);
-
-        Long init = (Long)heapMemoryUsage.get("init");
-        attributes.addValue("init", init);
-
-        Long max = (Long)heapMemoryUsage.get("max");
-        attributes.addValue("max", max);
-
-        Long used = (Long)heapMemoryUsage.get("used");
-        attributes.addValue("used", used);
-        
-        SearchResult result = new SearchResult(memoryMonitorDn, attributes);
-        result.setEntry(this);
-
-        return result;
-    }
-
-    public DN createRuntimeMonitorDN(DN monitorDn) throws Exception {
-        return new DN("cn=Runtime").append(monitorDn);
-    }
-
-    public SearchResult createRuntimeMonitorSearchResult(DN runtimeMonitorDn) throws Exception {
-
-        Runtime rt = Runtime.getRuntime();
-
-        Attributes attributes = new Attributes();
-        attributes.addValue("objectClass", "monitoredObject");
-
-        Integer availableProcessors = rt.availableProcessors();
-        attributes.addValue("availableProcessors", availableProcessors);
-
-        Long freeMemory = rt.freeMemory();
-        attributes.addValue("freeMemory", freeMemory);
-
-        Long maxMemory = rt.maxMemory();
-        attributes.addValue("maxMemory", maxMemory);
-
-        Long totalMemory = rt.totalMemory();
-        attributes.addValue("totalMemory", totalMemory);
-
-        SearchResult result = new SearchResult(runtimeMonitorDn, attributes);
-        result.setEntry(this);
-
-        return result;
-    }
-*/
 }

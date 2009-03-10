@@ -418,7 +418,7 @@ public class LDAPDeltaSyncModule extends Module {
             log.debug("Loading "+targetDn);
 
             final DN sourceDn = targetDn.getPrefix(targetSuffix).append(sourceSuffix);
-            final int sourceDnSize = sourceDn.getSize();
+            final int sourceDnSize = sourceDn.getLength();
 
             SearchRequest request = new SearchRequest();
             request.setDn(sourceDn);
@@ -429,7 +429,7 @@ public class LDAPDeltaSyncModule extends Module {
                     DN dn = result.getDn();
                     if (sourceDn.equals(dn)) return;
 
-                    int dnSize = dn.getSize();
+                    int dnSize = dn.getLength();
                     DN newDn = dn.getPrefix(dnSize - sourceDnSize).append(targetDn);
 
                     Attributes attributes = result.getAttributes();
@@ -572,6 +572,8 @@ public class LDAPDeltaSyncModule extends Module {
     }
 
     public boolean synchronize(final Session session, final DN targetDn) throws Exception {
+
+        final boolean warn = log.isWarnEnabled();
 
         log.debug("##################################################################################################");
         log.warn("Synchronizing "+targetDn);

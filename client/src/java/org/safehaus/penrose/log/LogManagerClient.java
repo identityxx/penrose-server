@@ -29,64 +29,68 @@ public class LogManagerClient extends BaseClient implements LogManagerServiceMBe
         return (Collection<AppenderConfig>)getAttribute("AppenderConfigs");
     }
 
-    public Collection<String> getAppenderConfigNames() throws Exception {
-        return (Collection<String>)getAttribute("AppenderConfigNames");
+    public Collection<String> getAppenderNames() throws Exception {
+        return (Collection<String>)getAttribute("AppenderNames");
     }
 
     public AppenderConfig getAppenderConfig(String appenderName) throws Exception {
         return (AppenderConfig)invoke("getAppenderConfig", new Object[] { appenderName }, new String[] { String.class.getName() });
     }
 
-    public void addAppenderConfig(AppenderConfig appenderConfig) throws Exception {
-        invoke("addAppenderConfig", new Object[] { appenderConfig }, new String[] { AppenderConfig.class.getName() });
+    public void addAppender(AppenderConfig appenderConfig) throws Exception {
+        invoke("addAppender", new Object[] { appenderConfig }, new String[] { AppenderConfig.class.getName() });
     }
 
-    public void updateAppenderConfig(String appenderName, AppenderConfig appenderConfig) throws Exception {
+    public void updateAppender(String appenderName, AppenderConfig appenderConfig) throws Exception {
         invoke(
-                "updateAppenderConfig",
+                "updateAppender",
                 new Object[] { appenderName, appenderConfig },
                 new String[] { String.class.getName(), AppenderConfig.class.getName() }
         );
     }
 
-    public AppenderConfig removeAppenderConfig(String appenderName) throws Exception {
-        return (AppenderConfig)invoke("removeAppenderConfig", new Object[] { appenderName }, new String[] { String.class.getName() });
+    public void removeAppender(String appenderName) throws Exception {
+        invoke("removeAppender", new Object[] { appenderName }, new String[] { String.class.getName() });
     }
 
     public Collection<LoggerConfig> getLoggerConfigs() throws Exception {
         return (Collection<LoggerConfig>)getAttribute("LoggerConfigs");
     }
 
-    public Collection<String> getLoggerConfigNames() throws Exception {
-        return (Collection<String>)getAttribute("LoggerConfigNames");
+    public Collection<String> getLoggerNames() throws Exception {
+        return (Collection<String>)getAttribute("LoggerNames");
     }
 
     public LoggerConfig getLoggerConfig(String loggerName) throws Exception {
         return (LoggerConfig)invoke("getLoggerConfig", new Object[] { loggerName }, new String[] { String.class.getName() });
     }
 
-    public void addLoggerConfig(LoggerConfig loggerConfig) throws Exception {
-        invoke("addLoggerConfig", new Object[] { loggerConfig }, new String[] { LoggerConfig.class.getName() });
+    public void addLogger(LoggerConfig loggerConfig) throws Exception {
+        invoke("addLogger", new Object[] { loggerConfig }, new String[] { LoggerConfig.class.getName() });
     }
 
-    public void updateLoggerConfig(String loggerName, LoggerConfig loggerConfig) throws Exception {
+    public void updateLogger(String loggerName, LoggerConfig loggerConfig) throws Exception {
         invoke(
-                "updateLoggerConfig",
+                "updateLogger",
                 new Object[] { loggerName, loggerConfig },
                 new String[] { String.class.getName(), LoggerConfig.class.getName() }
         );
     }
 
-    public LoggerConfig removeLoggerConfig(String loggerName) throws Exception {
-        return (LoggerConfig)invoke("removeLoggerConfig", new Object[] { loggerName }, new String[] { String.class.getName() });
+    public void removeLogger(String loggerName) throws Exception {
+        invoke("removeLogger", new Object[] { loggerName }, new String[] { String.class.getName() });
     }
 
     public RootLoggerConfig getRootLoggerConfig() throws Exception {
         return (RootLoggerConfig)getAttribute("RootLoggerConfig");
     }
 
-    public void setRootLoggerConfig(RootLoggerConfig rootLoggerConfig) throws Exception {
-        setAttribute("RootLoggerConfig", rootLoggerConfig);
+    public void updateRootLogger(RootLoggerConfig rootLoggerConfig) throws Exception {
+        invoke(
+                "updateRootLogger", 
+                new Object[] { rootLoggerConfig },
+                new String[] { RootLoggerConfig.class.getName() }
+        );
     }
 
     public void store() throws Exception {

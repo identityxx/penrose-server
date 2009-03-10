@@ -18,7 +18,6 @@ import java.util.Collection;
 public class EntryFilterEvaluator {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     public Entry entry;
 
@@ -80,6 +79,8 @@ public class EntryFilterEvaluator {
     }
 
     public boolean eval(SimpleFilter filter) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         String attributeName = filter.getAttribute();
         String operator = filter.getOperator();
@@ -170,6 +171,8 @@ public class EntryFilterEvaluator {
 
     public boolean eval(PresentFilter filter) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         String attributeName = filter.getAttribute();
 
         Mapping mapping = entry.getMapping();
@@ -196,6 +199,8 @@ public class EntryFilterEvaluator {
     }
 
     public boolean eval(SubstringFilter filter) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         String attributeName = filter.getAttribute();
         Collection<Object> substrings = filter.getSubstrings();

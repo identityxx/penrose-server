@@ -11,6 +11,7 @@ import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.operation.SearchOperation;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.util.TextUtil;
+import org.safehaus.penrose.Penrose;
 import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
@@ -28,18 +29,20 @@ public class NISEntry extends DynamicEntry {
             SearchOperation operation
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         final DN baseDn     = operation.getDn();
         final Filter filter = operation.getFilter();
         final int scope     = operation.getScope();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("NIS SEARCH", 80));
-            log.debug(TextUtil.displayLine("Entry  : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("Base   : "+baseDn, 80));
-            log.debug(TextUtil.displayLine("Filter : "+filter, 80));
-            log.debug(TextUtil.displayLine("Scope  : "+ LDAP.getScope(scope), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("NIS SEARCH", 70));
+            log.debug(TextUtil.displayLine("Entry  : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("Base   : "+baseDn, 70));
+            log.debug(TextUtil.displayLine("Filter : "+filter, 70));
+            log.debug(TextUtil.displayLine("Scope  : "+ LDAP.getScope(scope), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         EntrySearchOperation op = new EntrySearchOperation(operation, this);
@@ -57,6 +60,8 @@ public class NISEntry extends DynamicEntry {
     public void expand(
             final SearchOperation operation
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         final Session session = operation.getSession();
         SearchResponse response = operation.getSearchResponse();
@@ -92,7 +97,7 @@ public class NISEntry extends DynamicEntry {
                         log.debug(e.getMessage());
                         
                     } catch (Exception e) {
-                        log.error(e.getMessage(), e);
+                        Penrose.errorLog.error(e.getMessage(), e);
                     }
                 }
 
@@ -272,6 +277,7 @@ public class NISEntry extends DynamicEntry {
             final Interpreter interpreter
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Searching source "+sourceRef.getAlias());
 
         RDNBuilder rb = new RDNBuilder();

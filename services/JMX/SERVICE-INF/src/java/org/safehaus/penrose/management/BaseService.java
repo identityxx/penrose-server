@@ -17,8 +17,6 @@ import java.util.*;
 public abstract class BaseService implements DynamicMBean {
 
     public Logger log = Logger.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
-    public boolean info = log.isInfoEnabled();
 
     protected PenroseJMXService jmxService;
 
@@ -75,6 +73,7 @@ public abstract class BaseService implements DynamicMBean {
     public abstract Object getObject();
 
     public Object getAttribute(String name) throws AttributeNotFoundException, MBeanException, ReflectionException {
+        boolean info = log.isInfoEnabled();
         if (info) log.info("Getting attribute "+name+" from "+getObjectName()+".");
 
         try {
@@ -139,6 +138,8 @@ public abstract class BaseService implements DynamicMBean {
     }
 
     public void setAttribute(Attribute attribute) throws AttributeNotFoundException, InvalidAttributeValueException, MBeanException, ReflectionException {
+
+        boolean info = log.isInfoEnabled();
 
         String name = attribute.getName();
         Object value = attribute.getValue();
@@ -217,6 +218,9 @@ public abstract class BaseService implements DynamicMBean {
     }
 
     public Object invoke(String operation, Object[] paramValues, String[] paramTypes) throws MBeanException, ReflectionException {
+
+        boolean debug = log.isDebugEnabled();
+        boolean info = log.isInfoEnabled();
 
         String signature = ClassUtil.getSignature(operation, paramTypes);
         if (info) log.info("Invoking method "+signature+" in "+getObjectName()+".");

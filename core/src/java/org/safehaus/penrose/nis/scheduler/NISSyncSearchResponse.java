@@ -5,6 +5,7 @@ import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.Field;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.util.TransformationUtil;
+import org.safehaus.penrose.Penrose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,8 +17,6 @@ import java.util.Collection;
 public class NISSyncSearchResponse extends SearchResponse {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public Logger errorLog = org.safehaus.penrose.log.Error.log;
-    public boolean debug = log.isDebugEnabled();
 
     protected Source source;
     protected Collection<Source> destinations;
@@ -38,6 +37,7 @@ public class NISSyncSearchResponse extends SearchResponse {
 
     public void add(SearchResult result) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         DN dn = result.getDn();
         Attributes attributes = result.getAttributes();
 
@@ -92,7 +92,7 @@ public class NISSyncSearchResponse extends SearchResponse {
                 try {
                     destination.add(null, newDn, newAttributes);
                 } catch (Exception e) {
-                    errorLog.error(e.getMessage(), e);
+                    Penrose.errorLog.error(e.getMessage(), e);
                 }
             }
         }

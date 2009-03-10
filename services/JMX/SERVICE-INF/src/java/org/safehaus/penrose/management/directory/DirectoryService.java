@@ -81,9 +81,11 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
         return list;
     }
 
-    public String getEntryName(DN dn) throws Exception {
+    public Collection<String> getChildNames(String entryName) throws Exception {
+        Collection<String> list = new ArrayList<String>();
         DirectoryConfig directoryConfig = getDirectoryConfig();
-        return directoryConfig.getEntryNameByDn(dn);
+        list.addAll(directoryConfig.getChildNames(entryName));
+        return list;
     }
 
     public EntryService getEntryService(String entryId) throws Exception {
@@ -94,9 +96,21 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
         return entryService;
     }
 
+    public String getEntryName(DN dn) throws Exception {
+        DirectoryConfig directoryConfig = getDirectoryConfig();
+        return directoryConfig.getEntryNameByDn(dn);
+    }
+
+    public DN getEntryDn(String entryName) throws Exception {
+        DirectoryConfig directoryConfig = getDirectoryConfig();
+        EntryConfig entryConfig = directoryConfig.getEntryConfig(entryName);
+        if (entryConfig == null) return null;
+        return entryConfig.getDn();
+    }
+
     public String createEntry(EntryConfig entryConfig) throws Exception {
 
-        log.debug(TextUtil.repeat("-", 80));
+        log.debug(TextUtil.repeat("-", 70));
 
         DirectoryConfig directoryConfig = getDirectoryConfig();
         directoryConfig.addEntryConfig(entryConfig);
@@ -118,7 +132,7 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
 
     public void updateEntry(String name, EntryConfig entryConfig) throws Exception {
 
-        log.debug(TextUtil.repeat("-", 80));
+        log.debug(TextUtil.repeat("-", 70));
 
         Directory directory = getDirectory();
         Collection<Entry> children = null;
@@ -126,7 +140,10 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
         if (directory != null) {
             try {
                 Entry oldEntry = directory.removeEntry(entryConfig.getName());
-                if (oldEntry != null) children = oldEntry.getChildren();
+                if (oldEntry != null) {
+                    children = oldEntry.getChildren();
+                    oldEntry.destroy();
+                }
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
@@ -151,23 +168,23 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
         newEntryService.register();
     }
 
-    public void removeEntry(String id) throws Exception {
+    public void removeEntry(String entryName) throws Exception {
 
-        log.debug(TextUtil.repeat("-", 80));
+        log.debug(TextUtil.repeat("-", 70));
 
         Directory directory = getDirectory();
         if (directory != null) {
             try {
-                directory.removeEntry(id);
+                directory.destroy(entryName);
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
         }
 
         DirectoryConfig directoryConfig = getDirectoryConfig();
-        directoryConfig.removeEntryConfig(id);
+        directoryConfig.removeEntryConfig(entryName);
 
-        EntryService entryService = getEntryService(id);
+        EntryService entryService = getEntryService(entryName);
         entryService.unregister();
     }
 

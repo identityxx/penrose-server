@@ -77,6 +77,8 @@ public class ADSyncModule extends Module {
     
     public void process(Session session, Attributes attributes) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         DN targetDn = new DN((String)attributes.getValue("targetDN"));
         if (debug) log.debug("Entry: "+targetDn);
 
@@ -168,6 +170,9 @@ public class ADSyncModule extends Module {
     }
 
     public Attributes createAttributes(String changes) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
         Attributes attributes = new Attributes();
 
         BufferedReader in = new BufferedReader(new StringReader(changes));
@@ -224,6 +229,9 @@ public class ADSyncModule extends Module {
     }
 
     public Collection<Modification> createModifications(String changes) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
         Collection<Modification> modifications = new ArrayList<Modification>();
 
         BufferedReader in = new BufferedReader(new StringReader(changes));
@@ -302,6 +310,7 @@ public class ADSyncModule extends Module {
 
     public void update() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         log.debug("============================================================================================");
         log.debug("Updating cache...");
 

@@ -59,12 +59,20 @@ public class RDN implements Serializable, Comparable {
         return values.get(name);
     }
 
+    public String getName() {
+        return values.keySet().iterator().next();
+    }
+
     public Collection<String> getNames() {
         return values.keySet();
     }
 
     public boolean contains(String name) {
         return values.containsKey(name);
+    }
+
+    public Object getValue() {
+        return values.values().iterator().next();
     }
 
     public Map<String,Object> getValues() {

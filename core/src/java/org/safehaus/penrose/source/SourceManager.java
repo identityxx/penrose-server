@@ -9,6 +9,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.PartitionContext;
 import org.safehaus.penrose.adapter.Adapter;
+import org.safehaus.penrose.Penrose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +24,6 @@ import java.util.Map;
 public class SourceManager {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     public Partition partition;
     protected SourceConfigManager sourceConfigManager;
@@ -43,15 +43,15 @@ public class SourceManager {
         Collection<String> names = new ArrayList<String>();
         names.addAll(getSourceNames());
 
-        for (String name : names) {
+        for (String sourceName : names) {
 
-            SourceConfig sourceConfig = getSourceConfig(name);
+            SourceConfig sourceConfig = getSourceConfig(sourceName);
             if (!sourceConfig.isEnabled()) continue;
 
             try {
-                startSource(name);
+                startSource(sourceName);
             } catch (Exception e) {
-                log.error(e.getMessage(), e);
+                Penrose.errorLog.error("Failed creating source "+sourceName+" in partition "+partition.getName()+".", e);
             }
         }
     }
@@ -61,8 +61,12 @@ public class SourceManager {
         Collection<String> names = new ArrayList<String>();
         names.addAll(sources.keySet());
 
-        for (String name : names) {
-            stopSource(name);
+        for (String sourceName : names) {
+            try {
+                stopSource(sourceName);
+            } catch (Exception e) {
+                Penrose.errorLog.error("Failed removing source "+sourceName+" in partition "+partition.getName()+".", e);
+            }
         }
     }
 
@@ -74,16 +78,41 @@ public class SourceManager {
         return sourceConfigManager.getSourceConfig(name);
     }
 
-    public void startSource(String name) throws Exception {
-        if (debug) log.debug("Starting source "+name+".");
-        SourceConfig sourceConfig = getSourceConfig(name);
-        createSource(sourceConfig);
+    public void startSource(String sourceName) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Starting source "+sourceName+".");
+
+        SourceConfig sourceConfig = getSourceConfig(sourceName);
+        Source source = createSource(sourceConfig);
+
+        sources.put(sourceName, source);
+
+        String connectionName = source.getConnectionName();
+        Collection<Source> list = sourcesByConnectionName.get(connectionName);
+        if (list == null) {
+            list = new ArrayList<Source>();
+            sourcesByConnectionName.put(connectionName, list);
+        }
+        list.add(source);
     }
 
-    public void stopSource(String name) throws Exception {
-        if (debug) log.debug("Stopping source "+name+".");
-        Source source = removeSource(name);
+    public void stopSource(String sourceName) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Stopping source "+sourceName+".");
+
+        Source source = sources.get(sourceName);
         source.destroy();
+
+        sources.remove(sourceName);
+
+        String connectionName = source.getConnectionName();
+        Collection<Source> list = sourcesByConnectionName.get(connectionName);
+        if (list != null) {
+            list.remove(source);
+            if (list.isEmpty()) sourcesByConnectionName.remove(connectionName);
+        }
     }
 
     public boolean isRunning(String name) {
@@ -92,7 +121,10 @@ public class SourceManager {
 
     public Source createSource(SourceConfig sourceConfig) throws Exception {
 
-        if (debug) log.debug("Creating source "+sourceConfig.getName()+".");
+        boolean debug = log.isDebugEnabled();
+        String sourceName = sourceConfig.getName();
+
+        if (debug) log.debug("Creating source "+sourceName+".");
 
         String partitionName = sourceConfig.getPartitionName();
         String connectionName = sourceConfig.getConnectionName();
@@ -133,33 +165,23 @@ public class SourceManager {
         if (debug) log.debug("Creating "+className+".");
         Class clazz = cl.loadClass(className);
         source = (Source)clazz.newInstance();
-        source.init(sourceConfig, sourceContext);
 
-        addSource(source);
+        source.init(sourceConfig, sourceContext);
 
         return source;
     }
 
-    public void addSource(Source source) {
+    public void updateSource(SourceConfig sourceConfig) throws Exception {
 
-        String name = source.getName();
-        sources.put(name, source);
-
-        String connectionName = source.getConnectionName();
-        Collection<Source> list = sourcesByConnectionName.get(connectionName);
-        if (list == null) {
-            list = new ArrayList<Source>();
-            sourcesByConnectionName.put(connectionName, list);
-        }
-        list.add(source);
-    }
-
-    public void updateSourceConfig(SourceConfig sourceConfig) throws Exception {
-
-        String sourceName = sourceConfig.getName();
         sourceConfigManager.updateSourceConfig(sourceConfig);
 
-        // fix references
+        String sourceName = sourceConfig.getName();
+
+        if (isRunning(sourceName)) {
+            stopSource(sourceName);
+            startSource(sourceName);
+        }
+
         PartitionConfig partitionConfig = partition.getPartitionConfig();
         DirectoryConfig directoryConfig = partitionConfig.getDirectoryConfig();
         for (EntryConfig entryConfig : directoryConfig.getEntryConfigs()) {
@@ -184,22 +206,6 @@ public class SourceManager {
 
         SourceManager sourceManager = rootPartition.getSourceManager();
         return sourceManager.getSource(name);
-    }
-
-    public Source removeSource(String name) {
-
-        if (debug) log.debug("Removing source "+name+".");
-
-        Source source = sources.remove(name);
-
-        String connectionName = source.getConnectionName();
-        Collection<Source> list = sourcesByConnectionName.get(connectionName);
-        if (list != null) {
-            list.remove(source);
-            if (list.isEmpty()) sourcesByConnectionName.remove(connectionName);
-        }
-
-        return source;
     }
 
     public Collection<Source> getSourcesByConnectionName(String connectionName) {

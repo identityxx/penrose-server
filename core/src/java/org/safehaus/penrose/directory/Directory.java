@@ -5,6 +5,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.PartitionContext;
 import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.Penrose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +17,6 @@ import java.util.*;
 public class Directory implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    boolean debug = log.isDebugEnabled();
 
     public final static Collection<Entry> EMPTY_ENTRIES = new ArrayList<Entry>();
 
@@ -24,6 +24,7 @@ public class Directory implements Cloneable {
 
     protected DirectoryConfig directoryConfig;
 
+    protected Collection<Entry> rootEntries = new ArrayList<Entry>();
     protected Map<String,Entry> entries = new LinkedHashMap<String,Entry>();
 
     public Directory(Partition partition) throws Exception {
@@ -35,6 +36,7 @@ public class Directory implements Cloneable {
 
     public void init() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Root entries: "+directoryConfig.getRootNames());
 
         for (EntryConfig entryConfig : directoryConfig.getEntryConfigs()) {
@@ -43,39 +45,52 @@ public class Directory implements Cloneable {
             try {
                 createEntry(entryConfig);
             } catch (Exception e) {
-                log.error(e.getMessage(), e);
+                Penrose.errorLog.error("Failed creating entry "+entryConfig.getName()+" ("+entryConfig.getDn()+") in partition "+partition.getName()+".", e);
             }
         }
     }
 
     public void destroy() throws Exception {
-        for (String id : getRootNames()) {
+
+        for (String entryName : getRootNames()) {
             try {
-                destroy(id);
+                destroy(entryName);
             } catch (Exception e) {
-                log.error(e.getMessage(), e);
+                Penrose.errorLog.error("Failed removing entry "+entryName+" in partition "+partition.getName()+".", e);
             }
         }
     }
 
-    public void destroy(String id) throws Exception {
+    public void destroy(String entryName) throws Exception {
 
-        Entry entry = removeEntry(id);
-        if (entry == null) throw new Exception("Entry "+id+" not found.");
+        Entry entry = getEntry(entryName);
+        if (entry == null) throw new Exception("Entry "+entryName+" not found.");
+
+        destroy(entry);
+    }
+
+    public void destroy(Entry entry) throws Exception {
+
+        log.debug("Destroying entry \""+entry.getDn()+"\".");
 
         Collection<Entry> children = new ArrayList<Entry>();
         children.addAll(entry.getChildren());
 
         for (Entry child : children) {
             if (child.getPartition() != partition) continue;
-            destroy(child.getName());
+            destroy(child);
         }
 
+        removeEntry(entry);
+
         entry.destroy();
+
+        log.debug("Entry \""+entry.getDn()+"\" destroyed.");
     }
 
     public Entry createEntry(EntryConfig entryConfig) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Creating entry \""+ entryConfig.getDn()+"\".");
 
         EntryContext entryContext = new EntryContext();
@@ -96,39 +111,62 @@ public class Directory implements Cloneable {
         Entry entry = (Entry)clazz.newInstance();
         entry.init(entryConfig, entryContext);
 
-        addEntry(entry);
+        String entryName = entry.getName();
+        if (debug) log.debug("Adding entry \""+entryName+"\".");
+
+        entries.put(entryName, entry);
+
+        if (parent == null || parent.getPartition() != partition) {
+            if (debug) log.debug("Adding into root entry list.");
+            rootEntries.add(entry);
+        }
+
+        if (parent != null) {
+            if (debug) log.debug("Attaching to parent \""+parent.getDn()+"\".");
+            parent.addChild(entry);
+        }
 
         return entry;
     }
 
-    public void addEntry(Entry entry) throws Exception {
-        entries.put(entry.getName(), entry);
-    }
+    public Entry removeEntry(String entryName) throws Exception {
 
-    public Entry removeEntry(String id) throws Exception {
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Removing entry \""+entryName+"\".");
 
-        if (debug) log.debug("Removing entry \""+id+"\".");
-
-        Entry entry = entries.remove(id);
+        Entry entry = entries.get(entryName);
         if (entry == null) {
-            if (debug) log.debug("Entry \""+id+"\" not found.");
+            if (debug) log.debug("Entry \""+entryName+"\" not found.");
             return null;
         }
 
-        DN dn = entry.getDn();
-        if (debug) log.debug("Removing entry \""+dn+"\".");
+        removeEntry(entry);
+
+        return entry;
+    }
+
+    public void removeEntry(Entry entry) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         Entry parent = entry.getParent();
+        if (parent == null || parent.getPartition() != partition) {
+            if (debug) log.debug("Removing from root entry list.");
+            rootEntries.remove(entry);
+        }
+
         if (parent != null) {
-            if (debug) log.debug("Detaching from \""+parent.getDn()+"\".");
+            if (debug) log.debug("Detaching from parent \""+parent.getDn()+"\".");
             parent.removeChild(entry);
         }
 
-        return entry;
+        if (debug) log.debug("Removing entry \""+entry.getDn()+"\".");
+        entries.remove(entry.getName());
     }
 
     public Entry findParent(EntryConfig entryConfig) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Searching parent of \""+entryConfig.getDn()+"\".");
 
         String parentName = entryConfig.getParentName();
@@ -186,8 +224,8 @@ public class Directory implements Cloneable {
         return null;
     }
 
-    public Entry getEntry(String id) {
-        return entries.get(id);
+    public Entry getEntry(String entryName) {
+        return entries.get(entryName);
     }
 
     public Entry getEntry(DN dn) throws Exception {
@@ -224,11 +262,12 @@ public class Directory implements Cloneable {
 
     public Collection<Entry> findEntries(DN dn) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Searching for \""+dn+"\" in \""+partition.getName()+"\":");
 
         Collection<Entry> results = new ArrayList<Entry>();
 
-        for (Entry entry : getRootEntries()) {
+        for (Entry entry : rootEntries) {
             if (debug) log.debug(" - Suffix: "+entry.getDn());
 
             Collection<Entry> list = entry.findEntries(dn);
@@ -325,7 +364,11 @@ public class Directory implements Cloneable {
     }
 
     public Collection<String> getRootNames() {
-        return directoryConfig.getRootNames();
+        Collection<String> entryNames = new ArrayList<String>();
+        for (Entry entry : rootEntries) {
+            entryNames.add(entry.getName());
+        }
+        return entryNames;
     }
 
     public Entry getRootEntry() {
@@ -333,7 +376,7 @@ public class Directory implements Cloneable {
     }
 
     public Collection<Entry> getRootEntries() {
-        return getEntries(getRootNames());
+        return rootEntries;
     }
 
     public DN getSuffix() {

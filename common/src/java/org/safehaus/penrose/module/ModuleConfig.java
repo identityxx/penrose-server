@@ -17,9 +17,7 @@
  */
 package org.safehaus.penrose.module;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.io.Serializable;
 
 /**
@@ -35,6 +33,8 @@ public class ModuleConfig implements Serializable, Cloneable {
     private String moduleClass;
 
     public Map<String,String> parameters = new LinkedHashMap<String,String>();
+
+    public Collection<ModuleMapping> moduleMappings = new LinkedHashSet<ModuleMapping>();
 
     public ModuleConfig() {
     }
@@ -101,6 +101,34 @@ public class ModuleConfig implements Serializable, Cloneable {
         this.description = description;
     }
 
+    public void addModuleMapping(ModuleMapping moduleMapping) {
+        moduleMappings.add(moduleMapping);
+    }
+
+    public void removeModuleMapping(ModuleMapping moduleMapping) {
+        Collection<ModuleMapping> list = new ArrayList<ModuleMapping>();
+        for (ModuleMapping mm : moduleMappings) {
+            if (!mm.equals(moduleMapping)) continue;
+            list.add(mm);
+        }
+        moduleMappings.removeAll(list);
+    }
+
+    public void removeModuleMappings() {
+        moduleMappings.clear();
+    }
+    
+    public Collection<ModuleMapping> getModuleMappings() {
+        return moduleMappings;
+    }
+
+    public void setModuleMappings(Collection<ModuleMapping> moduleMappings) {
+        if (this.moduleMappings == moduleMappings) return;
+        this.moduleMappings.clear();
+        if (moduleMappings == null) return;
+        this.moduleMappings.addAll(moduleMappings);
+    }
+    
     public int hashCode() {
         return name == null ? 0 : name.hashCode();
     }
@@ -126,10 +154,12 @@ public class ModuleConfig implements Serializable, Cloneable {
 
         if (!equals(parameters, moduleConfig.parameters)) return false;
 
+        if (!equals(moduleMappings, moduleConfig.moduleMappings)) return false;
+
         return true;
     }
 
-    public void copy(ModuleConfig moduleConfig) {
+    public void copy(ModuleConfig moduleConfig) throws CloneNotSupportedException {
         enabled = moduleConfig.enabled;
 
         name = moduleConfig.name;
@@ -139,6 +169,11 @@ public class ModuleConfig implements Serializable, Cloneable {
 
         parameters = new LinkedHashMap<String,String>();
         parameters.putAll(moduleConfig.parameters);
+
+        moduleMappings = new LinkedHashSet<ModuleMapping>();
+        for (ModuleMapping moduleMapping : moduleConfig.moduleMappings) {
+            moduleMappings.add((ModuleMapping)moduleMapping.clone());
+        }
     }
 
     public Object clone() throws CloneNotSupportedException {

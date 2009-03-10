@@ -29,7 +29,6 @@ import arlut.csd.crypto.Sha512Crypt;
 public class Password {
 
     public static Logger log = LoggerFactory.getLogger(Password.class);
-    public static boolean debug = log.isDebugEnabled();
 
     public final static String CRYPT        = "crypt";
     public final static String CRYPT_MD5    = "crypt-md5";
@@ -60,6 +59,7 @@ public class Password {
 
     public String encrypt() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug("Encrypting password:");
             log.debug(" - encryption: ["+encryption+"]");
@@ -132,6 +132,7 @@ public class Password {
 
     public static boolean validate(String encryption, String password, String hash) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (CRYPT.equalsIgnoreCase(encryption)) {
 
             if (hash.startsWith("$1$")) {

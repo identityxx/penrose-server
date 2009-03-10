@@ -11,7 +11,6 @@ import javax.management.*;
 public class BaseClient {
 
     public Logger log = Logger.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     protected PenroseClient client;
     protected String name;
@@ -46,6 +45,7 @@ public class BaseClient {
     }
     
     public Object invoke(String method, Object[] paramValues, String[] paramTypes) throws Exception {
+        boolean debug = log.isDebugEnabled();
         try {
             if (debug) {
                 String signature = ClassUtil.getSignature(method, paramTypes);
@@ -64,6 +64,7 @@ public class BaseClient {
 
     public Object getAttribute(String attributeName) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Getting attribute "+ attributeName +" from "+objectName+".");
 
         Object object = connection.getAttribute(objectName, attributeName);
@@ -74,6 +75,7 @@ public class BaseClient {
 
     public void setAttribute(String attributeName, Object value) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Setting attribute "+ attributeName +" from "+objectName+".");
 
         Attribute attribute = new Attribute(attributeName, value);

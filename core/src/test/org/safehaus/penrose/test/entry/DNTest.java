@@ -20,7 +20,7 @@ public class DNTest extends TestCase {
 
         assertEquals(rdn.getNames().size(), 1);
 
-        String cn = (String)rdn.getNames().iterator().next();
+        String cn = rdn.getName();
         assertEquals(cn, "cn");
 
         String value = (String)rdn.get(cn);
@@ -58,27 +58,27 @@ public class DNTest extends TestCase {
     public void testParsingSimpleDn() throws Exception {
         DN dn = new DN("cn=James Bond,ou=Users,dc=Example,dc=com");
 
-        assertEquals(dn.getSize(), 4);
+        assertEquals(dn.getLength(), 4);
 
-        RDN rdn = dn.get(0);
+        RDN rdn = dn.getRdn(0);
         Collection names = rdn.getNames();
         assertEquals(names.size(), 1);
         assertTrue(names.contains("cn"));
         assertEquals(rdn.get("cn"), "James Bond");
 
-        rdn = dn.get(1);
+        rdn = dn.getRdn(1);
         names = rdn.getNames();
         assertEquals(names.size(), 1);
         assertTrue(names.contains("ou"));
         assertEquals(rdn.get("ou"), "Users");
 
-        rdn = dn.get(2);
+        rdn = dn.getRdn(2);
         names = rdn.getNames();
         assertEquals(names.size(), 1);
         assertTrue(names.contains("dc"));
         assertEquals(rdn.get("dc"), "Example");
 
-        rdn = dn.get(3);
+        rdn = dn.getRdn(3);
         names = rdn.getNames();
         assertEquals(names.size(), 1);
         assertTrue(names.contains("dc"));
@@ -89,27 +89,27 @@ public class DNTest extends TestCase {
     public void testParsingDnWithEscapedCharacters() throws Exception {
         DN dn = new DN("cn=Bond\\, James,ou=Agents\\, Secret,dc=Example,dc=com");
 
-        assertEquals(dn.getSize(), 4);
+        assertEquals(dn.getLength(), 4);
 
-        RDN rdn = dn.get(0);
+        RDN rdn = dn.getRdn(0);
         Collection names = rdn.getNames();
         assertEquals(names.size(), 1);
         assertTrue(names.contains("cn"));
         assertEquals(rdn.get("cn"), "Bond, James");
 
-        rdn = dn.get(1);
+        rdn = dn.getRdn(1);
         names = rdn.getNames();
         assertEquals(names.size(), 1);
         assertTrue(names.contains("ou"));
         assertEquals(rdn.get("ou"), "Agents, Secret");
 
-        rdn = dn.get(2);
+        rdn = dn.getRdn(2);
         names = rdn.getNames();
         assertEquals(names.size(), 1);
         assertTrue(names.contains("dc"));
         assertEquals(rdn.get("dc"), "Example");
 
-        rdn = dn.get(3);
+        rdn = dn.getRdn(3);
         names = rdn.getNames();
         assertEquals(names.size(), 1);
         assertTrue(names.contains("dc"));
@@ -119,9 +119,9 @@ public class DNTest extends TestCase {
     public void testParsingCompositeRdn() throws Exception {
         DN dn = new DN("cn=James Bond+uid=jbond+displayName=007,ou=Users+description=Secret Agents,dc=Example,dc=com");
 
-        assertEquals(dn.getSize(), 4);
+        assertEquals(dn.getLength(), 4);
 
-        RDN rdn = dn.get(0);
+        RDN rdn = dn.getRdn(0);
         Collection names = rdn.getNames();
         assertEquals(names.size(), 3);
         assertTrue(names.contains("cn"));
@@ -131,7 +131,7 @@ public class DNTest extends TestCase {
         assertTrue(names.contains("displayName"));
         assertEquals(rdn.get("displayName"), "007");
 
-        rdn = dn.get(1);
+        rdn = dn.getRdn(1);
         names = rdn.getNames();
         assertEquals(names.size(), 2);
         assertTrue(names.contains("ou"));
@@ -139,13 +139,13 @@ public class DNTest extends TestCase {
         assertTrue(names.contains("description"));
         assertEquals(rdn.get("description"), "Secret Agents");
 
-        rdn = dn.get(2);
+        rdn = dn.getRdn(2);
         names = rdn.getNames();
         assertEquals(names.size(), 1);
         assertTrue(names.contains("dc"));
         assertEquals(rdn.get("dc"), "Example");
 
-        rdn = dn.get(3);
+        rdn = dn.getRdn(3);
         names = rdn.getNames();
         assertEquals(names.size(), 1);
         assertTrue(names.contains("dc"));

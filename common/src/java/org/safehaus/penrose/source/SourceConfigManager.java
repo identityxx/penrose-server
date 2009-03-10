@@ -18,20 +18,16 @@ public class SourceConfigManager implements Serializable, Cloneable {
     }
 
     public static transient Logger log;
-    public static boolean debug = log.isDebugEnabled();
 
     protected Map<String,SourceConfig> sourceConfigs                             = new LinkedHashMap<String,SourceConfig>();
     protected Map<String,Collection<SourceConfig>> sourceConfigsByConnectionName = new LinkedHashMap<String,Collection<SourceConfig>>();
 
-    public void addSourceConfig(SourceConfig sourceConfig) {
+    public void addSourceConfig(SourceConfig sourceConfig) throws Exception {
 
         String sourceName = sourceConfig.getName();
 
-        if (debug) {
-            log.debug("Adding source "+sourceName+":");
-            for (FieldConfig fieldConfig : sourceConfig.getFieldConfigs()) {
-                log.debug(" - "+fieldConfig.getName()+": "+fieldConfig.getType()+(fieldConfig.isPrimaryKey() ? " (pk)" : ""));
-            }
+        if (sourceConfigs.containsKey(sourceName)) {
+            throw new Exception("Source "+sourceName+" already exists.");
         }
 
         sourceConfigs.put(sourceName, sourceConfig);
@@ -58,11 +54,13 @@ public class SourceConfigManager implements Serializable, Cloneable {
     public void updateSourceConfig(SourceConfig sourceConfig) throws Exception {
 
         String sourceName = sourceConfig.getName();
-        String connectionName = sourceConfig.getConnectionName();
 
         SourceConfig oldSourceConfig = sourceConfigs.get(sourceName);
-        if (oldSourceConfig == null) throw new Exception("Source "+sourceName+" not found.");
+        if (oldSourceConfig == null) {
+            throw new Exception("Source "+sourceName+" not found.");
+        }
 
+        String connectionName = sourceConfig.getConnectionName();
         String oldConnectionName = oldSourceConfig.getConnectionName();
 
         oldSourceConfig.copy(sourceConfig);

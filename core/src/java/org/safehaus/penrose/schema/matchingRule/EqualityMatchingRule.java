@@ -31,7 +31,6 @@ import java.util.Arrays;
 public class EqualityMatchingRule {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     public final static String BOOLEAN            = "booleanMatch";
     public final static String CASE_IGNORE        = "caseIgnoreMatch";
@@ -67,6 +66,9 @@ public class EqualityMatchingRule {
     }
 
     public boolean compare(Object object1, Object object2) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
         if (object1 == null && object2 == null) return true;
         if (object1 == null || object2 == null) return false;
 

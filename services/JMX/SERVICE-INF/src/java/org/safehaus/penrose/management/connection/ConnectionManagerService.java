@@ -129,6 +129,7 @@ public class ConnectionManagerService extends BaseService implements ConnectionM
 
     public void validateConnection(ConnectionConfig connectionConfig) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         String connectionName = connectionConfig.getName();
 
         if (debug) {
@@ -156,6 +157,8 @@ public class ConnectionManagerService extends BaseService implements ConnectionM
     }
 
     public Collection<DN> getNamingContexts(ConnectionConfig connectionConfig) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         String connectionName = connectionConfig.getName();
 
@@ -215,6 +218,8 @@ public class ConnectionManagerService extends BaseService implements ConnectionM
 
     public void createConnection(ConnectionConfig connectionConfig) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         String connectionName = connectionConfig.getName();
 
         if (debug) {
@@ -237,6 +242,8 @@ public class ConnectionManagerService extends BaseService implements ConnectionM
     }
 
     public void renameConnection(String name, String newName) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(TextUtil.repeat("-", 70));
@@ -275,9 +282,9 @@ public class ConnectionManagerService extends BaseService implements ConnectionM
         newConnectionService.register();
     }
 
-    public void updateConnection(ConnectionConfig connectionConfig) throws Exception {
+    public void updateConnection(String connectionName, ConnectionConfig connectionConfig) throws Exception {
 
-        String connectionName = connectionConfig.getName();
+        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(TextUtil.repeat("-", 70));
@@ -285,25 +292,20 @@ public class ConnectionManagerService extends BaseService implements ConnectionM
         }
 
         Partition partition = getPartition();
-        boolean running = false;
+        if (partition == null) {
+            PartitionConfig partitionConfig = getPartitionConfig();
+            ConnectionConfigManager connectionConfigManager = partitionConfig.getConnectionConfigManager();
+            connectionConfigManager.updateConnectionConfig(connectionConfig);
 
-        if (partition != null) {
+        } else {
             ConnectionManager connectionManager = partition.getConnectionManager();
-            running = connectionManager.isRunning(connectionName);
-            if (running) connectionManager.stopConnection(connectionName);
-        }
-
-        PartitionConfig partitionConfig = getPartitionConfig();
-        ConnectionConfigManager connectionConfigManager = partitionConfig.getConnectionConfigManager();
-        connectionConfigManager.updateConnectionConfig(connectionConfig);
-
-        if (partition != null) {
-            ConnectionManager connectionManager = partition.getConnectionManager();
-            if (running) connectionManager.startConnection(connectionName);
+            connectionManager.updateConnection(connectionConfig);
         }
     }
 
     public void removeConnection(String connectionName) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(TextUtil.repeat("-", 70));

@@ -73,25 +73,33 @@ public class ModuleService extends BaseService implements ModuleServiceMBean {
     }
 
     public void addModuleMapping(ModuleMapping moduleMapping) throws Exception {
-        PartitionConfig partitionConfig = getPartitionConfig();
-        ModuleConfigManager moduleConfigManager = partitionConfig.getModuleConfigManager();
-        moduleConfigManager.addModuleMapping(moduleMapping);
+        ModuleConfig moduleConfig = getModuleConfig();
+        moduleConfig.addModuleMapping(moduleMapping);
+        //PartitionConfig partitionConfig = getPartitionConfig();
+        //ModuleConfigManager moduleConfigManager = partitionConfig.getModuleConfigManager();
+        //moduleConfigManager.addModuleMapping(moduleMapping);
     }
 
     public void removeModuleMapping(ModuleMapping moduleMapping) throws Exception {
-        PartitionConfig partitionConfig = getPartitionConfig();
-        ModuleConfigManager moduleConfigManager = partitionConfig.getModuleConfigManager();
-        moduleConfigManager.removeModuleMapping(moduleMapping);
+        ModuleConfig moduleConfig = getModuleConfig();
+        moduleConfig.removeModuleMapping(moduleMapping);
+        //PartitionConfig partitionConfig = getPartitionConfig();
+        //ModuleConfigManager moduleConfigManager = partitionConfig.getModuleConfigManager();
+        //moduleConfigManager.removeModuleMapping(moduleMapping);
     }
 
     public Collection<ModuleMapping> getModuleMappings() throws Exception {
+        ModuleConfig moduleConfig = getModuleConfig();
+        Collection<ModuleMapping> results = new ArrayList<ModuleMapping>();
+        results.addAll(moduleConfig.getModuleMappings());
+/*
         PartitionConfig partitionConfig = getPartitionConfig();
         ModuleConfigManager moduleConfigManager = partitionConfig.getModuleConfigManager();
 
         Collection<ModuleMapping> results = new ArrayList<ModuleMapping>();
         Collection<ModuleMapping> list = moduleConfigManager.getModuleMappings(moduleName);
         if (list != null) results.addAll(list);
-
+*/
         return results;
     }
 

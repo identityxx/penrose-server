@@ -30,6 +30,7 @@ import org.safehaus.penrose.pipeline.SOPipeline;
 import org.safehaus.penrose.mapping.Mapping;
 import org.safehaus.penrose.mapping.MappingRule;
 import org.safehaus.penrose.password.Password;
+import org.safehaus.penrose.Penrose;
 import org.ietf.ldap.LDAPException;
 
 import java.util.*;
@@ -60,6 +61,8 @@ public class DynamicEntry extends Entry implements Cloneable {
             AddRequest request,
             AddResponse response
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
 
@@ -129,6 +132,7 @@ public class DynamicEntry extends Entry implements Cloneable {
             EntrySource source
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Adding source "+source.getAlias()+".");
 
         Attributes sourceAttributes = sourceValues.get(source.getAlias());
@@ -182,6 +186,7 @@ public class DynamicEntry extends Entry implements Cloneable {
             BindResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         DN dn = request.getDn();
         byte[] password = request.getPassword();
 
@@ -257,7 +262,7 @@ public class DynamicEntry extends Entry implements Cloneable {
 
             } catch (Exception e) {
 
-                log.error(e.getMessage());
+                Penrose.errorLog.error(e.getMessage());
 
                 if (EntrySourceConfig.REQUISITE.equals(flag)) {
                     if (debug) log.debug("Bind is requisite.");
@@ -285,6 +290,7 @@ public class DynamicEntry extends Entry implements Cloneable {
             CompareResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         DN dn = request.getDn();
 
         if (debug) {
@@ -413,6 +419,7 @@ public class DynamicEntry extends Entry implements Cloneable {
             DeleteResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         DN dn = request.getDn();
 
         if (debug) {
@@ -465,6 +472,7 @@ public class DynamicEntry extends Entry implements Cloneable {
             EntrySource source
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Deleting source "+source.getAlias()+".");
 
         Attributes sourceAttributes = sourceValues.get(source.getAlias());
@@ -514,6 +522,8 @@ public class DynamicEntry extends Entry implements Cloneable {
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
 
@@ -568,6 +578,7 @@ public class DynamicEntry extends Entry implements Cloneable {
             EntrySource source
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Modifying source "+source.getAlias()+".");
 
         Attributes sourceAttributes = sourceValues.get(source.getAlias());
@@ -733,6 +744,8 @@ public class DynamicEntry extends Entry implements Cloneable {
             ModRdnResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         DN dn = request.getDn();
 
         if (debug) {
@@ -787,6 +800,7 @@ public class DynamicEntry extends Entry implements Cloneable {
             EntrySource source
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Renaming source "+source.getAlias()+".");
 
         Attributes sourceAttributes = sourceValues.get(source.getAlias());
@@ -854,6 +868,8 @@ public class DynamicEntry extends Entry implements Cloneable {
     public void search(
             SearchOperation operation
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         final DN baseDn     = operation.getDn();
         final Filter filter = operation.getFilter();
@@ -953,6 +969,7 @@ public class DynamicEntry extends Entry implements Cloneable {
             SearchOperation operation
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Expanding entry.");
 
         Session session = operation.getSession();
@@ -1064,6 +1081,8 @@ public class DynamicEntry extends Entry implements Cloneable {
     }
 
     public Collection<String> getRequestedAliases(SearchOperation operation) throws Exception {
+
+        final boolean debug = log.isDebugEnabled();
 
         final Collection<String> requestedSources = new HashSet<String>();
 
@@ -1178,6 +1197,8 @@ public class DynamicEntry extends Entry implements Cloneable {
             Map<DN,SourceAttributes> results
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         EntrySource source = getSource(alias);
 
         String linkedAttribute = null;
@@ -1277,6 +1298,7 @@ public class DynamicEntry extends Entry implements Cloneable {
             final Map<String,Boolean> requestedSources
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         final String alias = getSearchOrder(index);
 
         int nextIndex = index+1;
@@ -1394,6 +1416,7 @@ public class DynamicEntry extends Entry implements Cloneable {
             String prevLinkingAttribute
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         String alias = getSearchOrder(index);
 
         int nextIndex = index+1;
@@ -1474,6 +1497,8 @@ public class DynamicEntry extends Entry implements Cloneable {
             UnbindRequest request,
             UnbindResponse response
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         DN dn = session.getBindDn();
 
@@ -1580,6 +1605,7 @@ public class DynamicEntry extends Entry implements Cloneable {
 
     public Collection<DN> computeDns(Interpreter interpreter) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         Collection<DN> dns = new ArrayList<DN>();
 
         EntryAttributeConfig dnMapping = entryConfig.getAttributeConfig("dn");
@@ -1660,21 +1686,22 @@ public class DynamicEntry extends Entry implements Cloneable {
             SourceAttributes sourceValues
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Extracting DN: "+baseDn);
 
         Interpreter interpreter = partition.newInterpreter();
 
         Entry base = this;
         
-        while (base.getDn().getSize() > baseDn.getSize()) {
+        while (base.getDn().getLength() > baseDn.getLength()) {
             base = base.getParent();
             if (base == null) return;
         }
 
         for (Entry entry : base.getPath()) {
 
-            int i = baseDn.getSize() - entry.getDn().getSize();
-            RDN rdn = baseDn.get(i);
+            int i = baseDn.getLength() - entry.getDn().getLength();
+            RDN rdn = baseDn.getRdn(i);
 
             if (debug) {
                 log.debug(" - RDN: "+rdn);
@@ -1697,6 +1724,8 @@ public class DynamicEntry extends Entry implements Cloneable {
             Interpreter interpreter,
             SourceAttributes sourceValues
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         interpreter.set(sourceValues);
         interpreter.set(rdn);
@@ -1722,6 +1751,7 @@ public class DynamicEntry extends Entry implements Cloneable {
             SourceAttributes sourceValues
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         EntrySourceConfig sourceConfig = getSourceConfig(sourceRef.getAlias());
 
         Attributes attributes = sourceValues.get(sourceConfig.getAlias());
@@ -1785,6 +1815,7 @@ public class DynamicEntry extends Entry implements Cloneable {
             Interpreter interpreter
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Propagating source "+sourceConfig.getAlias()+" in "+getDn()+":");
 
         interpreter.set(sourceValues);
@@ -1810,6 +1841,7 @@ public class DynamicEntry extends Entry implements Cloneable {
             Interpreter interpreter
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         String lsourceName = sourceConfig.getAlias();
 
         String lfieldName;
@@ -1850,6 +1882,7 @@ public class DynamicEntry extends Entry implements Cloneable {
 
     public Object encrypt(String encryption, Object value) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (value instanceof Collection) {
 
             Collection list = (Collection)value;

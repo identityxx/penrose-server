@@ -34,7 +34,6 @@ import java.util.ArrayList;
 public class EventManager {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
@@ -51,6 +50,7 @@ public class EventManager {
 
     public void postEvent(AddEvent event) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Firing "+event+" event.");
 
         AddResponse response = event.getResponse();
@@ -77,6 +77,7 @@ public class EventManager {
 
     public void postEvent(BindEvent event) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Firing "+event+" event.");
 
         BindResponse response = event.getResponse();
@@ -103,6 +104,7 @@ public class EventManager {
 
     public void postEvent(CompareEvent event) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Firing "+event+" event.");
 
         CompareResponse response = event.getResponse();
@@ -129,6 +131,7 @@ public class EventManager {
 
     public void postEvent(DeleteEvent event) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Firing "+event+" event.");
 
         DeleteResponse response = event.getResponse();
@@ -155,6 +158,7 @@ public class EventManager {
 
     public void postEvent(ModifyEvent event) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Firing "+event+" event.");
 
         ModifyResponse response = event.getResponse();
@@ -181,6 +185,7 @@ public class EventManager {
 
     public void postEvent(ModRdnEvent event) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Firing "+event+" event.");
 
         ModRdnResponse response = event.getResponse();
@@ -207,6 +212,7 @@ public class EventManager {
 
     public void postEvent(SearchEvent event) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Firing "+event+" event.");
 
         SearchResponse response = event.getResponse();
@@ -233,6 +239,7 @@ public class EventManager {
 
     public void postEvent(UnbindEvent event) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Firing "+event+" event.");
 
         UnbindResponse response = event.getResponse();

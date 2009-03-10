@@ -30,6 +30,7 @@ import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.schema.SchemaParser;
 import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.util.TextUtil;
+import org.safehaus.penrose.Penrose;
 
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
@@ -39,8 +40,6 @@ import com.sun.jndi.ldap.BerDecoder;
 public class JNDIClient implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean warn = log.isWarnEnabled();
-    public boolean debug = log.isDebugEnabled();
 
     public Collection<String> DEFAULT_BINARY_ATTRIBUTES = Arrays.asList(
         "photo", "personalSignature", "audio", "jpegPhoto", "javaSerializedData",
@@ -85,7 +84,7 @@ public class JNDIClient implements Cloneable {
                 connection = createConnection();
 
             } catch (Exception e) {
-                log.error(e.getMessage(), e);
+                Penrose.errorLog.error(e.getMessage(), e);
             }
         }
     }
@@ -153,6 +152,7 @@ public class JNDIClient implements Cloneable {
 
     public LdapContext createConnection() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug("Creating InitialLdapContext:");
 
@@ -201,6 +201,9 @@ public class JNDIClient implements Cloneable {
             AddResponse response
     ) throws Exception {
 
+        boolean warn = log.isWarnEnabled();
+        boolean debug = log.isDebugEnabled();
+
         LdapContext context = getConnection();
 
         try {
@@ -243,7 +246,7 @@ public class JNDIClient implements Cloneable {
                 context.createSubcontext(escapedDn, attrs);
 
             } catch (CommunicationException e) {
-                log.error(e.getMessage(), e);
+                Penrose.errorLog.error(e.getMessage(), e);
                 context = reconnect(context);
                 context.createSubcontext(escapedDn, attrs);
             }
@@ -263,6 +266,9 @@ public class JNDIClient implements Cloneable {
             BindRequest request,
             BindResponse response
     ) throws Exception {
+
+        boolean warn = log.isWarnEnabled();
+        boolean debug = log.isDebugEnabled();
 
         DN bindDn = request.getDn();
         byte[] password = request.getPassword();
@@ -307,6 +313,9 @@ public class JNDIClient implements Cloneable {
             CompareResponse response
     ) throws Exception {
 
+        boolean warn = log.isWarnEnabled();
+        boolean debug = log.isDebugEnabled();
+
         LdapContext context = getConnection();
 
         try {
@@ -342,7 +351,7 @@ public class JNDIClient implements Cloneable {
                 ne = context.search(escapedDn, filter, args, sc);
 
             } catch (CommunicationException e) {
-                log.error(e.getMessage(), e);
+                Penrose.errorLog.error(e.getMessage(), e);
                 context = reconnect(context);
                 ne = context.search(escapedDn, filter, args, sc);
             }
@@ -369,6 +378,8 @@ public class JNDIClient implements Cloneable {
             DeleteResponse response
     ) throws Exception {
 
+        boolean warn = log.isWarnEnabled();
+
         LdapContext context = getConnection();
 
         try {
@@ -387,7 +398,7 @@ public class JNDIClient implements Cloneable {
                 context.destroySubcontext(escapedDn);
 
             } catch (CommunicationException e) {
-                log.error(e.getMessage(), e);
+                Penrose.errorLog.error(e.getMessage(), e);
                 context = reconnect(context);
                 context.destroySubcontext(escapedDn);
             }
@@ -408,6 +419,8 @@ public class JNDIClient implements Cloneable {
             ModifyResponse response
     ) throws Exception {
 
+        boolean warn = log.isWarnEnabled();
+        boolean debug = log.isDebugEnabled();
 
         LdapContext context = getConnection();
 
@@ -474,7 +487,7 @@ public class JNDIClient implements Cloneable {
                 context.modifyAttributes(escapedDn, mods);
 
             } catch (CommunicationException e) {
-                log.error(e.getMessage(), e);
+                Penrose.errorLog.error(e.getMessage(), e);
                 context = reconnect(context);
                 context.modifyAttributes(escapedDn, mods);
             }
@@ -494,6 +507,8 @@ public class JNDIClient implements Cloneable {
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
+
+        boolean warn = log.isWarnEnabled();
 
         LdapContext context = getConnection();
 
@@ -515,7 +530,7 @@ public class JNDIClient implements Cloneable {
                 context.rename(escapedDn, escapedNewRdn);
 
             } catch (CommunicationException e) {
-                log.error(e.getMessage(), e);
+                Penrose.errorLog.error(e.getMessage(), e);
                 context = reconnect(context);
                 context.rename(escapedDn, escapedNewRdn);
             }
@@ -536,13 +551,14 @@ public class JNDIClient implements Cloneable {
             SearchResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         LdapContext context = getConnection();
 
         try {
-            if (log.isDebugEnabled()) {
-                log.debug(TextUtil.displaySeparator(80));
-                log.debug(TextUtil.displayLine("LDAP SEARCH", 80));
-                log.debug(TextUtil.displaySeparator(80));
+            if (debug) {
+                log.debug(TextUtil.displaySeparator(70));
+                log.debug(TextUtil.displayLine("LDAP SEARCH", 70));
+                log.debug(TextUtil.displaySeparator(70));
             }
 
             DNBuilder db = new DNBuilder();
@@ -652,7 +668,7 @@ public class JNDIClient implements Cloneable {
                             context.setRequestControls(requestControls.toArray(new Control[requestControls.size()]));
 
                         } catch (CommunicationException e) {
-                            log.error(e.getMessage(), e);
+                            Penrose.errorLog.error(e.getMessage(), e);
                             context = reconnect(context);
                             context.setRequestControls(requestControls.toArray(new Control[requestControls.size()]));
                         }
@@ -665,7 +681,7 @@ public class JNDIClient implements Cloneable {
                             ne = context.search(escapedBaseDn, filter, values, sc);
 
                         } catch (CommunicationException e) {
-                            log.error(e.getMessage(), e);
+                            Penrose.errorLog.error(e.getMessage(), e);
                             context = reconnect(context);
                             ne = context.search(escapedBaseDn, filter, values, sc);
                         }
@@ -719,7 +735,7 @@ public class JNDIClient implements Cloneable {
                     moreReferrals = false;
 
                 } catch (PartialResultException e) {
-                    log.error(e.getMessage(), e);
+                    Penrose.errorLog.error(e.getMessage(), e);
                     moreReferrals = false;
 
                 } catch (ReferralException e) {
@@ -758,6 +774,7 @@ public class JNDIClient implements Cloneable {
             javax.naming.directory.SearchResult sr
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         String s = sr.getName();
 
         DNBuilder db = new DNBuilder();
@@ -821,6 +838,7 @@ public class JNDIClient implements Cloneable {
 
     public SearchResult getRootDSE() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (rootDSE != null) return rootDSE;
 
         if (debug) log.debug("Searching Root DSE ...");
@@ -863,7 +881,7 @@ public class JNDIClient implements Cloneable {
             rootDSE = createSearchResult(entry);
 
         } finally {
-            if (connection != null) try { connection.disconnect(); } catch (Exception e) { log.error(e.getMessage(), e); }
+            if (connection != null) try { connection.disconnect(); } catch (Exception e) { Penrose.errorLog.error(e.getMessage(), e); }
         }
 */
         return rootDSE;
@@ -887,6 +905,7 @@ public class JNDIClient implements Cloneable {
 
     public Schema getSchema() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (schema != null) return schema;
 
         getRootDSE();
@@ -916,7 +935,7 @@ public class JNDIClient implements Cloneable {
             }
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
             throw e;
         }
 
@@ -925,6 +944,7 @@ public class JNDIClient implements Cloneable {
 
     public Schema getActiveDirectorySchema(String schemaDn) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Searching "+schemaDn+" ...");
 
         Schema schema = new Schema("ad");
@@ -937,6 +957,7 @@ public class JNDIClient implements Cloneable {
 
     public void getActiveDirectoryAttributeTypes(Schema schema, String schemaDn) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Search \""+ schemaDn +"\"");
 
         LdapContext context = getConnection();
@@ -968,7 +989,7 @@ public class JNDIClient implements Cloneable {
                     ne = context.search(schemaDn, "(objectClass=attributeSchema)", searchControls);
 
                 } catch (CommunicationException e) {
-                    log.error(e.getMessage(), e);
+                    Penrose.errorLog.error(e.getMessage(), e);
                     context = reconnect(context);
                     context.setRequestControls(requestControls.toArray(new Control[requestControls.size()]));
                     ne = context.search(schemaDn, "(objectClass=attributeSchema)", searchControls);
@@ -1037,6 +1058,7 @@ public class JNDIClient implements Cloneable {
 
     public void getActiveDirectoryObjectClasses(Schema schema, String schemaDn) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         LdapContext context = getConnection();
 
         try {
@@ -1067,7 +1089,7 @@ public class JNDIClient implements Cloneable {
                     ne = context.search(schemaDn, "(objectClass=classSchema)", searchControls);
 
                 } catch (CommunicationException e) {
-                    log.error(e.getMessage(), e);
+                    Penrose.errorLog.error(e.getMessage(), e);
                     context = reconnect(context);
                     context.setRequestControls(requestControls.toArray(new Control[requestControls.size()]));
                     ne = context.search(schemaDn, "(objectClass=classSchema)", searchControls);
@@ -1170,6 +1192,7 @@ public class JNDIClient implements Cloneable {
 
     public Schema getLDAPSchema(String schemaDn) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         LdapContext context = getConnection();
 
         try {
@@ -1187,7 +1210,7 @@ public class JNDIClient implements Cloneable {
                 ne = context.search(schemaDn, "(objectClass=*)", ctls);
 
             } catch (CommunicationException e) {
-                log.error(e.getMessage(), e);
+                Penrose.errorLog.error(e.getMessage(), e);
                 context = reconnect(context);
                 ne = context.search(schemaDn, "(objectClass=*)", ctls);
             }
@@ -1242,7 +1265,7 @@ public class JNDIClient implements Cloneable {
             return schema.getAttributeTypes().iterator().next();
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
             return null;
         }
     }
@@ -1255,7 +1278,7 @@ public class JNDIClient implements Cloneable {
             return schema.getObjectClasses().iterator().next();
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            Penrose.errorLog.error(e.getMessage(), e);
             return null;
         }
     }
@@ -1291,6 +1314,7 @@ public class JNDIClient implements Cloneable {
 
     public Collection<SearchResult> getChildren(String baseDn) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         Collection<SearchResult> results = new ArrayList<SearchResult>();
 
         DNBuilder db = new DNBuilder();
@@ -1415,6 +1439,7 @@ public class JNDIClient implements Cloneable {
     }
 
     public String escape(String string) {
+        boolean debug = log.isDebugEnabled();
         String s = string.replaceAll("/", "\\\\/");
         if (debug) log.debug("Escape ["+string+"] => ["+s+"].");
         return s;

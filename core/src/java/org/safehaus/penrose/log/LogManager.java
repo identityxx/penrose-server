@@ -1,6 +1,7 @@
 package org.safehaus.penrose.log;
 
 import org.apache.log4j.Logger;
+import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.log.log4j.*;
 
 import java.util.*;
@@ -15,31 +16,33 @@ public class LogManager {
 
     File homeDir;
     File confDir;
+    File log4jXml;
 
     Log4jConfig log4jConfig;
     
-    Map loggers = new TreeMap();
-
     public LogManager(File homeDir) {
         this.homeDir = homeDir;
         this.confDir = new File(homeDir, "conf");
+        this.log4jXml = new File(confDir, "log4j.xml");
     }
 
     public void load() throws Exception {
         Log4jConfigReader reader = new Log4jConfigReader();
-        log4jConfig = reader.read(new File(confDir, "log4j.xml"));
+        log4jConfig = reader.read(log4jXml);
     }
 
     public void store() throws Exception {
         Log4jConfigWriter writer = new Log4jConfigWriter();
-        writer.write(new File(confDir, "log4j.xml"), log4jConfig);
+        writer.write(log4jXml, log4jConfig);
+
+        DOMConfigurator.configure(log4jXml.getAbsolutePath());
     }
 
     public Collection<AppenderConfig> getAppenderConfigs() {
         return log4jConfig.getAppenderConfigs();
     }
 
-    public Collection<String> getAppenderConfigNames() {
+    public Collection<String> getAppenderNames() {
         return log4jConfig.getAppenderConfigNames();
     }
 
@@ -47,24 +50,23 @@ public class LogManager {
         return log4jConfig.getAppenderConfig(appenderName);
     }
 
-    public void addAppenderConfig(AppenderConfig appenderConfig) {
+    public void addAppender(AppenderConfig appenderConfig) {
         log4jConfig.addAppenderConfig(appenderConfig);
     }
 
-    public void updateAppenderConfig(String appenderName, AppenderConfig appenderConfig) {
-        removeAppenderConfig(appenderName);
-        addAppenderConfig(appenderConfig);
+    public void updateAppender(String appenderName, AppenderConfig appenderConfig) throws Exception {
+        log4jConfig.updateAppenderConfig(appenderName, appenderConfig);
     }
 
-    public AppenderConfig removeAppenderConfig(String appenderName) {
-        return log4jConfig.removeAppenderConfig(appenderName);
+    public void removeAppender(String appenderName) {
+        log4jConfig.removeAppenderConfig(appenderName);
     }
 
     public Collection<LoggerConfig> getLoggerConfigs() {
         return log4jConfig.getLoggerConfigs();
     }
 
-    public Collection<String> getLoggerConfigNames() {
+    public Collection<String> getLoggerNames() {
         return log4jConfig.getLoggerConfigNames();
     }
 
@@ -72,106 +74,23 @@ public class LogManager {
         return log4jConfig.getLoggerConfig(loggerName);
     }
 
-    public void addLoggerConfig(LoggerConfig loggerConfig) {
+    public void addLogger(LoggerConfig loggerConfig) {
         log4jConfig.addLoggerConfig(loggerConfig);
     }
 
-    public void updateLoggerConfig(String loggerName, LoggerConfig loggerConfig) {
-        removeLoggerConfig(loggerName);
-        addLoggerConfig(loggerConfig);
+    public void updateLogger(String loggerName, LoggerConfig loggerConfig) throws Exception {
+        log4jConfig.updateLoggerConfig(loggerName, loggerConfig);
     }
 
-    public LoggerConfig removeLoggerConfig(String loggerName) {
-        return log4jConfig.removeLoggerConfig(loggerName);
+    public void removeLogger(String loggerName) {
+        log4jConfig.removeLoggerConfig(loggerName);
     }
 
     public RootLoggerConfig getRootLoggerConfig() throws Exception {
         return log4jConfig.getRootLoggerConfig();
     }
 
-    public void setRootLoggerConfig(RootLoggerConfig rootLoggerConfig) throws Exception {
+    public void updateRootLogger(RootLoggerConfig rootLoggerConfig) throws Exception {
         log4jConfig.setRootLoggerConfig(rootLoggerConfig);
-    }
-
-    public void addLogger(String name) {
-        StringTokenizer st = new StringTokenizer(name, ".");
-        Map map = loggers;
-
-        //log.debug("Adding logger:");
-        while (st.hasMoreTokens()) {
-            String rname = st.nextToken();
-            //log.debug(" - "+rname);
-
-            Map m = (Map)map.get(rname);
-            if (m == null) {
-                m = new TreeMap();
-                map.put(rname, m);
-            }
-
-            map = m;
-        }
-    }
-
-    public void removeLogger(String name) {
-        StringTokenizer st = new StringTokenizer(name, ".");
-        Map map = loggers;
-
-        //log.debug("Adding logger:");
-        while (st.hasMoreTokens()) {
-            String rname = st.nextToken();
-            //log.debug(" - "+rname);
-
-            Map m = (Map)map.get(rname);
-            if (m == null) {
-                m = new TreeMap();
-                map.put(rname, m);
-            }
-
-            if (!st.hasMoreTokens()) {
-                map.remove(rname);
-                return;
-            }
-            
-            map = m;
-        }
-    }
-
-    public Collection getLoggers() {
-        return getLoggers(null);
-    }
-
-    public Collection getLoggers(String name) {
-        if (name == null) {
-            return loggers.keySet();
-        }
-
-        StringTokenizer st = new StringTokenizer(name, ".");
-        Map map = loggers;
-
-        //log.debug("Getting logger:");
-        while (st.hasMoreTokens()) {
-            String rname = st.nextToken();
-            //log.debug(" - "+rname);
-
-            Map m = (Map)map.get(rname);
-            if (m == null) {
-                m = new TreeMap();
-                map.put(rname, m);
-            }
-
-            map = m;
-        }
-
-        Collection list = new ArrayList();
-        for (Iterator i=map.keySet().iterator(); i.hasNext(); ) {
-            String rname = (String)i.next();
-            list.add(name+"."+rname);
-        }
-
-        return list;
-    }
-
-    public void clear() {
-        loggers.clear();
     }
 }
