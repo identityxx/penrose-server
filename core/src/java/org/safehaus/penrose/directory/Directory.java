@@ -39,14 +39,30 @@ public class Directory implements Cloneable {
         boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Root entries: "+directoryConfig.getRootNames());
 
-        for (EntryConfig entryConfig : directoryConfig.getEntryConfigs()) {
+        for (String entryName : directoryConfig.getRootNames()) {
+
+            EntryConfig entryConfig = directoryConfig.getEntryConfig(entryName);
             if (!entryConfig.isEnabled()) continue;
 
             try {
-                createEntry(entryConfig);
+                createEntry(entryName);
             } catch (Exception e) {
                 Penrose.errorLog.error("Failed creating entry "+entryConfig.getName()+" ("+entryConfig.getDn()+") in partition "+partition.getName()+".", e);
             }
+        }
+    }
+
+    public void createEntry(String entryName) throws Exception {
+
+        EntryConfig entryConfig = directoryConfig.getEntryConfig(entryName);
+        createEntry(entryConfig);
+
+        for (String childName : directoryConfig.getChildNames(entryName)) {
+
+            EntryConfig childConfig = directoryConfig.getEntryConfig(childName);
+            if (!childConfig.isEnabled()) continue;
+
+            createEntry(childName);
         }
     }
 
@@ -54,7 +70,12 @@ public class Directory implements Cloneable {
 
         for (String entryName : getRootNames()) {
             try {
+                log.debug("Removing subtree "+entryName+".");
+
                 destroy(entryName);
+
+                log.debug("Subtree "+entryName+" removed.");
+
             } catch (Exception e) {
                 Penrose.errorLog.error("Failed removing entry "+entryName+" in partition "+partition.getName()+".", e);
             }
@@ -71,21 +92,25 @@ public class Directory implements Cloneable {
 
     public void destroy(Entry entry) throws Exception {
 
-        log.debug("Destroying entry \""+entry.getDn()+"\".");
+        boolean debug = log.isDebugEnabled();
 
-        Collection<Entry> children = new ArrayList<Entry>();
+        List<Entry> children = new ArrayList<Entry>();
         children.addAll(entry.getChildren());
 
         for (Entry child : children) {
-            if (child.getPartition() != partition) continue;
+
+            if (child.getPartition() != partition) {
+                if (debug) log.debug("Entry "+child.getName()+" is in partition "+child.getPartition().getName()+".");
+                continue;
+            }
+
+            if (debug) log.debug("Removing entry "+child.getName()+" under entry "+entry.getName()+".");
             destroy(child);
         }
 
         removeEntry(entry);
 
         entry.destroy();
-
-        log.debug("Entry \""+entry.getDn()+"\" destroyed.");
     }
 
     public Entry createEntry(EntryConfig entryConfig) throws Exception {
@@ -148,20 +173,29 @@ public class Directory implements Cloneable {
     public void removeEntry(Entry entry) throws Exception {
 
         boolean debug = log.isDebugEnabled();
+        String entryName = entry.getName();
+
+        if (debug) log.debug("Removing entry "+entryName+" ("+entry.getDn()+").");
 
         Entry parent = entry.getParent();
-        if (parent == null || parent.getPartition() != partition) {
-            if (debug) log.debug("Removing from root entry list.");
+
+        if (parent == null) {
+            if (debug) log.debug("Entry "+entryName+" has no parent.");
+            rootEntries.remove(entry);
+
+        } else if (parent.getPartition() != partition) {
+            if (debug) log.debug("Entry "+entryName+" has a parent in "+parent.getPartition().getName()+" partition.");
             rootEntries.remove(entry);
         }
 
         if (parent != null) {
-            if (debug) log.debug("Detaching from parent \""+parent.getDn()+"\".");
+            if (debug) log.debug("Detaching from parent "+parent.getName()+" ("+parent.getDn()+").");
             parent.removeChild(entry);
         }
 
-        if (debug) log.debug("Removing entry \""+entry.getDn()+"\".");
         entries.remove(entry.getName());
+
+        if (debug) log.debug("Entry "+entry.getName()+" removed.");
     }
 
     public Entry findParent(EntryConfig entryConfig) throws Exception {
@@ -260,17 +294,17 @@ public class Directory implements Cloneable {
         return getEntries(ids);
     }
 
-    public Collection<Entry> findEntries(DN dn) throws Exception {
+    public List<Entry> findEntries(DN dn) throws Exception {
 
         boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Searching for \""+dn+"\" in \""+partition.getName()+"\":");
 
-        Collection<Entry> results = new ArrayList<Entry>();
+        List<Entry> results = new ArrayList<Entry>();
 
         for (Entry entry : rootEntries) {
             if (debug) log.debug(" - Suffix: "+entry.getDn());
 
-            Collection<Entry> list = entry.findEntries(dn);
+            List<Entry> list = entry.findEntries(dn);
             for (Entry e : list) {
                 if (debug) log.debug("   - Found "+e.getName()+": "+e.getDn());
                 results.add(e);
@@ -279,74 +313,7 @@ public class Directory implements Cloneable {
 
         return results;
     }
-/*
-    public Collection<Entry> findEntries(DN dn) throws Exception {
-        if (dn == null) return EMPTY_ENTRIES;
-        //log.debug("Finding entries \""+dn+"\" in partition "+getName());
 
-        // search for static mappings
-        Collection<Entry> results = entriesByDn.get(dn.getNormalizedDn());
-        if (results != null) {
-            //log.debug("Found "+results.size()+" mapping(s).");
-            return results;
-        }
-
-        // can't find exact match -> search for parent mappings
-
-        DN parentDn = dn.getParentDn();
-
-        results = new ArrayList<Entry>();
-        Collection<Entry> list;
-
-        // if dn has no parent, check against root entries
-        if (parentDn.isEmpty()) {
-            //log.debug("Check root mappings");
-            list = rootEntries;
-
-        } else {
-            if (debug) log.debug("Search parents for \""+parentDn+"\".");
-            Collection<Entry> parents = findEntries(parentDn);
-
-            // if no parent mappings found, the entry doesn't exist in this partition
-            if (parents == null || parents.isEmpty()) {
-            	if (debug) log.debug("Entry \""+parentDn+"\" not found.");
-                return EMPTY_ENTRIES;
-            }
-
-            list = new ArrayList<Entry>();
-
-            // for each parent mapping found
-            for (Entry parent : parents) {
-                if (debug) log.debug("Found parent \"" + parent.getDn()+"\".");
-
-                String handlerName = parent.getHandlerName();
-                if ("PROXY".equals(handlerName)) { // if parent is proxy, include it in results
-                    results.add(parent);
-
-                } else { // otherwise check for matching siblings
-                    Collection<Entry> children = parent.getChildren();
-                    list.addAll(children);
-                }
-            }
-        }
-
-        // check against each mapping in the list
-        for (Entry entry : list) {
-
-            if (debug) {
-                log.debug("Checking DN pattern:");
-                log.debug(" - " + dn);
-                log.debug(" - " + entry.getDn());
-            }
-            if (!dn.matches(entry.getDn())) continue;
-
-            if (debug) log.debug("Found " + entry.getDn());
-            results.add(entry);
-        }
-
-        return results;
-    }
-*/
     public DirectoryConfig getDirectoryConfig() {
         return directoryConfig;
     }

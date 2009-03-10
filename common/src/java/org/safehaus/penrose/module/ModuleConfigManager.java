@@ -21,7 +21,6 @@ public class ModuleConfigManager implements Serializable, Cloneable {
     public static transient Logger log;
 
     private Map<String,ModuleConfig> moduleConfigs = new LinkedHashMap<String,ModuleConfig>();
-    //private Map<String,Collection<ModuleMapping>> moduleMappings = new LinkedHashMap<String,Collection<ModuleMapping>>();
 
     public void addModuleConfig(ModuleConfig moduleConfig) throws Exception {
 
@@ -55,24 +54,9 @@ public class ModuleConfigManager implements Serializable, Cloneable {
         }
 
         moduleConfig.copy(newModuleConfig);
-/*
-        if (!moduleName.equals(newModuleConfig.getName())) {
-            moduleConfigs.remove(moduleName);
-            moduleConfigs.put(newModuleConfig.getName(), newModuleConfig);
-
-            Collection<ModuleMapping> list = moduleMappings.remove(moduleName);
-            if (list != null) {
-                for (ModuleMapping moduleMapping : list) {
-                    moduleMapping.setModuleName(newModuleConfig.getName());
-                }
-                moduleMappings.put(moduleName, list);
-            }
-        }
-*/
     }
 
     public ModuleConfig removeModuleConfig(String moduleName) {
-        //moduleMappings.remove(moduleName);
         return moduleConfigs.remove(moduleName);
     }
 
@@ -95,14 +79,6 @@ public class ModuleConfigManager implements Serializable, Cloneable {
         }
 
         moduleConfig.addModuleMapping(moduleMapping);
-/*
-        Collection<ModuleMapping> c = moduleMappings.get(moduleMapping.getModuleName());
-        if (c == null) {
-            c = new ArrayList<ModuleMapping>();
-            moduleMappings.put(moduleMapping.getModuleName(), c);
-        }
-        c.add(moduleMapping);
-*/
     }
 
     public Collection<ModuleMapping> getModuleMappings() {
@@ -120,7 +96,6 @@ public class ModuleConfigManager implements Serializable, Cloneable {
         }
 
         return moduleConfig.getModuleMappings();
-        //return moduleMappings.get(moduleName);
     }
 
     public void removeModuleMapping(ModuleMapping moduleMapping) throws Exception {
@@ -135,8 +110,6 @@ public class ModuleConfigManager implements Serializable, Cloneable {
         }
 
         moduleConfig.removeModuleMapping(moduleMapping);
-        //Collection<ModuleMapping> c = moduleMappings.get(moduleName);
-        //if (c != null) c.remove(moduleMapping);
     }
 
     public void removeModuleMapping(String moduleName) throws Exception {
@@ -147,27 +120,17 @@ public class ModuleConfigManager implements Serializable, Cloneable {
         }
 
         moduleConfig.removeModuleMappings();
-        // moduleMappings.remove(moduleName);
     }
 
     public Object clone() throws CloneNotSupportedException {
         ModuleConfigManager modules = (ModuleConfigManager)super.clone();
 
         modules.moduleConfigs = new LinkedHashMap<String,ModuleConfig>();
-/*
-        modules.moduleMappings = new LinkedHashMap<String,Collection<ModuleMapping>>();
 
         for (ModuleConfig moduleConfig : moduleConfigs.values()) {
             modules.moduleConfigs.put(moduleConfig.getName(), (ModuleConfig)moduleConfig.clone());
-
-            Collection<ModuleMapping> list = moduleMappings.get(moduleConfig.getName());
-            if (list == null) continue;
-            
-            for (ModuleMapping moduleMapping : list) {
-                modules.addModuleMapping((ModuleMapping)moduleMapping.clone());
-            }
         }
-*/
+
         return modules;
     }
 }

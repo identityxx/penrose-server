@@ -50,6 +50,7 @@ import java.lang.reflect.Constructor;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.List;
 
 /**
  * @author Endi S. Dewata
@@ -820,7 +821,7 @@ public class Partition implements Cloneable {
     // Find
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public Collection<Entry> findEntries(DN dn) throws Exception {
+    public List<Entry> findEntries(DN dn) throws Exception {
         return directory.findEntries(dn);
     }
     
@@ -986,7 +987,7 @@ public class Partition implements Cloneable {
             log.debug("Normalized attributes: "+requestedAttributes);
         }
 
-        Collection<Entry> entries;
+        List<Entry> entries;
 
         try {
             entries = findEntries(dn);
@@ -1038,7 +1039,7 @@ public class Partition implements Cloneable {
             return;
         }
 
-        Collection<Entry> children = entry.getChildren();
+        List<Entry> children = entry.getChildren();
 
         if (children.size() == 0) {
             if (debug) log.debug("Entry "+entry.getDn()+" has no children.");
@@ -1052,7 +1053,7 @@ public class Partition implements Cloneable {
 
     public void searchEntries(
             final SearchOperation operation,
-            final Collection<Entry> entries,
+            final List<Entry> entries,
             boolean wait
     ) throws Exception {
 

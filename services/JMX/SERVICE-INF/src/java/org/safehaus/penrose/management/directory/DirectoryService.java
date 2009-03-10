@@ -11,6 +11,7 @@ import org.safehaus.penrose.util.TextUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Endi Sukma Dewata
@@ -81,11 +82,19 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
         return list;
     }
 
-    public Collection<String> getChildNames(String entryName) throws Exception {
-        Collection<String> list = new ArrayList<String>();
+    public String getParentName(String entryName) throws Exception {
         DirectoryConfig directoryConfig = getDirectoryConfig();
-        list.addAll(directoryConfig.getChildNames(entryName));
-        return list;
+        return directoryConfig.getParentName(entryName);
+    }
+
+    public List<String> getChildNames(String entryName) throws Exception {
+        DirectoryConfig directoryConfig = getDirectoryConfig();
+        return directoryConfig.getChildNames(entryName);
+    }
+
+    public void setChildNames(String entryName, List<String> childNames) throws Exception {
+        DirectoryConfig directoryConfig = getDirectoryConfig();
+        directoryConfig.setChildNames(entryName, childNames);
     }
 
     public EntryService getEntryService(String entryId) throws Exception {
@@ -106,6 +115,11 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
         EntryConfig entryConfig = directoryConfig.getEntryConfig(entryName);
         if (entryConfig == null) return null;
         return entryConfig.getDn();
+    }
+
+    public EntryConfig getEntryConfig(String entryName) throws Exception {
+        DirectoryConfig directoryConfig = getDirectoryConfig();
+        return directoryConfig.getEntryConfig(entryName);
     }
 
     public String createEntry(EntryConfig entryConfig) throws Exception {
@@ -135,7 +149,7 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
         log.debug(TextUtil.repeat("-", 70));
 
         Directory directory = getDirectory();
-        Collection<Entry> children = null;
+        List<Entry> children = null;
 
         if (directory != null) {
             try {

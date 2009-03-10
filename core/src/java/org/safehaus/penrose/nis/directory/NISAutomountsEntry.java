@@ -48,7 +48,7 @@ public class NISAutomountsEntry extends DynamicEntry {
         return false;
     }
 
-    public Collection<Entry> findEntries(DN dn) throws Exception {
+    public List<Entry> findEntries(DN dn) throws Exception {
 
         boolean debug = log.isDebugEnabled();
         if (dn == null) return EMPTY_ENTRIES;
@@ -59,7 +59,7 @@ public class NISAutomountsEntry extends DynamicEntry {
             return EMPTY_ENTRIES;
         }
 
-        Collection<Entry> results = new ArrayList<Entry>();
+        List<Entry> results = new ArrayList<Entry>();
 
         if (debug) log.debug("Found entry \""+entryDn+"\".");
         results.add(this);

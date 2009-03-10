@@ -49,13 +49,13 @@ public class Entry implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    public final static Collection<Entry> EMPTY_ENTRIES = new ArrayList<Entry>();
+    public final static List<Entry> EMPTY_ENTRIES = new ArrayList<Entry>();
 
     protected EntryConfig entryConfig;
     protected EntryContext entryContext;
 
     protected Entry parent;
-    protected Collection<Entry> children = new LinkedHashSet<Entry>();
+    protected List<Entry> children = new ArrayList<Entry>();
 
     protected Map<String, EntrySource> localSources = new LinkedHashMap<String, EntrySource>();
     //protected Map<String,SourceRef> localPrimarySourceRefs = new LinkedHashMap<String,SourceRef>();
@@ -83,7 +83,6 @@ public class Entry implements Cloneable {
         this.entryContext = entryContext;
 
         Entry parent = entryContext.getParent();
-        if (parent != null) parent.addChild(this);
 
         directory = entryContext.getDirectory();
         partition = directory.getPartition();
@@ -319,7 +318,7 @@ public class Entry implements Cloneable {
         this.primarySourceRefs = primarySourceRefs;
     }
 */
-    public Collection<Entry> getChildren() {
+    public List<Entry> getChildren() {
         return children;
     }
 
@@ -774,7 +773,7 @@ public class Entry implements Cloneable {
         return false;
     }
 
-    public Collection<Entry> findEntries(DN dn) throws Exception {
+    public List<Entry> findEntries(DN dn) throws Exception {
 
         if (dn == null) return EMPTY_ENTRIES;
 
@@ -785,7 +784,7 @@ public class Entry implements Cloneable {
         int entryDnLength = entryDn.getLength();
 
         if (dnLength == 0 && entryDnLength == 0) { // Root DSE
-            Collection<Entry> results = new ArrayList<Entry>();
+            List<Entry> results = new ArrayList<Entry>();
             results.add(this);
             return results;
         }
@@ -797,7 +796,7 @@ public class Entry implements Cloneable {
 
         //if (debug) log.debug("Searching children of \""+entryDn+"\".");
 
-        Collection<Entry> results = new ArrayList<Entry>();
+        List<Entry> results = new ArrayList<Entry>();
 
         if (dnLength > entryDnLength) { // children has priority
             for (Entry child : getChildren()) {
