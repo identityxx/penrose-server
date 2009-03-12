@@ -23,6 +23,8 @@ import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.session.SessionConfig;
 import org.safehaus.penrose.user.UserConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -104,8 +106,42 @@ public class PenroseConfig implements Serializable, Cloneable {
         return adapterConfigs.get(name);
     }
 
-    public void addAdapterConfig(AdapterConfig adapter) {
-        adapterConfigs.put(adapter.getName(), adapter);
+    public void addAdapterConfig(AdapterConfig adapterConfig) throws Exception {
+
+        Logger log = LoggerFactory.getLogger(getClass());
+        boolean debug = log.isDebugEnabled();
+
+        String adapterName = adapterConfig.getName();
+
+        if (debug) log.debug("Adding adapter \""+adapterName+"\".");
+
+        validate(adapterConfig);
+
+        adapterConfigs.put(adapterName, adapterConfig);
+    }
+
+    public void validate(AdapterConfig adapterConfig) throws Exception {
+
+        String adapterName = adapterConfig.getName();
+
+        if (adapterName == null || "".equals(adapterName)) {
+            throw new Exception("Missing adapter name.");
+        }
+
+        char startingChar = adapterName.charAt(0);
+        if (!Character.isLetter(startingChar)) {
+            throw new Exception("Invalid adapter name: "+adapterName);
+        }
+
+        for (int i = 1; i<adapterName.length(); i++) {
+            char c = adapterName.charAt(i);
+            if (Character.isLetterOrDigit(c) || c == '_') continue;
+            throw new Exception("Invalid adapter name: "+adapterName);
+        }
+
+        if (adapterConfigs.containsKey(adapterName)) {
+            throw new Exception("Adapter "+adapterName+" already exists.");
+        }
     }
 
     public Collection<String> getAdapterNames() {
@@ -223,8 +259,9 @@ public class PenroseConfig implements Serializable, Cloneable {
         }
 
         adapterConfigs = new LinkedHashMap<String,AdapterConfig>();
-        for (AdapterConfig adapterConfig : penroseConfig.adapterConfigs.values()) {
-            addAdapterConfig((AdapterConfig) adapterConfig.clone());
+        for (String adapterName : penroseConfig.adapterConfigs.keySet()) {
+            AdapterConfig adapterConfig = penroseConfig.adapterConfigs.get(adapterName);
+            adapterConfigs.put(adapterName, (AdapterConfig)adapterConfig.clone());
         }
 
         interpreterConfigs = new LinkedHashMap<String,InterpreterConfig>();

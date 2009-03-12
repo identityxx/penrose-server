@@ -13,32 +13,55 @@ import java.io.Serializable;
  */
 public class SourceConfigManager implements Serializable, Cloneable {
 
-    static {
-        log = LoggerFactory.getLogger(SourceConfigManager.class);
-    }
-
-    public static transient Logger log;
-
     protected Map<String,SourceConfig> sourceConfigs                             = new LinkedHashMap<String,SourceConfig>();
     protected Map<String,Collection<SourceConfig>> sourceConfigsByConnectionName = new LinkedHashMap<String,Collection<SourceConfig>>();
 
     public void addSourceConfig(SourceConfig sourceConfig) throws Exception {
 
+        Logger log = LoggerFactory.getLogger(getClass());
+        boolean debug = log.isDebugEnabled();
+
         String sourceName = sourceConfig.getName();
+
+        if (debug) log.debug("Adding source \""+sourceName+"\".");
+
+        validate(sourceConfig);
+        
+        sourceConfigs.put(sourceName, sourceConfig);
+
+        String connectionName = sourceConfig.getConnectionName();
+        if (connectionName != null) {
+            Collection<SourceConfig> list = sourceConfigsByConnectionName.get(connectionName);
+            if (list == null) {
+                list = new ArrayList<SourceConfig>();
+                sourceConfigsByConnectionName.put(connectionName, list);
+            }
+            list.add(sourceConfig);
+        }
+    }
+
+    public void validate(SourceConfig sourceConfig) throws Exception {
+
+        String sourceName = sourceConfig.getName();
+
+        if (sourceName == null || "".equals(sourceName)) {
+            throw new Exception("Missing source name.");
+        }
+
+        char startingChar = sourceName.charAt(0);
+        if (!Character.isLetter(startingChar)) {
+            throw new Exception("Invalid source name: "+sourceName);
+        }
+
+        for (int i = 1; i<sourceName.length(); i++) {
+            char c = sourceName.charAt(i);
+            if (Character.isLetterOrDigit(c) || c == '_') continue;
+            throw new Exception("Invalid source name: "+sourceName);
+        }
 
         if (sourceConfigs.containsKey(sourceName)) {
             throw new Exception("Source "+sourceName+" already exists.");
         }
-
-        sourceConfigs.put(sourceName, sourceConfig);
-
-        String connectionName = sourceConfig.getConnectionName();
-        Collection<SourceConfig> list = sourceConfigsByConnectionName.get(connectionName);
-        if (list == null) {
-            list = new ArrayList<SourceConfig>();
-            sourceConfigsByConnectionName.put(connectionName, list);
-        }
-        list.add(sourceConfig);
     }
 
     public Collection<String> getSourceNames() {
@@ -60,24 +83,30 @@ public class SourceConfigManager implements Serializable, Cloneable {
             throw new Exception("Source "+sourceName+" not found.");
         }
 
-        String connectionName = sourceConfig.getConnectionName();
         String oldConnectionName = oldSourceConfig.getConnectionName();
+        String connectionName = sourceConfig.getConnectionName();
 
         oldSourceConfig.copy(sourceConfig);
 
-        if (!oldConnectionName.equals(connectionName)) {
-            Collection<SourceConfig> list = sourceConfigsByConnectionName.get(oldConnectionName);
-            if (list != null) {
-                list.remove(oldSourceConfig);
-                if (list.isEmpty()) sourceConfigsByConnectionName.remove(oldConnectionName);
+        if (oldConnectionName != null && !oldConnectionName.equals(connectionName)
+                || connectionName != null && !connectionName.equals(oldConnectionName)) {
+
+            if (oldConnectionName != null) {
+                Collection<SourceConfig> list = sourceConfigsByConnectionName.get(oldConnectionName);
+                if (list != null) {
+                    list.remove(oldSourceConfig);
+                    if (list.isEmpty()) sourceConfigsByConnectionName.remove(oldConnectionName);
+                }
             }
 
-            list = sourceConfigsByConnectionName.get(connectionName);
-            if (list == null) {
-                list = new ArrayList<SourceConfig>();
-                sourceConfigsByConnectionName.put(connectionName, list);
+            if (connectionName != null) {
+                Collection<SourceConfig> list = sourceConfigsByConnectionName.get(connectionName);
+                if (list == null) {
+                    list = new ArrayList<SourceConfig>();
+                    sourceConfigsByConnectionName.put(connectionName, list);
+                }
+                list.add(sourceConfig);
             }
-            list.add(sourceConfig);
         }
     }
 
@@ -85,10 +114,12 @@ public class SourceConfigManager implements Serializable, Cloneable {
         SourceConfig sourceConfig = sourceConfigs.remove(sourceName);
 
         String connectionName = sourceConfig.getConnectionName();
-        Collection<SourceConfig> list = sourceConfigsByConnectionName.get(connectionName);
-        if (list != null) {
-            list.remove(sourceConfig);
-            if (list.isEmpty()) sourceConfigsByConnectionName.remove(connectionName);
+        if (connectionName != null) {
+            Collection<SourceConfig> list = sourceConfigsByConnectionName.get(connectionName);
+            if (list != null) {
+                list.remove(sourceConfig);
+                if (list.isEmpty()) sourceConfigsByConnectionName.remove(connectionName);
+            }
         }
 
         return sourceConfig;

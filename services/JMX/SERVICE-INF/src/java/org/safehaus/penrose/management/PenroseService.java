@@ -19,7 +19,6 @@ package org.safehaus.penrose.management;
 
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.management.PenroseServiceMBean;
 import org.safehaus.penrose.management.log.LogManagerService;
 import org.safehaus.penrose.PenroseConfig;
 import org.safehaus.penrose.log.LogManager;
@@ -76,40 +75,35 @@ public class PenroseService extends StandardMBean implements PenroseServiceMBean
 
         schemaManagerService = new SchemaManagerService(jmxService, schemaManager);
         schemaManagerService.init();
-        schemaManagerService.register();
 
         PartitionManager partitionManager = penrose.getPartitionManager();
 
         partitionManagerService = new PartitionManagerService(jmxService, partitionManager);
         partitionManagerService.init();
-        partitionManagerService.register();
 
         ServiceManager serviceManager = penroseServer.getServiceManager();
 
         serviceManagerService = new ServiceManagerService(jmxService, serviceManager);
         serviceManagerService.init();
-        serviceManagerService.register();
 
         SessionManager sessionManager = penrose.getSessionContext().getSessionManager();
 
         sessionManagerService = new SessionManagerService(jmxService, sessionManager);
         sessionManagerService.init();
-        sessionManagerService.register();
 
         LogManager logManager = penrose.getPenroseContext().getLogManager();
 
         logManagerService = new LogManagerService(jmxService, logManager);
         logManagerService.init();
-        logManagerService.register();
     }
 
     public void destroy() throws Exception {
 
-        logManagerService.unregister();
-        sessionManagerService.unregister();
-        serviceManagerService.unregister();
-        partitionManagerService.unregister();
-        schemaManagerService.unregister();
+        logManagerService.destroy();
+        sessionManagerService.destroy();
+        serviceManagerService.destroy();
+        partitionManagerService.destroy();
+        schemaManagerService.destroy();
 
         jmxService.unregister(getObjectName());
     }
@@ -222,38 +216,11 @@ public class PenroseService extends StandardMBean implements PenroseServiceMBean
         penrose.store();
     }
 
-    ////////////////////////////////////////////////////////////////////////////////
-    // Schemas
-    ////////////////////////////////////////////////////////////////////////////////
-
-    public SchemaManagerService getSchemaManagerService() throws Exception {
-        return schemaManagerService;
+    public void store() throws Exception {
+        Penrose penrose = penroseServer.getPenrose();
+        penrose.store();
     }
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // Partitions
-    ////////////////////////////////////////////////////////////////////////////////
-
-    public PartitionManagerService getPartitionManagerService() throws Exception {
-        return partitionManagerService;
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // Services
-    ////////////////////////////////////////////////////////////////////////////////
-
-    public ServiceManagerService getServiceManagerService() throws Exception {
-        return serviceManagerService;
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // Sessions
-    ////////////////////////////////////////////////////////////////////////////////
-
-    public SessionManagerService getSessionManagerService() throws Exception {
-        return sessionManagerService;
-    }
-
+    
     ////////////////////////////////////////////////////////////////////////////////
     // Files
     ////////////////////////////////////////////////////////////////////////////////

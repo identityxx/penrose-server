@@ -13,12 +13,6 @@ import java.io.Serializable;
  */
 public class DirectoryConfig implements Serializable, Cloneable {
 
-    static {
-        log = LoggerFactory.getLogger(DirectoryConfig.class);
-    }
-
-    public static transient Logger log;
-
     public final static List<String> EMPTY_IDS  = new ArrayList<String>();
     public final static Collection<EntryConfig> EMPTY = new ArrayList<EntryConfig>();
 
@@ -36,11 +30,15 @@ public class DirectoryConfig implements Serializable, Cloneable {
 
     public void addEntryConfig(EntryConfig entryConfig) throws Exception {
 
+        Logger log = LoggerFactory.getLogger(getClass());
         boolean debug = log.isDebugEnabled();
+
         String entryName = entryConfig.getName();
         DN dn = entryConfig.getDn();
 
         if (debug) log.debug("Adding entry \""+dn+"\".");
+
+        validate(entryConfig);
 
         if (entryConfigByName.containsKey(entryName)) {
             throw new Exception("Entry "+entryName+" already exists.");
@@ -114,6 +112,29 @@ public class DirectoryConfig implements Serializable, Cloneable {
         rootNames.add(entryName);
     }
 
+    public void validate(EntryConfig entryConfig) throws Exception {
+
+        String entryName = entryConfig.getName();
+
+        if (entryName != null) {
+
+            char startingChar = entryName.charAt(0);
+            if (!Character.isLetter(startingChar)) {
+                throw new Exception("Invalid service name: "+entryName);
+            }
+
+            for (int i = 1; i<entryName.length(); i++) {
+                char c = entryName.charAt(i);
+                if (Character.isLetterOrDigit(c) || c == '_') continue;
+                throw new Exception("Invalid service name: "+entryName);
+            }
+
+            if (entryConfigByName.containsKey(entryName)) {
+                throw new Exception("Entry "+entryName+" already exists.");
+            }
+        }
+    }
+
     public boolean contains(EntryConfig entryConfig) {
         return entryConfigByName.containsKey(entryConfig.getName());
     }
@@ -160,7 +181,9 @@ public class DirectoryConfig implements Serializable, Cloneable {
 
     public void removeEntryConfig(String name) throws Exception {
         
+        Logger log = LoggerFactory.getLogger(getClass());
         boolean debug = log.isDebugEnabled();
+
         for (String childName : getChildNames(name)) {
             removeEntryConfig(childName);
         }
@@ -271,7 +294,10 @@ public class DirectoryConfig implements Serializable, Cloneable {
     }
 
     public void renameChildren(EntryConfig entryConfig, String newDn) throws Exception {
+
+        Logger log = LoggerFactory.getLogger(getClass());
         boolean debug = log.isDebugEnabled();
+
         if (entryConfig == null) return;
         if (newDn.equals(entryConfig.getDn().toString())) return;
 
@@ -314,7 +340,9 @@ public class DirectoryConfig implements Serializable, Cloneable {
 
     public void renameEntryConfig(EntryConfig entryConfig, DN newDn) throws Exception {
 
+        Logger log = LoggerFactory.getLogger(getClass());
         boolean debug = log.isDebugEnabled();
+
         EntryConfig oldParent = getParent(entryConfig);
         DN oldDn = entryConfig.getDn();
 
@@ -372,7 +400,9 @@ public class DirectoryConfig implements Serializable, Cloneable {
 
     public void renameEntryConfig(EntryConfig entryConfig, RDN newRdn) throws Exception {
 
+        Logger log = LoggerFactory.getLogger(getClass());
         boolean debug = log.isDebugEnabled();
+
         EntryConfig oldParent = getParent(entryConfig);
         DN oldDn = entryConfig.getDn();
 
@@ -416,7 +446,9 @@ public class DirectoryConfig implements Serializable, Cloneable {
 
     public void addChildName(String entryName, String childName) throws Exception {
 
+        Logger log = LoggerFactory.getLogger(getClass());
         boolean debug = log.isDebugEnabled();
+
         if (debug) log.debug("Adding child "+childName+" to entry "+entryName+".");
 
         if (entryName == null) {
@@ -442,7 +474,9 @@ public class DirectoryConfig implements Serializable, Cloneable {
 
     public void removeChildName(String entryName, String childName) throws Exception {
 
+        Logger log = LoggerFactory.getLogger(getClass());
         boolean debug = log.isDebugEnabled();
+
         if (debug) log.debug("Removing child "+childName+" of entry "+entryName+".");
 
         if (entryName == null) {

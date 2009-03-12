@@ -23,13 +23,40 @@ public class MappingConfigManager implements Serializable, Cloneable {
 
     public void addMappingConfig(MappingConfig mappingConfig) throws Exception {
 
+        Logger log = LoggerFactory.getLogger(getClass());
+        boolean debug = log.isDebugEnabled();
+
         String mappingName = mappingConfig.getName();
+
+        if (debug) log.debug("Adding mapping \""+mappingName+"\".");
+
+        validate(mappingConfig);
+
+        mappingConfigs.put(mappingName, mappingConfig);
+    }
+
+    public void validate(MappingConfig mappingConfig) throws Exception {
+
+        String mappingName = mappingConfig.getName();
+
+        if (mappingName == null || "".equals(mappingName)) {
+            throw new Exception("Missing mapping name.");
+        }
+
+        char startingChar = mappingName.charAt(0);
+        if (!Character.isLetter(startingChar)) {
+            throw new Exception("Invalid mapping name: "+mappingName);
+        }
+
+        for (int i = 1; i<mappingName.length(); i++) {
+            char c = mappingName.charAt(i);
+            if (Character.isLetterOrDigit(c) || c == '_') continue;
+            throw new Exception("Invalid mapping name: "+mappingName);
+        }
 
         if (mappingConfigs.containsKey(mappingName)) {
             throw new Exception("Mapping "+mappingName+" already exists.");
         }
-
-        mappingConfigs.put(mappingName, mappingConfig);
     }
 
     public MappingConfig getMappingConfig(String name) {

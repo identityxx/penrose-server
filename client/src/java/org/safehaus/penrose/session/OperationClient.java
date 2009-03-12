@@ -21,6 +21,6 @@ public class OperationClient extends BaseClient implements OperationServiceMBean
     }
 
     public static String getStringObjectName(String sessionName, String operationName) {
-        return "Penrose:type=operation,session="+sessionName+",name="+operationName;
+        return "Penrose:type=Operation,session="+sessionName+",name="+operationName;
     }
 }

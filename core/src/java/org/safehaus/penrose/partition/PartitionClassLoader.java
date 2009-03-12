@@ -1,129 +1,41 @@
 package org.safehaus.penrose.partition;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.util.PenroseClassLoader;
 
 import java.io.File;
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.FileInputStream;
-import java.util.Map;
-import java.util.LinkedHashMap;
-import java.util.Collection;
-import java.util.ArrayList;
-import java.util.jar.JarFile;
-import java.util.jar.JarEntry;
+import java.io.FilenameFilter;
 
 /**
- * Based on example at http://forums.sun.com/thread.jspa?threadID=360060&forumID=31.
+ * @author Endi Sukma Dewata
  */
-public class PartitionClassLoader extends ClassLoader {
+public class PartitionClassLoader extends PenroseClassLoader {
 
-    Logger log = LoggerFactory.getLogger(getClass());
-
-    Map<String,Class> classes = new LinkedHashMap<String,Class>();
-
-    Collection<File> files = new ArrayList<File>();
-
-    public PartitionClassLoader(Collection<File> files, ClassLoader parent) {
+    public PartitionClassLoader(File partitionDir, ClassLoader parent) throws Exception {
         super(parent);
-        this.files.addAll(files);
-    }
 
-    public byte[] getClassData(File file, String classFileName) throws Exception {
-        if (file.isDirectory()) {
-            return getClassDataFromDirectory(file, classFileName);
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Creating partition class loader:");
 
-        } else {
-            return getClassDataFromJarFile(file, classFileName);
+        File baseDir = new File(partitionDir, "DIR-INF");
+
+        File classesDir = new File(baseDir, "classes");
+        if (classesDir.isDirectory()) {
+            if (debug) log.debug(" - "+classesDir);
+            classPaths.add(classesDir);
         }
-    }
 
-    public byte[] getClassDataFromDirectory(File dir, String classFileName) throws Exception {
+        File libDir = new File(baseDir, "lib");
+        if (libDir.isDirectory()) {
+            File files[] = libDir.listFiles(new FilenameFilter() {
+                public boolean accept(File dir, String name) {
+                    return name.toLowerCase().endsWith(".jar");
+                }
+            });
 
-        BufferedInputStream is = null;
-
-        try {
-            File file = new File(dir, classFileName);
-            if (!file.exists()) return null;
-
-            is = new BufferedInputStream(new FileInputStream(file));
-            byte[] buffer = new byte[(int)file.length()];
-
-            int c = is.read(buffer, 0, buffer.length);
-            if (c < 0) throw new Exception("Error reading "+file.getName()+".");
-
-            return buffer;
-
-        } finally {
-            if (is != null) try { is.close(); } catch (IOException e) { Penrose.errorLog.error(e.getMessage(), e); }
-        }
-    }
-
-    public byte[] getClassDataFromJarFile(File file, String classFileName) throws Exception {
-
-        JarFile jarFile = null;
-        BufferedInputStream is = null;
-
-        try {
-            jarFile = new JarFile(file);
-
-            JarEntry jarEntry = (JarEntry)jarFile.getEntry(classFileName);
-            if (jarEntry == null) return null;
-
-            is = new BufferedInputStream(jarFile.getInputStream(jarEntry));
-            byte[] buffer = new byte[(int)jarEntry.getSize()];
-
-            int c = is.read(buffer, 0, buffer.length);
-            if (c < 0) throw new Exception("Error reading "+ file.getName()+".");
-
-            return buffer;
-
-        } finally {
-            if (is != null) try { is.close(); } catch (IOException e) { Penrose.errorLog.error(e.getMessage(), e); }
-            if (jarFile != null) try { jarFile.close(); } catch (IOException e) { Penrose.errorLog.error(e.getMessage(), e); }
-        }
-    }
-
-    public byte[] getClassData(String className) {
-
-        //if (debug) log.debug("Searching for "+className+":");
-
-        String classFileName = className.replace('.', '/')+".class";
-
-        for (File file : files) {
-            try {
-                byte[] buffer = getClassData(file, classFileName);
-                if (buffer == null) continue;
-
-                //if (debug) log.debug("Class "+className+" found in "+file+".");
-
-                return buffer;
-
-            } catch (Exception e) {
-                Penrose.errorLog.error(e.getMessage(), e);
+            for (File f : files) {
+                if (debug) log.debug(" - "+f);
+                classPaths.add(f);
             }
         }
-
-        //if (debug) log.debug("Class "+className+" not found.");
-
-        return null;
     }
-
-	public synchronized Class loadClass(String className, boolean resolve) throws ClassNotFoundException {
-
-        if (classes.containsKey(className)) return classes.get(className);
-
-        byte[] buffer = getClassData(className);
-        if (buffer == null) return super.loadClass(className, resolve);
-
-		Class clazz = defineClass(className, buffer, 0, buffer.length);
-		if (clazz == null) throw new ClassFormatError();
-
-		if (resolve) resolveClass(clazz);
-		classes.put(className, clazz);
-
-		return(clazz);
-	}
 }

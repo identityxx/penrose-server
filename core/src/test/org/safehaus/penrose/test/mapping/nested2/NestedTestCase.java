@@ -111,7 +111,8 @@ public class NestedTestCase extends JDBCTestCase {
         partitionConfig.getDirectoryConfig().addEntryConfig(members);
 
         PartitionManager partitionManager = penrose.getPartitionManager();
-        partitionManager.createPartition(partitionConfig);
+        partitionManager.addPartitionConfig(partitionConfig);
+        partitionManager.startPartition(partitionConfig.getName());
     }
     
     public void testDummy()

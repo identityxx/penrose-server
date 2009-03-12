@@ -14,23 +14,44 @@ import java.util.Map;
  */
 public class ModuleConfigManager implements Serializable, Cloneable {
 
-    static {
-        log = LoggerFactory.getLogger(ModuleConfigManager.class);
-    }
-
-    public static transient Logger log;
-
-    private Map<String,ModuleConfig> moduleConfigs = new LinkedHashMap<String,ModuleConfig>();
+    protected Map<String,ModuleConfig> moduleConfigs = new LinkedHashMap<String,ModuleConfig>();
 
     public void addModuleConfig(ModuleConfig moduleConfig) throws Exception {
 
+        Logger log = LoggerFactory.getLogger(getClass());
+        boolean debug = log.isDebugEnabled();
+
         String moduleName = moduleConfig.getName();
+
+        if (debug) log.debug("Adding module \""+moduleName+"\".");
+
+        validate(moduleConfig);
+
+        moduleConfigs.put(moduleName, moduleConfig);
+    }
+
+    public void validate(ModuleConfig moduleConfig) throws Exception {
+
+        String moduleName = moduleConfig.getName();
+
+        if (moduleName == null || "".equals(moduleName)) {
+            throw new Exception("Missing module name.");
+        }
+
+        char startingChar = moduleName.charAt(0);
+        if (!Character.isLetter(startingChar)) {
+            throw new Exception("Invalid module name: "+moduleName);
+        }
+
+        for (int i = 1; i<moduleName.length(); i++) {
+            char c = moduleName.charAt(i);
+            if (Character.isLetterOrDigit(c) || c == '_') continue;
+            throw new Exception("Invalid module name: "+moduleName);
+        }
 
         if (moduleConfigs.containsKey(moduleName)) {
             throw new Exception("Module "+moduleName+" already exists.");
         }
-
-        moduleConfigs.put(moduleName, moduleConfig);
     }
 
     public ModuleConfig getModuleConfig(String moduleName) {
@@ -68,7 +89,9 @@ public class ModuleConfigManager implements Serializable, Cloneable {
     
     public void addModuleMapping(ModuleMapping moduleMapping) throws Exception {
 
+        Logger log = LoggerFactory.getLogger(getClass());
         boolean debug = log.isDebugEnabled();
+
         String moduleName = moduleMapping.getModuleName();
 
         if (debug) log.debug("Adding module mapping "+moduleName+" => "+ moduleMapping.getBaseDn());

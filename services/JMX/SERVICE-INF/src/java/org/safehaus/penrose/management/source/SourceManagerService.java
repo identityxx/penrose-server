@@ -12,6 +12,8 @@ import org.safehaus.penrose.util.TextUtil;
 
 import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.LinkedHashMap;
 
 /**
  * @author Endi Sukma Dewata
@@ -20,6 +22,8 @@ public class SourceManagerService extends BaseService implements SourceManagerSe
 
     private PartitionManager partitionManager;
     private String partitionName;
+
+    Map<String,SourceService> sourceServices = new LinkedHashMap<String,SourceService>();
 
     public SourceManagerService(PenroseJMXService jmxService, PartitionManager partitionManager, String partitionName) throws Exception {
 
@@ -56,33 +60,42 @@ public class SourceManagerService extends BaseService implements SourceManagerSe
         return partition.getSourceManager();
     }
 
-    public SourceService getSourceService(String sourceName) throws Exception {
+    public void createSourceService(String sourceName) throws Exception {
 
         SourceService sourceService = new SourceService(jmxService, partitionManager, partitionName, sourceName);
         sourceService.init();
 
-        return sourceService;
+        sourceServices.put(sourceName, sourceService);
     }
 
-    public void register() throws Exception {
+    public SourceService getSourceService(String sourceName) throws Exception {
+        return sourceServices.get(sourceName);
+    }
 
-        super.register();
+    public void removeSourceService(String sourceName) throws Exception {
+        SourceService sourceService = sourceServices.remove(sourceName);
+        if (sourceService == null) return;
+
+        sourceService.destroy();
+    }
+
+    public void init() throws Exception {
+
+        super.init();
 
         SourceConfigManager sourceConfigManager = getSourceConfigManager();
         for (String sourceName : sourceConfigManager.getSourceNames()) {
-            SourceService sourceService = getSourceService(sourceName);
-            sourceService.register();
+            createSourceService(sourceName);
         }
     }
 
-    public void unregister() throws Exception {
+    public void destroy() throws Exception {
         SourceConfigManager sourceConfigManager = getSourceConfigManager();
         for (String sourceName : sourceConfigManager.getSourceNames()) {
-            SourceService sourceService = getSourceService(sourceName);
-            sourceService.unregister();
+            removeSourceService(sourceName);
         }
 
-        super.unregister();
+        super.destroy();
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -114,8 +127,7 @@ public class SourceManagerService extends BaseService implements SourceManagerSe
             sourceManager.startSource(sourceName);
         }
 
-        SourceService sourceService = getSourceService(sourceName);
-        sourceService.register();
+        createSourceService(sourceName);
     }
 
     public void renameSource(String name, String newName) throws Exception {
@@ -135,8 +147,7 @@ public class SourceManagerService extends BaseService implements SourceManagerSe
             if (running) sourceManager.stopSource(name);
         }
 
-        SourceService oldSourceService = getSourceService(name);
-        oldSourceService.unregister();
+        removeSourceService(name);
 
         PartitionConfig partitionConfig = getPartitionConfig();
         SourceConfigManager sourceConfigManager = partitionConfig.getSourceConfigManager();
@@ -147,8 +158,7 @@ public class SourceManagerService extends BaseService implements SourceManagerSe
             if (running) sourceManager.startSource(newName);
         }
 
-        SourceService newSourceService = getSourceService(newName);
-        newSourceService.register();
+        createSourceService(newName);
     }
 
     public void updateSource(String sourceName, SourceConfig sourceConfig) throws Exception {
@@ -207,7 +217,6 @@ public class SourceManagerService extends BaseService implements SourceManagerSe
         SourceConfigManager sourceConfigManager = sourceManager.getSourceConfigManager();
         sourceConfigManager.removeSourceConfig(name);
 
-        SourceService sourceService = getSourceService(name);
-        sourceService.unregister();
+        removeSourceService(name);
     }
 }

@@ -10,7 +10,6 @@ import org.apache.commons.digester.Digester;
 import java.net.URL;
 import java.io.IOException;
 import java.io.File;
-import java.io.FilenameFilter;
 
 /**
  * @author Endi Sukma Dewata
@@ -47,30 +46,6 @@ public class ServiceReader implements EntityResolver {
         digester.push(serviceConfig);
 		digester.parse(serviceXml);
         digester.pop();
-
-        //log.debug("Classpath:");
-
-        File classesDir = new File(serviceInf, "classes");
-        if (classesDir.exists()) {
-            URL url = classesDir.toURL();
-            //log.debug(" - "+url);
-            serviceConfig.addClassPath(url);
-        }
-
-        File libDir = new File(serviceInf, "lib");
-        if (libDir.isDirectory()) {
-            File files[] = libDir.listFiles(new FilenameFilter() {
-                public boolean accept(File dir, String name) {
-                    return name.toLowerCase().endsWith(".jar");
-                }
-            });
-
-            for (File file : files) {
-                URL url = file.toURL();
-                //log.debug(" - "+url);
-                serviceConfig.addClassPath(url);
-            }
-        }
 
         return serviceConfig;
     }

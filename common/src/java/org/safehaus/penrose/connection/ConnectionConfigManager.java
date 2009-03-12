@@ -13,23 +13,44 @@ import java.io.Serializable;
  */
 public class ConnectionConfigManager implements Serializable, Cloneable {
 
-    static {
-        log = LoggerFactory.getLogger(ConnectionConfigManager.class);
-    }
-
-    public static transient Logger log;
-
-    private Map<String,ConnectionConfig> connectionConfigs = new LinkedHashMap<String,ConnectionConfig>();
+    protected Map<String,ConnectionConfig> connectionConfigs = new LinkedHashMap<String,ConnectionConfig>();
 
     public void addConnectionConfig(ConnectionConfig connectionConfig) throws Exception {
 
+        Logger log = LoggerFactory.getLogger(getClass());
+        boolean debug = log.isDebugEnabled();
+
         String connectionName = connectionConfig.getName();
+
+        if (debug) log.debug("Adding connection \""+connectionName+"\".");
+
+        validate(connectionConfig);
+
+        connectionConfigs.put(connectionConfig.getName(), connectionConfig);
+    }
+
+    public void validate(ConnectionConfig connectionConfig) throws Exception {
+
+        String connectionName = connectionConfig.getName();
+
+        if (connectionName == null || "".equals(connectionName)) {
+            throw new Exception("Missing connection name.");
+        }
+
+        char startingChar = connectionName.charAt(0);
+        if (!Character.isLetter(startingChar)) {
+            throw new Exception("Invalid connection name: "+connectionName);
+        }
+
+        for (int i = 1; i<connectionName.length(); i++) {
+            char c = connectionName.charAt(i);
+            if (Character.isLetterOrDigit(c) || c == '_') continue;
+            throw new Exception("Invalid connection name: "+connectionName);
+        }
 
         if (connectionConfigs.containsKey(connectionName)) {
             throw new Exception("Connection "+connectionName+" already exists.");
         }
-
-        connectionConfigs.put(connectionName, connectionConfig);
     }
 
     public ConnectionConfig getConnectionConfig(String connectionName) {

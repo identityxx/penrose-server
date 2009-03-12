@@ -79,7 +79,8 @@ public class PartitionManagerTest extends TestCase {
         partitionConfig.getDirectoryConfig().addEntryConfig(entryConfig);
 
         PartitionManager partitionManager = penrose.getPartitionManager();
-        partitionManager.createPartition(partitionConfig);
+        partitionManager.addPartitionConfig(partitionConfig);
+        partitionManager.startPartition(partitionConfig.getName());
 
         Session session = penrose.createSession();
         session.setBindDn("uid=admin,ou=system");

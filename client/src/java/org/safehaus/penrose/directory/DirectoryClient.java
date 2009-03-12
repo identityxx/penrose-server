@@ -45,7 +45,7 @@ public class DirectoryClient extends BaseClient implements DirectoryServiceMBean
     }
 
     public static String getStringObjectName(String partitionName) {
-        return "Penrose:type=directory,partition="+partitionName;
+        return "Penrose:type=Directory,partition="+partitionName;
     }
 
     public String getPartitionName() {

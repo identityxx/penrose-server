@@ -31,6 +31,6 @@ public class SessionClient extends BaseClient implements SessionServiceMBean {
     }
 
     public static String getStringObjectName(String sessionName) {
-        return "Penrose:type=session,name="+sessionName;
+        return "Penrose:type=Session,name="+sessionName;
     }
 }

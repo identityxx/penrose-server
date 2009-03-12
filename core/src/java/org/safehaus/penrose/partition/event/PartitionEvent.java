@@ -1,8 +1,5 @@
 package org.safehaus.penrose.partition.event;
 
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionConfig;
-
 import java.util.Date;
 
 /**
@@ -20,46 +17,18 @@ public class PartitionEvent {
 
     private String partitionName;
 
-    protected PartitionConfig partitionConfig;
-    protected Partition partition;
-
-    public PartitionEvent(int action, PartitionConfig partitionConfig) {
+    public PartitionEvent(int action, String partitionName) {
         this.time = new Date();
         this.action = action;
-        this.partitionName = partitionConfig.getName();
-        this.partitionConfig = partitionConfig;
+        this.partitionName = partitionName;
     }
 
-    public PartitionEvent(int action, Partition partition) {
-        this.time = new Date();
-        this.action = action;
-        this.partitionName = partition.getName();
-        this.partitionConfig = partition.getPartitionConfig();
-        this.partition = partition;
-    }
-    
     public Date getTime() {
         return time;
     }
 
     public void setTime(Date time) {
         this.time = time;
-    }
-
-    public PartitionConfig getPartitionConfig() {
-        return partitionConfig;
-    }
-
-    public void setPartitionConfig(PartitionConfig partitionConfig) {
-        this.partitionConfig = partitionConfig;
-    }
-
-    public Partition getPartition() {
-        return partition;
-    }
-
-    public void setPartition(Partition partition) {
-        this.partition = partition;
     }
 
     public int getAction() {

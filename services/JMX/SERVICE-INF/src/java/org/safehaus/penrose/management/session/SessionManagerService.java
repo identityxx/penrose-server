@@ -55,10 +55,7 @@ public class SessionManagerService extends BaseService implements SessionManager
 
     public SessionService getSessionService(String sessionName) throws Exception {
 
-        SessionService sessionService = new SessionService(jmxService, sessionManager, sessionName);
-        sessionService.init();
-
-        return sessionService;
+        return new SessionService(jmxService, sessionManager, sessionName);
     }
 
     public void closeSession(String sessionName) throws Exception {

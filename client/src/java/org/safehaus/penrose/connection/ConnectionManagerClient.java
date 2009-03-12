@@ -40,7 +40,7 @@ public class ConnectionManagerClient extends BaseClient implements ConnectionMan
     }
 
     public static String getStringObjectName(String partitionName) {
-        return "Penrose:type=connectionManager,partition="+partitionName;
+        return "Penrose:type=ConnectionManager,partition="+partitionName;
     }
 
     public String getPartitionName() {

@@ -19,9 +19,7 @@ package org.safehaus.penrose.service;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.TreeMap;
-import java.util.ArrayList;
-import java.net.URL;
+import java.util.LinkedHashMap;
 import java.io.Serializable;
 
 /**
@@ -35,9 +33,7 @@ public class ServiceConfig implements Serializable, Cloneable {
     private String serviceClass;
     private String description;
 
-    private Map<String,String> parameters = new TreeMap<String,String>();
-
-    private Collection<URL> classPaths = new ArrayList<URL>();
+    private Map<String,String> parameters = new LinkedHashMap<String,String>();
 
     public ServiceConfig() {
     }
@@ -139,24 +135,13 @@ public class ServiceConfig implements Serializable, Cloneable {
         serviceClass = serviceConfig.serviceClass;
         description = serviceConfig.description;
 
-        parameters = new TreeMap<String,String>();
+        parameters = new LinkedHashMap<String,String>();
         parameters.putAll(serviceConfig.parameters);
-
-        classPaths = new ArrayList<URL>();
-        classPaths.addAll(serviceConfig.classPaths);
     }
 
     public Object clone() throws CloneNotSupportedException {
         ServiceConfig serviceConfig = (ServiceConfig)super.clone();
         serviceConfig.copy(this);
         return serviceConfig;
-    }
-
-    public Collection<URL> getClassPaths() {
-        return classPaths;
-    }
-
-    public void addClassPath(URL library) {
-        classPaths.add(library);
     }
 }

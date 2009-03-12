@@ -13,6 +13,8 @@ import org.safehaus.penrose.util.FileUtil;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
+import java.util.LinkedHashMap;
 
 /**
  * @author Endi Sukma Dewata
@@ -20,6 +22,8 @@ import java.util.Collection;
 public class PartitionManagerService extends BaseService implements PartitionManagerServiceMBean, PartitionListener {
 
     PartitionManager partitionManager;
+
+    Map<String,PartitionService> partitionServices = new LinkedHashMap<String,PartitionService>();
 
     public PartitionManagerService(PenroseJMXService jmxService, PartitionManager partitionManager) {
 
@@ -42,7 +46,7 @@ public class PartitionManagerService extends BaseService implements PartitionMan
         list.addAll(partitionManager.getAvailablePartitionNames());
         return list;
     }
-    
+
     public void storePartition(String name) throws Exception {
         partitionManager.storePartition(name);
     }
@@ -98,8 +102,7 @@ public class PartitionManagerService extends BaseService implements PartitionMan
 
     public void removePartition(String partitionName) throws Exception {
 
-        PartitionService partitionService = getPartitionService(partitionName);
-        partitionService.unregister();
+        removePartitionService(partitionName);
 
         File partitionsDir = partitionManager.getPartitionsDir();
         File partitionDir = new File(partitionsDir, partitionName);
@@ -110,55 +113,53 @@ public class PartitionManagerService extends BaseService implements PartitionMan
         FileUtil.delete(partitionDir);
     }
 
+    public void createPartitionService(String partitionName) throws Exception {
+
+        PartitionService partitionService = new PartitionService(jmxService, partitionManager, partitionName);
+        partitionService.init();
+
+        partitionServices.put(partitionName, partitionService);
+    }
+
     public PartitionService getPartitionService(String partitionName) throws Exception {
-
-        PartitionService service = new PartitionService(jmxService, partitionManager, partitionName);
-        service.init();
-
-        return service;
+        return partitionServices.get(partitionName);
     }
 
-    public void register() throws Exception {
-        super.register();
+    public void removePartitionService(String partitionName) throws Exception {
 
-        PartitionService rootPartition = getPartitionService(PartitionConfig.ROOT);
-        rootPartition.register();
+        PartitionService partitionService = partitionServices.remove(partitionName);
+        if (partitionService == null) return;
 
-        for (PartitionConfig partitionConfig : partitionManager.getPartitionConfigs()) {
-            String partitionName = partitionConfig.getName();
-            PartitionService partitionService = getPartitionService(partitionName);
-            partitionService.register();
+        partitionService.destroy();
+    }
+
+    public void init() throws Exception {
+        super.init();
+
+        createPartitionService(PartitionConfig.ROOT);
+
+        for (String partitionName : partitionManager.getPartitionNames()) {
+            createPartitionService(partitionName);
         }
     }
 
-    public void unregister() throws Exception {
+    public void destroy() throws Exception {
 
-        for (PartitionConfig partitionConfig : partitionManager.getPartitionConfigs()) {
-            String partitionName = partitionConfig.getName();
-            PartitionService partitionService = getPartitionService(partitionName);
-            partitionService.unregister();
+        for (String partitionName : partitionManager.getPartitionNames()) {
+            removePartitionService(partitionName);
         }
 
-        PartitionService rootPartition = getPartitionService(PartitionConfig.ROOT);
-        rootPartition.unregister();
+        removePartitionService(PartitionConfig.ROOT);
 
-        super.unregister();
+        super.destroy();
     }
 
     public void partitionAdded(PartitionEvent event) throws Exception {
-
-        String partitionName = event.getPartitionName();
-
-        PartitionService partitionService = getPartitionService(partitionName);
-        partitionService.register();
+        createPartitionService(event.getPartitionName());
     }
 
     public void partitionRemoved(PartitionEvent event) throws Exception {
-
-        String partitionName = event.getPartitionName();
-
-        PartitionService partitionService = getPartitionService(partitionName);
-        partitionService.unregister();
+        removePartitionService(event.getPartitionName());
     }
 
     public void partitionStarted(PartitionEvent event) throws Exception {

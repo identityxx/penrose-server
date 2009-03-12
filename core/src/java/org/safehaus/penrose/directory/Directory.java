@@ -6,6 +6,8 @@ import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.PartitionContext;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.directory.event.DirectoryListener;
+import org.safehaus.penrose.directory.event.DirectoryEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +28,8 @@ public class Directory implements Cloneable {
 
     protected Collection<Entry> rootEntries = new ArrayList<Entry>();
     protected Map<String,Entry> entries = new LinkedHashMap<String,Entry>();
+
+    Collection<DirectoryListener> listeners = new LinkedHashSet<DirectoryListener>();
 
     public Directory(Partition partition) throws Exception {
         this.partition = partition;
@@ -48,6 +52,28 @@ public class Directory implements Cloneable {
                 createEntry(entryName);
             } catch (Exception e) {
                 Penrose.errorLog.error("Failed creating entry "+entryConfig.getName()+" ("+entryConfig.getDn()+") in partition "+partition.getName()+".", e);
+            }
+        }
+    }
+
+    public void addEntryConfig(EntryConfig entryConfig) throws Exception {
+        directoryConfig.addEntryConfig(entryConfig);
+
+        if (!listeners.isEmpty()) {
+            DirectoryEvent event = new DirectoryEvent(DirectoryEvent.ENTRY_ADDED, partition.getName(), entryConfig.getName());
+            for (DirectoryListener listener : listeners) {
+                listener.entryAdded(event);
+            }
+        }
+    }
+
+    public void removeEntryConfig(String entryName) throws Exception {
+        directoryConfig.removeEntryConfig(entryName);
+
+        if (!listeners.isEmpty()) {
+            DirectoryEvent event = new DirectoryEvent(DirectoryEvent.ENTRY_REMOVED, partition.getName(), entryName);
+            for (DirectoryListener listener : listeners) {
+                listener.entryRemoved(event);
             }
         }
     }
@@ -357,5 +383,13 @@ public class Directory implements Cloneable {
     public Collection<Entry> getEntriesBySourceName(String sourceName) throws Exception {
         Collection<String> ids = directoryConfig.getEntryNamesBySource(sourceName);
         return getEntries(ids);
+    }
+
+    public void addListener(DirectoryListener listener) {
+        listeners.add(listener);
+    }
+
+    public void removeListener(DirectoryListener listener) {
+        listeners.remove(listener);
     }
 }

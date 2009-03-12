@@ -32,6 +32,11 @@ public abstract class BaseService implements DynamicMBean {
     }
 
     public void init() throws Exception {
+        jmxService.register(getObjectName(), this);
+    }
+
+    public void destroy() throws Exception {
+        jmxService.unregister(getObjectName());
     }
 
     public String getDescription() {
@@ -59,14 +64,6 @@ public abstract class BaseService implements DynamicMBean {
 
     public void setJmxService(PenroseJMXService jmxService) {
         this.jmxService = jmxService;
-    }
-
-    public void register() throws Exception {
-        jmxService.register(getObjectName(), this);
-    }
-
-    public void unregister() throws Exception {
-        jmxService.unregister(getObjectName());
     }
 
     public abstract String getObjectName();
