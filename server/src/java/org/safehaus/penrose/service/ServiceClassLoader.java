@@ -1,4 +1,4 @@
-package org.safehaus.penrose.partition;
+package org.safehaus.penrose.service;
 
 import org.safehaus.penrose.util.PenroseClassLoader;
 
@@ -8,15 +8,15 @@ import java.io.FilenameFilter;
 /**
  * @author Endi Sukma Dewata
  */
-public class PartitionClassLoader extends PenroseClassLoader {
+public class ServiceClassLoader extends PenroseClassLoader {
 
-    public PartitionClassLoader(File partitionDir, ClassLoader parent) throws Exception {
+    public ServiceClassLoader(File serviceDir, ClassLoader parent) throws Exception {
         super(parent);
 
         boolean debug = log.isDebugEnabled();
-        if (debug) log.debug("Creating partition class loader:");
+        if (debug) log.debug("Creating service class loader:");
 
-        File baseDir = new File(partitionDir, "DIR-INF");
+        File baseDir = new File(serviceDir, "SERVICE-INF");
 
         File classesDir = new File(baseDir, "classes");
         if (classesDir.isDirectory()) {

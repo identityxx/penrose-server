@@ -30,6 +30,8 @@ import java.io.Serializable;
  */
 public class RDN implements Serializable, Comparable {
 
+    public final static long serialVersionUID = 1L;
+
     public Map<String,Object> values = new TreeMap<String,Object>();
 
     protected String original;

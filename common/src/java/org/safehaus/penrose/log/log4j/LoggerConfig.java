@@ -26,6 +26,8 @@ import java.io.Serializable;
  */
 public class LoggerConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     String name;
     boolean additivity;
     String level;

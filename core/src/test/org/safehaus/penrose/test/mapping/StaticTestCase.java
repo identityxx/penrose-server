@@ -69,7 +69,8 @@ public class StaticTestCase extends TestCase {
         partitionConfig.getDirectoryConfig().addEntryConfig(member2);
 
         PartitionManager partitionManager = penrose.getPartitionManager();
-        partitionManager.createPartition(partitionConfig);
+        partitionManager.addPartitionConfig(partitionConfig);
+        partitionManager.startPartition(partitionConfig.getName());
     }
     
     public void testDummy()

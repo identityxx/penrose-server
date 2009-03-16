@@ -29,7 +29,7 @@ public class ConnectionClient extends BaseClient implements ConnectionServiceMBe
     }
 
     public static String getStringObjectName(String partitionName, String connectionName) {
-        return "Penrose:type=connection,partition="+partitionName+",name="+connectionName;
+        return "Penrose:type=Connection,partition="+partitionName+",name="+connectionName;
     }
 
     public String getPartitionName() {

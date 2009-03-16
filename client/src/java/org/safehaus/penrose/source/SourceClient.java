@@ -59,7 +59,7 @@ public class SourceClient extends BaseClient implements SourceServiceMBean {
     }
 
     public static String getStringObjectName(String partitionName, String sourceName) {
-        return "Penrose:type=source,partition="+partitionName+",name="+sourceName;
+        return "Penrose:type=Source,partition="+partitionName+",name="+sourceName;
     }
 
     public String getPartitionName() {

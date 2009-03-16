@@ -27,6 +27,8 @@ import java.util.Arrays;
  */
 public class UserConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     private DN dn;
     private byte[] password;
 

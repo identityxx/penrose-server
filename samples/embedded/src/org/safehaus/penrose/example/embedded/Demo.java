@@ -82,7 +82,8 @@ public class Demo {
         partitionConfig.getDirectoryConfig().addEntryConfig(usersEntry);
 
         PartitionManager partitionManager = penrose.getPartitionManager();
-        partitionManager.createPartition(partitionConfig);
+        partitionManager.addPartitionConfig(partitionConfig);
+        partitionManager.startPartition(partitionConfig.getName());
 
         log.warn("Connecting to Penrose.");
 

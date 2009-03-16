@@ -8,6 +8,8 @@ import java.io.Serializable;
  */
 public class Control implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     protected String oid;
     protected byte[] value;
     protected boolean critical;

@@ -27,7 +27,6 @@ import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.URL;
 
@@ -67,31 +66,7 @@ public class PartitionReader implements EntityResolver {
             digester.parse(partitionXml);
             digester.pop();
         }
-/*
-        //log.debug("Classpath:");
 
-        File classesDir = new File(baseDir, "classes");
-        if (classesDir.isDirectory()) {
-            URL url = classesDir.toURL();
-            //log.debug(" - "+url);
-            partitionConfig.addClassPath(url);
-        }
-
-        File libDir = new File(baseDir, "lib");
-        if (libDir.isDirectory()) {
-            File files[] = libDir.listFiles(new FilenameFilter() {
-                public boolean accept(File dir, String name) {
-                    return name.toLowerCase().endsWith(".jar");
-                }
-            });
-
-            for (File f : files) {
-                URL url = f.toURL();
-                //log.debug(" - "+url);
-                partitionConfig.addClassPath(url);
-            }
-        }
-*/
         readSchedulerConfig(baseDir, partitionConfig);
     }
 

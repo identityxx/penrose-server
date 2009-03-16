@@ -23,7 +23,7 @@ public class ModuleClient extends BaseClient implements ModuleServiceMBean {
     }
 
     public static String getStringObjectName(String partitionName, String name) {
-        return "Penrose:type=module,partition="+partitionName+",name="+name;
+        return "Penrose:type=Module,partition="+partitionName+",name="+name;
     }
 
     public String getPartitionName() {

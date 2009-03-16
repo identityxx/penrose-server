@@ -11,6 +11,8 @@ import java.io.Serializable;
  */
 public class Request implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     protected Integer messageId;
     protected Collection<Control> controls = new ArrayList<Control>();
 

@@ -27,6 +27,8 @@ import java.io.Serializable;
  */
 public class Log4jConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     boolean debug;
 
     Map<String,AppenderConfig> appenderConfigs = new LinkedHashMap<String,AppenderConfig>();

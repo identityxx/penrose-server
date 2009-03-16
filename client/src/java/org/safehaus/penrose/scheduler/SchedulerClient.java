@@ -24,7 +24,7 @@ public class SchedulerClient extends BaseClient implements SchedulerServiceMBean
     }
 
     public static String getStringObjectName(String partitionName) {
-        return "Penrose:type=scheduler,partition="+partitionName+",name=scheduler";
+        return "Penrose:type=Scheduler,partition="+partitionName+",name=scheduler";
     }
 
     public String getPartitionName() {

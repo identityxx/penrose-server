@@ -24,6 +24,8 @@ import java.util.Collection;
 
 public abstract class Filter implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     ContainerFilter parent;
 
     public boolean eval(Attributes attributes) throws Exception {

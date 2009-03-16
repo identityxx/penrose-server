@@ -51,15 +51,16 @@ public class DirectoryWriter {
     public Element createElement(DirectoryConfig directoryConfig) throws Exception {
         Element directoryElement = new DefaultElement("directory");
 
-        for (EntryConfig entryConfig : directoryConfig.getEntryConfigs()) {
-            Element child = createElement(entryConfig);
-            directoryElement.add(child);
+        for (String entryName : directoryConfig.getRootNames()) {
+            createElement(directoryConfig, directoryElement, entryName);
         }
 
         return directoryElement;
     }
 
-    public Element createElement(EntryConfig entryConfig) throws Exception {
+    public void createElement(DirectoryConfig directoryConfig, Element directoryElement, String entryName) throws Exception {
+
+        EntryConfig entryConfig = directoryConfig.getEntryConfig(entryName);
 
         Element element = new DefaultElement("entry");
 
@@ -133,7 +134,11 @@ public class DirectoryWriter {
             element.add(parameter);
         }
 
-        return element;
+        directoryElement.add(element);
+
+        for (String childName : directoryConfig.getChildNames(entryName)) {
+            createElement(directoryConfig, directoryElement, childName);
+        }
     }
 
     public Element createElement(EntryAttributeConfig attributeConfig) throws Exception {

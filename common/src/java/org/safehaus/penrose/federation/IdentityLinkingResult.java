@@ -14,6 +14,8 @@ import java.io.Serializable;
  */
 public class IdentityLinkingResult implements Serializable {
 
+    public final static long serialVersionUID = 1L;
+
     public final static Collection<Object> EMPTY = new ArrayList<Object>();
 
     public final static int LOCAL_STORAGE  = 0;

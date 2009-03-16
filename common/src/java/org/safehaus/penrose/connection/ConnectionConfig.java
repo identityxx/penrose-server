@@ -25,6 +25,8 @@ import java.io.Serializable;
  */
 public class ConnectionConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     private boolean enabled = true;
 
 	public String name;

@@ -61,29 +61,29 @@ public class SchedulerService extends BaseService implements SchedulerServiceMBe
         return partitionManager.getPartition(partitionName);
     }
 
-    public void register() throws Exception {
-        super.register();
+    public void init() throws Exception {
+        super.init();
 
         SchedulerConfig schedulerConfig = getSchedulerConfig();
         if (schedulerConfig != null) {
             for (String jobName : schedulerConfig.getJobNames()) {
                 JobService jobService = getJobService(jobName);
-                jobService.register();
+                jobService.init();
             }
         }
     }
 
-    public void unregister() throws Exception {
+    public void destroy() throws Exception {
 
         SchedulerConfig schedulerConfig = getSchedulerConfig();
         if (schedulerConfig != null) {
             for (String jobName : schedulerConfig.getJobNames()) {
                 JobService jobService = getJobService(jobName);
-                jobService.unregister();
+                jobService.destroy();
             }
         }
 
-        super.unregister();
+        super.destroy();
     }
 
     public Collection<String> getJobNames() throws Exception {
@@ -110,10 +110,7 @@ public class SchedulerService extends BaseService implements SchedulerServiceMBe
 
     public JobService getJobService(String jobName) throws Exception {
 
-        JobService jobService = new JobService(jmxService, partitionManager, partitionName, jobName);
-        jobService.init();
-
-        return jobService;
+        return new JobService(jmxService, partitionManager, partitionName, jobName);
     }
 
     public void executeJob(String name) throws Exception {

@@ -25,6 +25,8 @@ import java.io.Serializable;
  */
 public class SchemaConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     private String name;
     private String path;
 

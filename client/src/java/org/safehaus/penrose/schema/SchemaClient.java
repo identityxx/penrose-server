@@ -15,7 +15,7 @@ public class SchemaClient extends BaseClient implements SchemaServiceMBean {
     }
 
     public static String getStringObjectName(String name) {
-        return "Penrose:type=schema,name="+name;
+        return "Penrose:type=Schema,name="+name;
     }
 
     public Collection<AttributeType> getAttributeTypes() throws Exception {

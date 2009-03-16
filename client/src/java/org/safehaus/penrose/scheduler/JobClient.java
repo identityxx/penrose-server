@@ -45,7 +45,7 @@ public class JobClient extends BaseClient implements JobServiceMBean {
     }
 
     public static String getStringObjectName(String partitionName, String name) {
-        return "Penrose:type=job,partition="+partitionName+",name="+name;
+        return "Penrose:type=Job,partition="+partitionName+",name="+name;
     }
 
     public String getPartitionName() {

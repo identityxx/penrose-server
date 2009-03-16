@@ -295,11 +295,11 @@ public class ProxyEntry extends Entry {
         return false;
     }
 
-    public Collection<Entry> findEntries(DN dn) throws Exception {
+    public List<Entry> findEntries(DN dn) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
-        Collection<Entry> results = new ArrayList<Entry>();
+        List<Entry> results = new ArrayList<Entry>();
         if (dn == null) return results;
 
         DN entryDn = getDn();
@@ -326,7 +326,7 @@ public class ProxyEntry extends Entry {
 
         if (dnLength > entryDnLength) { // children has priority
             for (Entry child : getChildren()) {
-                Collection<Entry> list = child.findEntries(dn);
+                List<Entry> list = child.findEntries(dn);
                 results.addAll(list);
             }
             if (!results.isEmpty()) return results;

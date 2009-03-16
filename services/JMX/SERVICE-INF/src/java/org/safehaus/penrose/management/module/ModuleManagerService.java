@@ -9,6 +9,8 @@ import org.safehaus.penrose.partition.Partition;
 
 import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.LinkedHashMap;
 
 /**
  * @author Endi Sukma Dewata
@@ -17,6 +19,8 @@ public class ModuleManagerService extends BaseService implements ModuleManagerSe
 
     private PartitionManager partitionManager;
     private String partitionName;
+
+    Map<String,ModuleService> moduleServices = new LinkedHashMap<String,ModuleService>();
 
     public ModuleManagerService(PenroseJMXService jmxService, PartitionManager partitionManager, String partitionName) throws Exception {
 
@@ -53,33 +57,42 @@ public class ModuleManagerService extends BaseService implements ModuleManagerSe
         return partition.getModuleManager();
     }
 
-    public ModuleService getModuleService(String moduleName) throws Exception {
+    public void createModuleService(String moduleName) throws Exception {
 
         ModuleService moduleService = new ModuleService(jmxService, partitionManager, partitionName, moduleName);
         moduleService.init();
 
-        return moduleService;
+        moduleServices.put(moduleName, moduleService);
     }
 
-    public void register() throws Exception {
+    public ModuleService getModuleService(String moduleName) throws Exception {
+        return moduleServices.get(moduleName);
+    }
 
-        super.register();
+    public void removeModuleService(String moduleName) throws Exception {
+        ModuleService moduleService = moduleServices.remove(moduleName);
+        if (moduleService == null) return;
+
+        moduleService.destroy();
+    }
+
+    public void init() throws Exception {
+
+        super.init();
 
         ModuleConfigManager moduleConfigManager = getModuleConfigManager();
         for (String moduleName : moduleConfigManager.getModuleNames()) {
-            ModuleService moduleService = getModuleService(moduleName);
-            moduleService.register();
+            createModuleService(moduleName);
         }
     }
 
-    public void unregister() throws Exception {
+    public void destroy() throws Exception {
         ModuleConfigManager moduleConfigManager = getModuleConfigManager();
         for (String moduleName : moduleConfigManager.getModuleNames()) {
-            ModuleService moduleService = getModuleService(moduleName);
-            moduleService.unregister();
+            removeModuleService(moduleName);
         }
 
-        super.unregister();
+        super.destroy();
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -113,8 +126,7 @@ public class ModuleManagerService extends BaseService implements ModuleManagerSe
             moduleManager.startModule(moduleName);
         }
 
-        ModuleService moduleService = getModuleService(moduleName);
-        moduleService.register();
+        createModuleService(moduleName);
     }
 
     public void updateModule(String moduleName, ModuleConfig moduleConfig) throws Exception {
@@ -129,8 +141,7 @@ public class ModuleManagerService extends BaseService implements ModuleManagerSe
             moduleManager.stopModule(moduleName);
         }
 
-        ModuleService oldModuleService = getModuleService(moduleName);
-        oldModuleService.unregister();
+        removeModuleService(moduleName);
 
         PartitionConfig partitionConfig = getPartitionConfig();
         ModuleConfigManager moduleConfigManager = partitionConfig.getModuleConfigManager();
@@ -141,8 +152,7 @@ public class ModuleManagerService extends BaseService implements ModuleManagerSe
             moduleManager.startModule(moduleName);
         }
 
-        ModuleService newModuleService = getModuleService(moduleConfig.getName());
-        newModuleService.register();
+        createModuleService(moduleConfig.getName());
     }
 
     public void removeModule(String moduleName) throws Exception {
@@ -161,8 +171,7 @@ public class ModuleManagerService extends BaseService implements ModuleManagerSe
         ModuleConfigManager moduleConfigManager = partitionConfig.getModuleConfigManager();
         moduleConfigManager.removeModuleConfig(moduleName);
 
-        ModuleService moduleService = getModuleService(moduleName);
-        moduleService.unregister();
+        removeModuleService(moduleName);
     }
 
 }

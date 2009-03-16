@@ -13,6 +13,8 @@ import java.io.Serializable;
  */
 public class SearchResult implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     private DN dn;
     private Attributes attributes;
     private String entryName;

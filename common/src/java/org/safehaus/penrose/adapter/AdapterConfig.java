@@ -27,6 +27,8 @@ import java.io.Serializable;
  */
 public class AdapterConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     private String name;
     private String description;
     private String adapterClass;

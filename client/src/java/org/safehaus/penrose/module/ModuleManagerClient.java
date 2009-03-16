@@ -38,7 +38,7 @@ public class ModuleManagerClient extends BaseClient implements ModuleManagerServ
     }
 
     public static String getStringObjectName(String partitionName) {
-        return "Penrose:type=moduleManager,partition="+partitionName;
+        return "Penrose:type=ModuleManager,partition="+partitionName;
     }
 
     public String getPartitionName() {

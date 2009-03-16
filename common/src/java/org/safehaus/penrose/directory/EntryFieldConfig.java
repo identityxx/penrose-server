@@ -31,6 +31,8 @@ import java.io.Serializable;
  */
 public class EntryFieldConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     public final static String CONSTANT       = "CONSTANT";
     public final static String VARIABLE       = "VARIABLE";
     public final static String EXPRESSION     = "EXPRESSION";

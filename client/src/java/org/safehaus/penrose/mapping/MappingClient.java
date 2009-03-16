@@ -25,7 +25,7 @@ public class MappingClient extends BaseClient implements MappingServiceMBean {
     }
 
     public static String getStringObjectName(String partitionName, String mappingName) {
-        return "Penrose:type=mapping,partition="+partitionName+",name="+mappingName;
+        return "Penrose:type=Mapping,partition="+partitionName+",name="+mappingName;
     }
 
     public String getPartitionName() {

@@ -28,6 +28,8 @@ import java.util.*;
  */
 public class FederationConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     protected Map<String,FederationRepositoryConfig> repositories = new LinkedHashMap<String,FederationRepositoryConfig>();
 
     protected Map<String,FederationPartitionConfig> partitions = new LinkedHashMap<String,FederationPartitionConfig>();

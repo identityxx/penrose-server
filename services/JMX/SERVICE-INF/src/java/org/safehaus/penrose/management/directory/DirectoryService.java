@@ -9,8 +9,7 @@ import org.safehaus.penrose.management.PenroseJMXService;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.util.TextUtil;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 
 /**
  * @author Endi Sukma Dewata
@@ -19,6 +18,8 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
 
     private PartitionManager partitionManager;
     private String partitionName;
+
+    Map<String,EntryService> entryServices = new LinkedHashMap<String,EntryService>();
 
     public DirectoryService(PenroseJMXService jmxService, PartitionManager partitionManager, String partitionName) throws Exception {
 
@@ -81,19 +82,39 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
         return list;
     }
 
-    public Collection<String> getChildNames(String entryName) throws Exception {
-        Collection<String> list = new ArrayList<String>();
+    public String getParentName(String entryName) throws Exception {
         DirectoryConfig directoryConfig = getDirectoryConfig();
-        list.addAll(directoryConfig.getChildNames(entryName));
-        return list;
+        return directoryConfig.getParentName(entryName);
     }
 
-    public EntryService getEntryService(String entryId) throws Exception {
+    public List<String> getChildNames(String entryName) throws Exception {
+        DirectoryConfig directoryConfig = getDirectoryConfig();
+        return directoryConfig.getChildNames(entryName);
+    }
 
-        EntryService entryService = new EntryService(jmxService, partitionManager, partitionName, entryId);
+    public void setChildNames(String entryName, List<String> childNames) throws Exception {
+        DirectoryConfig directoryConfig = getDirectoryConfig();
+        directoryConfig.setChildNames(entryName, childNames);
+    }
+
+    public void createEntryService(String entryName) throws Exception {
+
+        EntryService entryService = new EntryService(jmxService, partitionManager, partitionName, entryName);
         entryService.init();
 
-        return entryService;
+        entryServices.put(entryName, entryService);
+    }
+
+    public EntryService getEntryService(String entryName) throws Exception {
+        return entryServices.get(entryName);
+    }
+
+    public void removeEntryService(String entryName) throws Exception {
+
+        EntryService entryService = entryServices.remove(entryName);
+        if (entryService == null) return;
+
+        entryService.destroy();
     }
 
     public String getEntryName(DN dn) throws Exception {
@@ -106,6 +127,11 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
         EntryConfig entryConfig = directoryConfig.getEntryConfig(entryName);
         if (entryConfig == null) return null;
         return entryConfig.getDn();
+    }
+
+    public EntryConfig getEntryConfig(String entryName) throws Exception {
+        DirectoryConfig directoryConfig = getDirectoryConfig();
+        return directoryConfig.getEntryConfig(entryName);
     }
 
     public String createEntry(EntryConfig entryConfig) throws Exception {
@@ -124,8 +150,7 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
             }
         }
 
-        EntryService entryService = getEntryService(entryConfig.getName());
-        entryService.register();
+        createEntryService(entryConfig.getName());
 
         return entryConfig.getName();
     }
@@ -135,7 +160,7 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
         log.debug(TextUtil.repeat("-", 70));
 
         Directory directory = getDirectory();
-        Collection<Entry> children = null;
+        List<Entry> children = null;
 
         if (directory != null) {
             try {
@@ -149,8 +174,7 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
             }
         }
 
-        EntryService oldEntryService = getEntryService(entryConfig.getName());
-        oldEntryService.unregister();
+        removeEntryService(entryConfig.getName());
 
         DirectoryConfig directoryConfig = getDirectoryConfig();
         directoryConfig.updateEntryConfig(name, entryConfig);
@@ -164,8 +188,7 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
             }
         }
 
-        EntryService newEntryService = getEntryService(entryConfig.getName());
-        newEntryService.register();
+        createEntryService(entryConfig.getName());
     }
 
     public void removeEntry(String entryName) throws Exception {
@@ -184,28 +207,25 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
         DirectoryConfig directoryConfig = getDirectoryConfig();
         directoryConfig.removeEntryConfig(entryName);
 
-        EntryService entryService = getEntryService(entryName);
-        entryService.unregister();
+        removeEntryService(entryName);
     }
 
-    public void register() throws Exception {
+    public void init() throws Exception {
         jmxService.register(getObjectName(), this);
 
         DirectoryConfig directoryConfig = getDirectoryConfig();
 
-        for (String entryId : directoryConfig.getEntryNames()) {
-            EntryService entryService = getEntryService(entryId);
-            entryService.register();
+        for (String entryName : directoryConfig.getEntryNames()) {
+            createEntryService(entryName);
         }
     }
 
-    public void unregister() throws Exception {
+    public void destroy() throws Exception {
 
         DirectoryConfig directoryConfig = getDirectoryConfig();
 
-        for (String entryId : directoryConfig.getEntryNames()) {
-            EntryService entryService = getEntryService(entryId);
-            entryService.unregister();
+        for (String entryName : directoryConfig.getEntryNames()) {
+            removeEntryService(entryName);
         }
 
         jmxService.unregister(getObjectName());

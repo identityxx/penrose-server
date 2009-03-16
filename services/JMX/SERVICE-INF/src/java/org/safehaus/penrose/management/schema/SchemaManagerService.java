@@ -121,27 +121,24 @@ public class SchemaManagerService extends BaseService implements SchemaManagerSe
 
     public SchemaService getSchemaService(String schemaName) throws Exception {
 
-        SchemaService service = new SchemaService(jmxService, schemaManager, schemaName);
-        service.init();
-
-        return service;
+        return new SchemaService(jmxService, schemaManager, schemaName);
     }
 
-    public void register() throws Exception {
-        super.register();
+    public void init() throws Exception {
+        super.init();
 
         for (String schemaName : schemaManager.getSchemaNames()) {
             SchemaService partitionService = getSchemaService(schemaName);
-            partitionService.register();
+            partitionService.init();
         }
     }
 
-    public void unregister() throws Exception {
+    public void destroy() throws Exception {
         for (String schemaName : schemaManager.getSchemaNames()) {
             SchemaService partitionService = getSchemaService(schemaName);
-            partitionService.unregister();
+            partitionService.destroy();
         }
 
-        super.unregister();
+        super.destroy();
     }
 }

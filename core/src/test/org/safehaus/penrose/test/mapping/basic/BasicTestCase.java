@@ -83,7 +83,8 @@ public class BasicTestCase extends JDBCTestCase {
         partitionConfig.getDirectoryConfig().addEntryConfig(groups);
 
         PartitionManager partitionManager = penrose.getPartitionManager();
-        partitionManager.createPartition(partitionConfig);
+        partitionManager.addPartitionConfig(partitionConfig);
+        partitionManager.startPartition(partitionConfig.getName());
     }
 /*
     public void testDummy()

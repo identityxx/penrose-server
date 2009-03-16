@@ -40,7 +40,7 @@ public class SourceManagerClient extends BaseClient implements SourceManagerServ
     }
 
     public static String getStringObjectName(String partitionName) {
-        return "Penrose:type=sourceManager,partition="+partitionName;
+        return "Penrose:type=SourceManager,partition="+partitionName;
     }
 
     public String getPartitionName() {

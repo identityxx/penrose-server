@@ -40,6 +40,44 @@ public class PartitionConfigManager implements Serializable {
     public PartitionConfigManager() {
     }
 
+    public void addPartitionConfig(PartitionConfig partitionConfig) throws Exception {
+
+        Logger log = LoggerFactory.getLogger(getClass());
+        boolean debug = log.isDebugEnabled();
+
+        String partitionName = partitionConfig.getName();
+
+        if (debug) log.debug("Adding partition \""+partitionName+"\".");
+
+        validate(partitionConfig);
+
+        partitionConfigs.put(partitionName, partitionConfig);
+    }
+
+    public void validate(PartitionConfig partitionConfig) throws Exception {
+
+        String partitionName = partitionConfig.getName();
+
+        if (partitionName == null || "".equals(partitionName)) {
+            throw new Exception("Missing partition name.");
+        }
+
+        char startingChar = partitionName.charAt(0);
+        if (!Character.isLetter(startingChar)) {
+            throw new Exception("Invalid partition name: "+partitionName);
+        }
+
+        for (int i = 1; i<partitionName.length(); i++) {
+            char c = partitionName.charAt(i);
+            if (Character.isLetterOrDigit(c) || c == '_') continue;
+            throw new Exception("Invalid partition name: "+partitionName);
+        }
+
+        if (partitionConfigs.containsKey(partitionName)) {
+            throw new Exception("Partition "+partitionName+" already exists.");
+        }
+    }
+
     public PartitionConfig removePartitionConfig(String name) throws Exception {
         return partitionConfigs.remove(name);
     }
@@ -138,16 +176,6 @@ public class PartitionConfigManager implements Serializable {
 
     public Collection<String> getPartitionNames() {
         return partitionConfigs.keySet();
-    }
-
-    public void addPartitionConfig(PartitionConfig partitionConfig) throws Exception {
-        String partitionName = partitionConfig.getName();
-
-        if (partitionConfigs.containsKey(partitionName)) {
-            throw new Exception("Partition "+partitionName+" already exists.");
-        }
-
-        partitionConfigs.put(partitionName, partitionConfig);
     }
 
     public Collection<PartitionConfig> getPartitionConfigs() {

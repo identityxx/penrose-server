@@ -9,6 +9,8 @@ import org.safehaus.penrose.partition.Partition;
 
 import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.LinkedHashMap;
 
 /**
  * @author Endi Sukma Dewata
@@ -17,6 +19,8 @@ public class MappingManagerService extends BaseService implements MappingManager
 
     private PartitionManager partitionManager;
     private String partitionName;
+
+    Map<String,MappingService> mappingServices = new LinkedHashMap<String,MappingService>();
 
     public MappingManagerService(PenroseJMXService jmxService, PartitionManager partitionManager, String partitionName) throws Exception {
 
@@ -53,33 +57,42 @@ public class MappingManagerService extends BaseService implements MappingManager
         return partition.getMappingManager();
     }
 
-    public MappingService getMappingService(String mappingName) throws Exception {
+    public void createMappingService(String mappingName) throws Exception {
 
         MappingService mappingService = new MappingService(jmxService, partitionManager, partitionName, mappingName);
         mappingService.init();
 
-        return mappingService;
+        mappingServices.put(mappingName, mappingService);
     }
 
-    public void register() throws Exception {
+    public MappingService getMappingService(String mappingName) throws Exception {
+        return mappingServices.get(mappingName);
+    }
 
-        super.register();
+    public void removeMappingService(String mappingName) throws Exception {
+        MappingService mappingService = mappingServices.remove(mappingName);
+        if (mappingService == null) return;
+
+        mappingService.destroy();
+    }
+
+    public void init() throws Exception {
+
+        super.init();
 
         MappingConfigManager mappingConfigManager = getMappingConfigManager();
         for (String mappingName : mappingConfigManager.getMappingNames()) {
-            MappingService mappingService = getMappingService(mappingName);
-            mappingService.register();
+            createMappingService(mappingName);
         }
     }
 
-    public void unregister() throws Exception {
+    public void destroy() throws Exception {
         MappingConfigManager mappingConfigManager = getMappingConfigManager();
         for (String mappingName : mappingConfigManager.getMappingNames()) {
-            MappingService mappingService = getMappingService(mappingName);
-            mappingService.unregister();
+            removeMappingService(mappingName);
         }
 
-        super.unregister();
+        super.destroy();
     }
 
     public Collection<String> getMappingNames() throws Exception {
@@ -121,8 +134,7 @@ public class MappingManagerService extends BaseService implements MappingManager
         String mappingName = mappingConfig.getName();
         startMapping(mappingName);
 
-        MappingService mappingService = getMappingService(mappingName);
-        mappingService.register();
+        createMappingService(mappingName);
     }
 
     public void updateMapping(String mappingName, MappingConfig mappingConfig) throws Exception {
@@ -141,8 +153,7 @@ public class MappingManagerService extends BaseService implements MappingManager
 
         PartitionConfig partitionConfig = getPartitionConfig();
 
-        MappingService mappingService = getMappingService(mappingName);
-        mappingService.unregister();
+        removeMappingService(mappingName);
 
         stopMapping(mappingName);
 

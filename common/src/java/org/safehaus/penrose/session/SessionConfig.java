@@ -27,6 +27,8 @@ import java.util.Map;
  */
 public class SessionConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     public final static String MAX_SESSIONS       = "maxSessions";
     public final static String MAX_IDLE_TIME      = "maxIdleTime";
 

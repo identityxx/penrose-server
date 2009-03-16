@@ -23,7 +23,7 @@ public class MappingManagerClient extends BaseClient implements MappingManagerSe
     }
 
     public static String getStringObjectName(String partitionName) {
-        return "Penrose:type=mappingManager,partition="+partitionName;
+        return "Penrose:type=MappingManager,partition="+partitionName;
     }
 
     public String getPartitionName() {

@@ -44,10 +44,7 @@ public class ServiceManagerService extends BaseService implements ServiceManager
 
     public ServiceService getServiceService(String name) throws Exception {
 
-        ServiceService service = new ServiceService(jmxService, serviceManager, name);
-        service.init();
-
-        return service;
+        return new ServiceService(jmxService, serviceManager, name);
     }
 
     public void startService(String name) throws Exception {
@@ -55,43 +52,41 @@ public class ServiceManagerService extends BaseService implements ServiceManager
         serviceManager.startService(name);
 
         ServiceService service = getServiceService(name);
-        service.register();
+        service.init();
     }
 
     public void stopService(String name) throws Exception {
 
         ServiceService service = getServiceService(name);
-        service.unregister();
+        service.destroy();
 
         serviceManager.stopService(name);
     }
 
     public void createService(ServiceConfig serviceConfig) throws Exception {
 
-        String name = serviceConfig.getName();
+        String serviceName = serviceConfig.getName();
+        serviceManager.addServiceConfig(serviceConfig);
 
         File servicesDir = serviceManager.getServicesDir();
-        File path = new File(servicesDir, name);
+        File path = new File(servicesDir, serviceName);
 
         ServiceWriter serviceWriter = new ServiceWriter();
         serviceWriter.write(path, serviceConfig);
-
-        serviceManager.addServiceConfig(serviceConfig);
     }
 
-    public void updateService(String name, ServiceConfig serviceConfig) throws Exception {
+    public void updateService(String serviceName, ServiceConfig serviceConfig) throws Exception {
 
-        serviceManager.unloadService(name);
+        serviceManager.unloadService(serviceName);
+        serviceManager.addServiceConfig(serviceConfig);
 
         File servicesDir = serviceManager.getServicesDir();
-        File oldDir = new File(servicesDir, name);
+        File oldDir = new File(servicesDir, serviceName);
         File newDir = new File(servicesDir, serviceConfig.getName());
         oldDir.renameTo(newDir);
 
         ServiceWriter serviceWriter = new ServiceWriter();
         serviceWriter.write(newDir, serviceConfig);
-
-        serviceManager.addServiceConfig(serviceConfig);
     }
 
     public void removeService(String name) throws Exception {
@@ -104,21 +99,21 @@ public class ServiceManagerService extends BaseService implements ServiceManager
         FileUtil.delete(serviceDir);
     }
 
-    public void register() throws Exception {
-        super.register();
+    public void init() throws Exception {
+        super.init();
 
         for (String serviceName : getServiceNames()) {
             ServiceService serviceService = getServiceService(serviceName);
-            serviceService.register();
+            serviceService.init();
         }
     }
 
-    public void unregister() throws Exception {
+    public void destroy() throws Exception {
         for (String serviceName : getServiceNames()) {
             ServiceService serviceService = getServiceService(serviceName);
-            serviceService.unregister();
+            serviceService.destroy();
         }
 
-        super.unregister();
+        super.destroy();
     }
 }

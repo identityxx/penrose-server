@@ -21,28 +21,16 @@ import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.jdbc.adapter.JDBCAdapter;
 import org.safehaus.penrose.ldap.adapter.LDAPAdapter;
 import org.safehaus.penrose.PenroseConfig;
+import org.safehaus.penrose.nis.adapter.NISAdapter;
 
 /**
  * @author Endi S. Dewata
  */
 public class DefaultPenroseConfig extends PenroseConfig {
 
-    public DefaultPenroseConfig() {
-/*
-        addSchemaConfig(new SchemaConfig("schema/autofs.schema"));
-        addSchemaConfig(new SchemaConfig("schema/corba.schema"));
-        addSchemaConfig(new SchemaConfig("schema/core.schema"));
-        addSchemaConfig(new SchemaConfig("schema/cosine.schema"));
-        addSchemaConfig(new SchemaConfig("schema/apache.schema"));
-        addSchemaConfig(new SchemaConfig("schema/collective.schema"));
-        addSchemaConfig(new SchemaConfig("schema/inetorgperson.schema"));
-        addSchemaConfig(new SchemaConfig("schema/java.schema"));
-        addSchemaConfig(new SchemaConfig("schema/krb5kdc.schema"));
-        addSchemaConfig(new SchemaConfig("schema/nis.schema"));
-        addSchemaConfig(new SchemaConfig("schema/system.schema"));
-        addSchemaConfig(new SchemaConfig("schema/apachedns.schema"));
-*/
+    public DefaultPenroseConfig() throws Exception {
         addAdapterConfig(new AdapterConfig("JDBC", JDBCAdapter.class.getName()));
         addAdapterConfig(new AdapterConfig("LDAP", LDAPAdapter.class.getName()));
+        addAdapterConfig(new AdapterConfig("NIS", NISAdapter.class.getName()));
     }
 }

@@ -1,26 +1,26 @@
-package org.safehaus.penrose.partition.event;
+package org.safehaus.penrose.directory.event;
 
 import java.util.Date;
 
 /**
  * @author Endi Sukma Dewata
  */
-public class PartitionEvent {
+public class DirectoryEvent {
 
-    public final static int PARTITION_ADDED   = 0;
-    public final static int PARTITION_REMOVED = 1;
-    public final static int PARTITION_STARTED = 2;
-    public final static int PARTITION_STOPPED = 3;
-
+    public final static int ENTRY_ADDED   = 0;
+    public final static int ENTRY_REMOVED = 1;
+    
     protected Date time;
     protected int action;
 
-    private String partitionName;
+    protected String partitionName;
+    protected String entryName;
 
-    public PartitionEvent(int action, String partitionName) {
+    public DirectoryEvent(int action, String partitionName, String entryName) {
         this.time = new Date();
         this.action = action;
         this.partitionName = partitionName;
+        this.entryName = entryName;
     }
 
     public Date getTime() {
@@ -45,5 +45,13 @@ public class PartitionEvent {
 
     public void setPartitionName(String partitionName) {
         this.partitionName = partitionName;
+    }
+
+    public String getEntryName() {
+        return entryName;
+    }
+
+    public void setEntryName(String entryName) {
+        this.entryName = entryName;
     }
 }

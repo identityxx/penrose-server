@@ -10,6 +10,8 @@ import java.util.Map;
  */
 public class ThreadManagerConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     public final static String CORE_POOL_SIZE         = "corePoolSize";
     public final static int DEFAULT_CORE_POOL_SIZE    = 10;
 
