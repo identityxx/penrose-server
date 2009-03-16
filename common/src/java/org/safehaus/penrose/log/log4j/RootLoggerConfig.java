@@ -26,6 +26,8 @@ import java.io.Serializable;
  */
 public class RootLoggerConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     String level;
     Collection<String> appenderNames = new LinkedList<String>();
 

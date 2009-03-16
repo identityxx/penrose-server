@@ -9,6 +9,8 @@ import java.util.ArrayList;
  */
 public class IndexConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     private String name;
     private Collection<String> fieldNames = new ArrayList<String>();
 

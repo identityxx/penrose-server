@@ -13,6 +13,8 @@ import java.io.Serializable;
  */
 public class DirectoryConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     public final static List<String> EMPTY_IDS  = new ArrayList<String>();
     public final static Collection<EntryConfig> EMPTY = new ArrayList<EntryConfig>();
 

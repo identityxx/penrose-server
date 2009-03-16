@@ -24,6 +24,8 @@ import java.io.Serializable;
  */
 public class Table implements Serializable, Comparable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
 	private String name;
     private String type;
 

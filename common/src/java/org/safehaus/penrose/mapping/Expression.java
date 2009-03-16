@@ -24,6 +24,8 @@ import java.io.Serializable;
  */
 public class Expression implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     protected String foreach;
     protected String var;
     protected String script;

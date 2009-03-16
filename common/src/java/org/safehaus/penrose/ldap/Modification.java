@@ -7,6 +7,8 @@ import java.io.Serializable;
  */
 public class Modification implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     public final static int ADD     = 0;
     public final static int DELETE  = 1;
     public final static int REPLACE = 2;

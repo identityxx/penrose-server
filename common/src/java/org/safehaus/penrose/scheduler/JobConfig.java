@@ -10,6 +10,8 @@ import java.util.Collection;
  */
 public class JobConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     private boolean enabled = true;
 
     private String name = "DEFAULT";

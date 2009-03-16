@@ -8,6 +8,8 @@ import java.io.Serializable;
  */
 public class Attributes implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     public final static Collection<Object> EMPTY = new ArrayList<Object>();
 
     protected Map<String,Attribute> attributes = new TreeMap<String,Attribute>();

@@ -9,6 +9,8 @@ import java.io.Serializable;
  */
 public class DN implements Serializable, Comparable {
 
+    public final static long serialVersionUID = 1L;
+
     public List<RDN> rdns;
 
     public String originalDn;

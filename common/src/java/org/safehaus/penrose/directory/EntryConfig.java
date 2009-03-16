@@ -32,6 +32,8 @@ import java.util.*;
  */
 public class EntryConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     public boolean enabled = true;
     public boolean attached = true;
 

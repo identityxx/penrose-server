@@ -25,6 +25,8 @@ import java.io.Serializable;
  */
 public class MappingConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     public final static List<MappingRuleConfig> EMPTY = new LinkedList<MappingRuleConfig>();
 
     private boolean enabled = true;

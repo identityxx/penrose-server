@@ -27,6 +27,8 @@ import java.util.Iterator;
 
 public class ObjectClass implements Serializable, Cloneable, Comparable {
 
+    public final static long serialVersionUID = 1L;
+
 	public final static String ABSTRACT   = "ABSTRACT";
 	public final static String STRUCTURAL = "STRUCTURAL";
 	public final static String AUXILIARY  = "AUXILIARY";

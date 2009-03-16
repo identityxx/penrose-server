@@ -9,6 +9,8 @@ import java.io.PrintWriter;
  */
 public class SynchronizationResult implements Serializable {
 
+    public final static long serialVersionUID = 1L;
+
     private long sourceEntries;
 
     private long addedEntries;

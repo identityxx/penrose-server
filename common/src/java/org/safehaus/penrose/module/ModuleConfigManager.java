@@ -14,6 +14,8 @@ import java.util.Map;
  */
 public class ModuleConfigManager implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     protected Map<String,ModuleConfig> moduleConfigs = new LinkedHashMap<String,ModuleConfig>();
 
     public void addModuleConfig(ModuleConfig moduleConfig) throws Exception {

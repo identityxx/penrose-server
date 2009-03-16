@@ -13,6 +13,8 @@ import java.io.Serializable;
  */
 public class SourceConfigManager implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     protected Map<String,SourceConfig> sourceConfigs                             = new LinkedHashMap<String,SourceConfig>();
     protected Map<String,Collection<SourceConfig>> sourceConfigsByConnectionName = new LinkedHashMap<String,Collection<SourceConfig>>();
 

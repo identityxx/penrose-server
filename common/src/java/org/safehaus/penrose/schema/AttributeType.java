@@ -25,6 +25,8 @@ import java.util.Collection;
 
 public class AttributeType implements Serializable, Cloneable, Comparable {
 
+    public final static long serialVersionUID = 1L;
+
 	public final static String USER_APPLICATIONS     = "userApplications";
 	public final static String DIRECTORY_OPERATION   = "directoryOperation";
 	public final static String DISTRIBUTED_OPERATION = "distributedOperation";

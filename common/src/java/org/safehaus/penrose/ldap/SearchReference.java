@@ -10,6 +10,8 @@ import java.io.Serializable;
  */
 public class SearchReference implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     private DN dn;
     private Collection<String> urls = new ArrayList<String>();
     private Collection<Control> controls = new ArrayList<Control>();

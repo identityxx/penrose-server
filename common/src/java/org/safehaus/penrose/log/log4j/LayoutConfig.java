@@ -27,6 +27,8 @@ import java.io.Serializable;
  */
 public class LayoutConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     String layoutClass;
     Map<String,String> parameters = new LinkedHashMap<String,String>();
 

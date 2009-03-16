@@ -13,6 +13,8 @@ import java.io.Serializable;
  */
 public class MappingConfigManager implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     static {
         log = LoggerFactory.getLogger(MappingConfigManager.class);
     }

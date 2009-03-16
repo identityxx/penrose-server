@@ -24,6 +24,8 @@ import java.io.Serializable;
  */
 public class ValidationResult implements Serializable {
 
+    public final static long serialVersionUID = 1L;
+
     public final static String WARNING = "WARNING";
     public final static String ERROR   = "ERROR";
 

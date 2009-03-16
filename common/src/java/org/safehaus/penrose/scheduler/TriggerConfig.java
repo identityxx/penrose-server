@@ -8,6 +8,8 @@ import java.util.*;
  */
 public class TriggerConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     private boolean enabled = true;
 
     private String name = "DEFAULT";

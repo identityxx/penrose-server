@@ -30,6 +30,8 @@ import java.io.Serializable;
  */
 public class SourceAttributes implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     public Map<String,Attributes> map = new TreeMap<String,Attributes>();
 
     public SourceAttributes() {

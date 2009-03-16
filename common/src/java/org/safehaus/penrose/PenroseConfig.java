@@ -36,6 +36,8 @@ import java.util.Map;
  */
 public class PenroseConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     private Map<String,String> systemProperties              = new LinkedHashMap<String,String>();
     private Map<String,String> properties                    = new LinkedHashMap<String,String>();
 

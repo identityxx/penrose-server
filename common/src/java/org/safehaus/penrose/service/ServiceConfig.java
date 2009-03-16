@@ -27,8 +27,10 @@ import java.io.Serializable;
  */
 public class ServiceConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     private boolean enabled = true;
-    
+
     private String name;
     private String serviceClass;
     private String description;

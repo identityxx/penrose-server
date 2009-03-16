@@ -11,6 +11,8 @@ import java.util.HashMap;
  */
 public class FederationPartitionConfig implements Serializable, Comparable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     protected String name;
     protected String template;
 
