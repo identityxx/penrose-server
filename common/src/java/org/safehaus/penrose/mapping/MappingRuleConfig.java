@@ -29,6 +29,8 @@ import java.io.Serializable;
  */
 public class MappingRuleConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     static {
         log = LoggerFactory.getLogger(MappingRuleConfig.class);
     }

@@ -34,6 +34,6 @@ public class ServiceClient extends BaseClient implements ServiceServiceMBean {
     }
 
     public static String getStringObjectName(String name) {
-        return "Penrose:type=service,name="+name;
+        return "Penrose:type=Service,name="+name;
     }
 }

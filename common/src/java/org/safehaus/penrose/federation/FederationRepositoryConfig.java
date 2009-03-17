@@ -10,6 +10,8 @@ import java.util.Map;
  */
 public class FederationRepositoryConfig implements Serializable, Comparable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     public final static String LINKING_LOCAL_ATTRIBUTE  = "linkingLocalAttribute";
     public final static String LINKING_GLOBAL_ATTRIBUTE = "linkingGlobalAttribute";
     public final static String LINKING_STORAGE          = "linkingStorage";

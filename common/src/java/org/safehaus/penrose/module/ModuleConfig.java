@@ -25,6 +25,8 @@ import java.io.Serializable;
  */
 public class ModuleConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     private boolean enabled = true;
 
     private String name;

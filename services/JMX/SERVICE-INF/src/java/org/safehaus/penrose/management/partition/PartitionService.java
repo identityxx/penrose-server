@@ -24,6 +24,13 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
     private PartitionManager partitionManager;
     private String partitionName;
 
+    ConnectionManagerService connectionManagerService;
+    SourceManagerService sourceManagerService;
+    MappingManagerService mappingManagerService;
+    DirectoryService directoryService;
+    ModuleManagerService moduleManagerService;
+    SchedulerService schedulerService;
+
     public PartitionService(PenroseJMXService jmxService, PartitionManager partitionManager, String partitionName) throws Exception {
 
         this.jmxService = jmxService;
@@ -63,129 +70,43 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
         partitionManager.storePartition(partitionName);
     }
 
-    ////////////////////////////////////////////////////////////////////////////////
-    // Directory
-    ////////////////////////////////////////////////////////////////////////////////
-
-    public DirectoryService getDirectoryService() throws Exception {
-
-        DirectoryService directoryService = new DirectoryService(jmxService, partitionManager, partitionName);
-        directoryService.init();
-
-        return directoryService;
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // Connections
-    ////////////////////////////////////////////////////////////////////////////////
-
-    public ConnectionManagerService getConnectionManagerService() throws Exception {
-
-        ConnectionManagerService connectionManagerService = new ConnectionManagerService(jmxService, partitionManager, partitionName);
-        connectionManagerService.init();
-
-        return connectionManagerService;
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // Sources
-    ////////////////////////////////////////////////////////////////////////////////
-
-    public SourceManagerService getSourceManagerService() throws Exception {
-
-        SourceManagerService sourceManagerService = new SourceManagerService(jmxService, partitionManager, partitionName);
-        sourceManagerService.init();
-
-        return sourceManagerService;
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // Mappings
-    ////////////////////////////////////////////////////////////////////////////////
-
-    public MappingManagerService getMappingManagerService() throws Exception {
-
-        MappingManagerService mappingManagerService = new MappingManagerService(jmxService, partitionManager, partitionName);
-        mappingManagerService.init();
-
-        return mappingManagerService;
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // Modules
-    ////////////////////////////////////////////////////////////////////////////////
-
-    public ModuleManagerService getModuleManagerService() throws Exception {
-
-        ModuleManagerService moduleManagerService = new ModuleManagerService(jmxService, partitionManager, partitionName);
-        moduleManagerService.init();
-
-        return moduleManagerService;
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // Scheduler
-    ////////////////////////////////////////////////////////////////////////////////
-
-    public SchedulerService getSchedulerService() throws Exception {
-
-        SchedulerService schedulerService = new SchedulerService(jmxService, partitionManager, partitionName);
-        schedulerService.init();
-
-        return schedulerService;
-    }
-
-    public void register() throws Exception {
+    public void init() throws Exception {
 
         //log.debug("Registering partition "+partitionName+".");
 
-        super.register();
+        super.init();
 
-        ConnectionManagerService connectionManagerService = getConnectionManagerService();
-        connectionManagerService.register();
+        connectionManagerService = new ConnectionManagerService(jmxService, partitionManager, partitionName);
+        connectionManagerService.init();
 
-        SourceManagerService sourceManagerService = getSourceManagerService();
-        sourceManagerService.register();
+        sourceManagerService = new SourceManagerService(jmxService, partitionManager, partitionName);
+        sourceManagerService.init();
 
-        MappingManagerService mappingManagerService = getMappingManagerService();
-        mappingManagerService.register();
+        mappingManagerService = new MappingManagerService(jmxService, partitionManager, partitionName);
+        mappingManagerService.init();
 
-        DirectoryService directoryService = getDirectoryService();
-        directoryService.register();
+        directoryService = new DirectoryService(jmxService, partitionManager, partitionName);
+        directoryService.init();
 
-        ModuleManagerService moduleManagerService = getModuleManagerService();
-        moduleManagerService.register();
+        moduleManagerService = new ModuleManagerService(jmxService, partitionManager, partitionName);
+        moduleManagerService.init();
 
-        SchedulerService schedulerService = getSchedulerService();
-        if (schedulerService != null) schedulerService.register();
+        schedulerService = new SchedulerService(jmxService, partitionManager, partitionName);
+        schedulerService.init();
     }
 
-    public void unregister() throws Exception {
+    public void destroy() throws Exception {
 
         //log.debug("Unregistering partition "+partitionName+".");
 
-        PartitionConfig partitionConfig = getPartitionConfig();
-        if (partitionConfig == null) return;
+        schedulerService.destroy();
+        moduleManagerService.destroy();
+        directoryService.destroy();
+        mappingManagerService.destroy();
+        sourceManagerService.destroy();
+        connectionManagerService.destroy();
 
-        SchedulerService schedulerService = getSchedulerService();
-        if (schedulerService != null) schedulerService.unregister();
-
-        ModuleManagerService moduleManagerService = getModuleManagerService();
-        moduleManagerService.unregister();
-
-        DirectoryService directoryService = getDirectoryService();
-        directoryService.unregister();
-
-        MappingManagerService mappingManagerService = getMappingManagerService();
-        mappingManagerService.unregister();
-
-        SourceManagerService sourceManagerService = getSourceManagerService();
-        sourceManagerService.unregister();
-
-        ConnectionManagerService connectionManagerService = getConnectionManagerService();
-        connectionManagerService.unregister();
-
-        super.unregister();
+        super.destroy();
     }
 
     public PenroseJMXService getJmxService() {

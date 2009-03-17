@@ -40,7 +40,7 @@ public class EntryClient extends BaseClient implements EntryServiceMBean {
     }
 
     public static String getStringObjectName(String partitionName, String entryName) {
-        return "Penrose:type=entry,partition="+partitionName+",name="+entryName;
+        return "Penrose:type=Entry,partition="+partitionName+",name="+entryName;
     }
 
     public String getPartitionName() {

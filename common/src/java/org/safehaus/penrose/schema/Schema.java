@@ -28,6 +28,8 @@ import java.util.*;
  */
 public class Schema implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     private String name;
 
     protected Set<AttributeType> attributeTypes = new LinkedHashSet<AttributeType>();

@@ -49,18 +49,18 @@ public class ServiceWriter {
         Element element = new DefaultElement("service");
         if (!serviceConfig.isEnabled()) element.addAttribute("enabled", "false");
 
-        Element serviceName = new DefaultElement("service-name");
-        serviceName.add(new DefaultText(serviceConfig.getName()));
-        element.add(serviceName);
+        String serviceClass = serviceConfig.getServiceClass();
+        if (serviceClass != null && !"".equals(serviceClass)) {
+            Element classElement = new DefaultElement("service-class");
+            classElement.add(new DefaultText(serviceClass));
+            element.add(classElement);
+        }
 
-        Element serviceClass = new DefaultElement("service-class");
-        serviceClass.add(new DefaultText(serviceConfig.getServiceClass()));
-        element.add(serviceClass);
-
-        if (serviceConfig.getDescription() != null && !"".equals(serviceConfig.getDescription())) {
-            Element description = new DefaultElement("description");
-            description.add(new DefaultText(serviceConfig.getDescription()));
-            element.add(description);
+        String description = serviceConfig.getDescription();
+        if (description != null && !"".equals(description)) {
+            Element descriptionElement = new DefaultElement("description");
+            descriptionElement.add(new DefaultText(description));
+            element.add(descriptionElement);
         }
 
         for (String name : serviceConfig.getParameterNames()) {

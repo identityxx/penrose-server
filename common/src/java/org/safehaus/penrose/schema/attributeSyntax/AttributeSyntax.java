@@ -24,6 +24,8 @@ import java.io.Serializable;
  */
 public class AttributeSyntax implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     public String oid;
     public String description;
     public boolean humanReadable;

@@ -27,6 +27,8 @@ import java.io.Serializable;
  */
 public class AppenderConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     String name;
     String appenderClass;
 

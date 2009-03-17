@@ -26,6 +26,8 @@ import java.io.Serializable;
  */
 public class ACI implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     public final static String SUBJECT_USER          = "user";
     public final static String SUBJECT_GROUP         = "group";
     public final static String SUBJECT_SELF          = "self";

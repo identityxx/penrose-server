@@ -142,11 +142,14 @@ public class PenroseServerConfigurator {
 
             ServiceConfig serviceConfig = serviceConfigManager.load(serviceName);
 
+            File serviceDir = new File(servicesDir, serviceName);
+            ClassLoader classLoader = new ServiceClassLoader(serviceDir, getClass().getClassLoader());
+
             String serviceClass = serviceConfig.getServiceClass();
             String serviceConfiguratorClass = serviceClass+"Configurator";
 
-            Collection<URL> classPaths = serviceConfig.getClassPaths();
-            URLClassLoader classLoader = new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]), getClass().getClassLoader());
+            //Collection<URL> classPaths = serviceConfig.getClassPaths();
+            //URLClassLoader classLoader = new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]), getClass().getClassLoader());
 
             try {
                 Class clazz = classLoader.loadClass(serviceConfiguratorClass);
@@ -156,8 +159,6 @@ public class PenroseServerConfigurator {
                 out.println(title);
                 out.println(TextUtil.repeat("-", title.length()));
                 out.println();
-
-                File serviceDir = new File(servicesDir, serviceName);
 
                 ServiceConfigurator serviceConfigurator = (ServiceConfigurator)clazz.newInstance();
 

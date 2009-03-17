@@ -10,6 +10,8 @@ import java.io.Serializable;
  */
 public class EntrySearchConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     protected String name;
     protected Filter filter;
     protected String script;

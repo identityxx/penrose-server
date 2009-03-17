@@ -27,7 +27,7 @@ public class PartitionClient extends BaseClient implements PartitionServiceMBean
     }
 
     public static String getStringObjectName(String name) {
-        return "Penrose:type=partition,name="+name;
+        return "Penrose:type=Partition,name="+name;
     }
 
     public void start() throws Exception {

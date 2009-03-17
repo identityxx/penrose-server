@@ -19,6 +19,7 @@ import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.SourceReader;
 import org.safehaus.penrose.source.SourceWriter;
 import org.safehaus.penrose.util.TextUtil;
+import org.safehaus.penrose.util.PenroseClassLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +67,7 @@ public class PartitionManager {
         if (!listeners.isEmpty()) {
             //log.debug("Invoking "+listeners.size()+" listener(s).");
 
-            PartitionEvent event = new PartitionEvent(PartitionEvent.PARTITION_ADDED, partitionConfig);
+            PartitionEvent event = new PartitionEvent(PartitionEvent.PARTITION_ADDED, partitionConfig.getName());
             for (PartitionListener listener : listeners) {
                 listener.partitionAdded(event);
             }
@@ -300,58 +301,65 @@ public class PartitionManager {
         if (debug) log.debug("Partition "+partitionName+" stored.");
     }
 
-    public void startPartition(String name) throws Exception {
+    public void startPartition(String partitionName) throws Exception {
 
         boolean debug = log.isDebugEnabled();
-        Partition partition = partitions.get(name);
+
+        Partition partition = partitions.get(partitionName);
         if (partition != null) {
-            log.debug("Partition "+name+" already started.");
+            log.debug("Partition "+partitionName+" already started.");
             return;
         }
 
-        PartitionConfig partitionConfig = partitionConfigManager.getPartitionConfig(name);
+        PartitionConfig partitionConfig = partitionConfigManager.getPartitionConfig(partitionName);
         if (partitionConfig == null) {
-            Penrose.errorLog.error("Can't start partition "+name+": Partition not found.");
+            Penrose.errorLog.error("Can't start partition "+partitionName+": Partition not found.");
             return;
         }
 
         if (!partitionConfig.isEnabled()) {
-            log.debug("Partition "+name+" disabled.");
+            log.debug("Partition "+partitionName+" disabled.");
             return;
         }
 
         for (String depend : partitionConfig.getDepends()) {
             if (partitionConfigManager.getPartitionConfig(depend) == null) {
-                Penrose.errorLog.error("Can't start partition "+name+": Missing dependency ["+depend+"].");
+                Penrose.errorLog.error("Can't start partition "+partitionName+": Missing dependency ["+depend+"].");
                 return;
             }
 
-            log.debug("Partition "+name+" is dependent on partition "+depend+".");
+            log.debug("Partition "+partitionName+" is dependent on partition "+depend+".");
             startPartition(depend);
         }
 
         if (debug) {
             log.debug(TextUtil.repeat("-", 70));
-            log.debug("Starting partition "+name+".");
+            log.debug("Starting partition "+partitionName+".");
         }
 
-        partition = createPartition(partitionConfig);
+        PartitionContext partitionContext = createPartitionContext(partitionConfig);
+
+        partition = createPartition(partitionConfig, partitionContext);
+
+        log.debug("Adding partition "+partitionConfig.getName()+".");
+        partitions.put(partitionConfig.getName(), partition);
+
+        partition.init(partitionConfig, partitionContext);
 
         if (!listeners.isEmpty()) {
             //log.debug("Invoking "+listeners.size()+" listener(s).");
 
-            PartitionEvent event = new PartitionEvent(PartitionEvent.PARTITION_STARTED, partition);
+            PartitionEvent event = new PartitionEvent(PartitionEvent.PARTITION_STARTED, partitionName);
             for (PartitionListener listener : listeners) {
                 listener.partitionStarted(event);
             }
         }
 
-        log.debug("Partition "+name+" started.");
+        log.debug("Partition "+partitionName+" started.");
     }
 
     public PartitionContext createPartitionContext(PartitionConfig partitionConfig) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
         String partitionName = partitionConfig.getName();
         PartitionContext partitionContext = new PartitionContext();
 
@@ -364,36 +372,7 @@ public class PartitionManager {
             File partitionDir = new File(partitionsDir, partitionConfig.getName());
             partitionContext.setPath(partitionsDir == null ? null : partitionDir);
 
-            File baseDir = new File(partitionDir, "DIR-INF");
-
-            if (debug) log.debug("Creating class loader:");
-            Collection<File> classPaths = new ArrayList<File>();
-
-            File classesDir = new File(baseDir, "classes");
-            if (classesDir.isDirectory()) {
-                log.debug(" - "+classesDir);
-                classPaths.add(classesDir);
-            }
-
-            File libDir = new File(baseDir, "lib");
-            if (libDir.isDirectory()) {
-                File files[] = libDir.listFiles(new FilenameFilter() {
-                    public boolean accept(File dir, String name) {
-                        return name.toLowerCase().endsWith(".jar");
-                    }
-                });
-
-                for (File f : files) {
-                    log.debug(" - "+f);
-                    classPaths.add(f);
-                }
-            }
-
-            ClassLoader classLoader = new PartitionClassLoader(
-                    classPaths,
-                    getClass().getClassLoader()
-            );
-
+            ClassLoader classLoader = new PartitionClassLoader(partitionDir, getClass().getClassLoader());
             partitionContext.setClassLoader(classLoader);
         }
 
@@ -403,20 +382,6 @@ public class PartitionManager {
         partitionContext.setPartitionManager(penroseContext.getPartitionManager());
 
         return partitionContext;
-    }
-
-    public Partition createPartition(PartitionConfig partitionConfig) throws Exception {
-
-        PartitionContext partitionContext = createPartitionContext(partitionConfig);
-
-        Partition partition = createPartition(partitionConfig, partitionContext);
-
-        log.debug("Adding partition "+partitionConfig.getName()+".");
-        partitions.put(partitionConfig.getName(), partition);
-
-        partition.init(partitionConfig, partitionContext);
-
-        return partition;
     }
 
     public Partition createPartition(PartitionConfig partitionConfig, PartitionContext partitionContext) throws Exception {
@@ -476,7 +441,7 @@ public class PartitionManager {
         if (!listeners.isEmpty()) {
             //log.debug("Invoking "+listeners.size()+" listener(s).");
 
-            PartitionEvent event = new PartitionEvent(PartitionEvent.PARTITION_STOPPED, partition);
+            PartitionEvent event = new PartitionEvent(PartitionEvent.PARTITION_STOPPED, partitionName);
             for (PartitionListener listener : listeners) {
                 listener.partitionStopped(event);
             }
@@ -492,7 +457,7 @@ public class PartitionManager {
         if (!listeners.isEmpty()) {
             //log.debug("Invoking "+listeners.size()+" listener(s).");
 
-            PartitionEvent event = new PartitionEvent(PartitionEvent.PARTITION_REMOVED, partitionConfig);
+            PartitionEvent event = new PartitionEvent(PartitionEvent.PARTITION_REMOVED, partitionConfig.getName());
 
             for (PartitionListener listener : listeners) {
                 listener.partitionRemoved(event);

@@ -75,11 +75,11 @@ public class SchemaManager {
 
     public void loadSchemas() throws Exception {
 
-        log.debug("Built-in schema files:");
+        //log.debug("Built-in schema files:");
         File[] list = getSchemaFiles(schemaDir);
         if (list != null) {
             for (File schemaFile : list) {
-                log.debug(" - "+schemaFile);
+                //log.debug(" - "+schemaFile);
 
                 Schema schema = loadSchema(schemaFile);
                 addSchema(schema);
@@ -87,11 +87,11 @@ public class SchemaManager {
             }
         }
 
-        log.debug("Custom schema files:");
+        //log.debug("Custom schema files:");
         list = getSchemaFiles(extDir);
         if (list != null) {
             for (File schemaFile : list) {
-                log.debug(" - "+schemaFile);
+                //log.debug(" - "+schemaFile);
 
                 Schema schema = loadSchema(schemaFile);
                 addSchema(schema);
@@ -104,19 +104,52 @@ public class SchemaManager {
         return reader.read(schemaFile);
     }
 
-    public void addSchema(Schema schema) {
+    public void addSchema(Schema schema) throws Exception {
+
+        Logger log = LoggerFactory.getLogger(getClass());
+        boolean debug = log.isDebugEnabled();
+
+        String schemaName = schema.getName();
+
+        if (debug) log.debug("Adding schema \""+schemaName+"\".");
+
+        validate(schema);
+
         schemas.put(schema.getName(), schema);
         this.schema.add(schema);
     }
 
+    public void validate(Schema schema) throws Exception {
+
+        String schemaName = schema.getName();
+
+        if (schemaName == null || "".equals(schemaName)) {
+            throw new Exception("Missing schema name.");
+        }
+
+        char startingChar = schemaName.charAt(0);
+        if (!Character.isLetter(startingChar)) {
+            throw new Exception("Invalid schema name: "+schemaName);
+        }
+
+        for (int i = 1; i<schemaName.length(); i++) {
+            char c = schemaName.charAt(i);
+            if (Character.isLetterOrDigit(c) || c == '_') continue;
+            throw new Exception("Invalid schema name: "+schemaName);
+        }
+
+        if (schemas.containsKey(schemaName)) {
+            throw new Exception("Schema "+schemaName+" already exists.");
+        }
+    }
+
     public void createSchema(Schema schema) throws Exception {
-
-        File file = new File(extDir, schema.getName()+".schema");
-
-        writer.write(file, schema);
 
         addSchema(schema);
         customSchemas.put(schema.getName(), schema);
+
+        File file = new File(extDir, schema.getName()+".schema");
+        writer.write(file, schema);
     }
 
     public void updateSchema(String schemaName, Schema schema) throws Exception {

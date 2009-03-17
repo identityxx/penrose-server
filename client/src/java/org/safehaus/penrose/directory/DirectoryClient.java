@@ -19,6 +19,7 @@ import javax.management.*;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.ArrayList;
+import java.util.List;
 import java.io.File;
 
 import gnu.getopt.LongOpt;
@@ -44,7 +45,7 @@ public class DirectoryClient extends BaseClient implements DirectoryServiceMBean
     }
 
     public static String getStringObjectName(String partitionName) {
-        return "Penrose:type=directory,partition="+partitionName;
+        return "Penrose:type=Directory,partition="+partitionName;
     }
 
     public String getPartitionName() {
@@ -75,11 +76,27 @@ public class DirectoryClient extends BaseClient implements DirectoryServiceMBean
         return (Collection<String>)getAttribute("EntryNames");
     }
 
-    public Collection<String> getChildNames(String entryName) throws Exception {
-        return (Collection<String>)invoke(
+    public String getParentName(String entryName) throws Exception {
+        return (String)invoke(
+                "getParentName",
+                new Object[] { entryName },
+                new String[] { String.class.getName() }
+        );
+    }
+
+    public List<String> getChildNames(String entryName) throws Exception {
+        return (List<String>)invoke(
                 "getChildNames",
                 new Object[] { entryName },
                 new String[] { String.class.getName() }
+        );
+    }
+
+    public void setChildNames(String entryName, List<String> childNames) throws Exception {
+        invoke(
+                "setChildNames",
+                new Object[] { entryName, childNames },
+                new String[] { String.class.getName(), List.class.getName() }
         );
     }
 
@@ -98,6 +115,14 @@ public class DirectoryClient extends BaseClient implements DirectoryServiceMBean
     public DN getEntryDn(String entryName) throws Exception {
         return (DN)invoke(
                 "getEntryDn",
+                new Object[] { entryName },
+                new String[] { String.class.getName() }
+        );
+    }
+
+    public EntryConfig getEntryConfig(String entryName) throws Exception {
+        return (EntryConfig)invoke(
+                "getEntryConfig",
                 new Object[] { entryName },
                 new String[] { String.class.getName() }
         );

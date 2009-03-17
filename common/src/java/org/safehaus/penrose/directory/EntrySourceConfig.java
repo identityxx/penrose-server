@@ -25,6 +25,8 @@ import java.io.Serializable;
  */
 public class EntrySourceConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     public final static String REQUIRED   = "required";
     public final static String REQUISITE  = "requisite";
     public final static String SUFFICIENT = "sufficient";

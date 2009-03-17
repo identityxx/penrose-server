@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose;
 
-import org.safehaus.penrose.PenroseConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 

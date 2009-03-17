@@ -27,6 +27,8 @@ import java.io.Serializable;
  */
 public class InterpreterConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     private String name = "DEFAULT";
     private String interpreterClass;
     private String description;

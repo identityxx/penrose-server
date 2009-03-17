@@ -28,6 +28,8 @@ import java.io.Serializable;
  */
 public class SourceConfig implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     static {
         log = LoggerFactory.getLogger(SourceConfig.class);
     }
@@ -197,16 +199,47 @@ public class SourceConfig implements Serializable, Cloneable {
         }
     }
 
-    public void addFieldConfig(FieldConfig fieldConfig) {
-        String name = fieldConfig.getName();
-        //log.debug("Adding field "+name+" ("+fieldConfig.isPrimaryKey()+")");
+    public void addFieldConfig(FieldConfig fieldConfig) throws Exception {
 
-        fieldConfigs.put(name, fieldConfig);
+        Logger log = LoggerFactory.getLogger(getClass());
+        boolean debug = log.isDebugEnabled();
+
+        String fieldName = fieldConfig.getName();
+
+        if (debug) log.debug("Adding field \""+fieldName+"\".");
+
+        validate(fieldConfig);
+
+        fieldConfigs.put(fieldName, fieldConfig);
         fieldConfigsByOriginalName.put(fieldConfig.getOriginalName(), fieldConfig);
         if (fieldConfig.isPrimaryKey()) {
             pkFieldConfigs.add(fieldConfig);
         } else {
             nonPkFieldConfigs.add(fieldConfig);
+        }
+    }
+
+    public void validate(FieldConfig fieldConfig) throws Exception {
+
+        String fieldName = fieldConfig.getName();
+
+        if (fieldName == null || "".equals(fieldName)) {
+            throw new Exception("Missing field name.");
+        }
+
+        char startingChar = fieldName.charAt(0);
+        if (!Character.isLetter(startingChar)) {
+            throw new Exception("Invalid field name: "+fieldName);
+        }
+
+        for (int i = 1; i<fieldName.length(); i++) {
+            char c = fieldName.charAt(i);
+            if (Character.isLetterOrDigit(c) || c == '_') continue;
+            throw new Exception("Invalid field name: "+fieldName);
+        }
+
+        if (fieldConfigs.containsKey(fieldName)) {
+            throw new Exception("Field "+fieldName+" already exists.");
         }
     }
 
@@ -366,7 +399,12 @@ public class SourceConfig implements Serializable, Cloneable {
         nonPkFieldConfigs          = new ArrayList<FieldConfig>();
 
         for (FieldConfig fieldConfig : sourceConfig.fieldConfigs.values()) {
-            addFieldConfig((FieldConfig) fieldConfig.clone());
+            FieldConfig newFieldConfig = (FieldConfig)fieldConfig.clone();
+            try {
+                addFieldConfig(newFieldConfig);
+            } catch (Exception e) {
+                throw new CloneNotSupportedException(e.getMessage());
+            }
         }
 
         parameters = new LinkedHashMap<String,String>();

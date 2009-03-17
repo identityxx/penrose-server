@@ -14,8 +14,6 @@ import java.io.File;
  */
 public class ServiceConfigManager {
 
-    public Logger log = LoggerFactory.getLogger(getClass());
-
     public ServiceReader serviceReader = new ServiceReader();
     public ServiceWriter serviceWriter = new ServiceWriter();
 
@@ -24,6 +22,44 @@ public class ServiceConfigManager {
 
     public ServiceConfigManager(File servicesDir) throws Exception {
         this.servicesDir = servicesDir;
+    }
+
+    public void addServiceConfig(ServiceConfig serviceConfig) throws Exception {
+
+        Logger log = LoggerFactory.getLogger(getClass());
+        boolean debug = log.isDebugEnabled();
+
+        String serviceName = serviceConfig.getName();
+
+        if (debug) log.debug("Adding service \""+serviceName+"\".");
+
+        validate(serviceConfig);
+
+        serviceConfigs.put(serviceName, serviceConfig);
+    }
+
+    public void validate(ServiceConfig serviceConfig) throws Exception {
+
+        String serviceName = serviceConfig.getName();
+
+        if (serviceName == null || "".equals(serviceName)) {
+            throw new Exception("Missing service name.");
+        }
+
+        char startingChar = serviceName.charAt(0);
+        if (!Character.isLetter(startingChar)) {
+            throw new Exception("Invalid service name: "+serviceName);
+        }
+
+        for (int i = 1; i<serviceName.length(); i++) {
+            char c = serviceName.charAt(i);
+            if (Character.isLetterOrDigit(c) || c == '_') continue;
+            throw new Exception("Invalid service name: "+serviceName);
+        }
+
+        if (serviceConfigs.containsKey(serviceName)) {
+            throw new Exception("Service "+serviceName+" already exists.");
+        }
     }
 
     public Collection<String> getAvailableServiceNames() throws Exception {
@@ -36,22 +72,24 @@ public class ServiceConfigManager {
 
     public ServiceConfig load(String serviceName) throws Exception {
 
+        Logger log = LoggerFactory.getLogger(getClass());
+        boolean debug = log.isDebugEnabled();
+
         File dir = new File(servicesDir, serviceName);
-        log.debug("Loading service from "+dir+".");
+        if (debug) log.debug("Loading service from "+dir+".");
 
         return serviceReader.read(dir);
     }
 
     public void store(String serviceName, ServiceConfig serviceConfig) throws Exception {
 
+        Logger log = LoggerFactory.getLogger(getClass());
+        boolean debug = log.isDebugEnabled();
+
         File dir = new File(servicesDir, serviceName);
-        log.debug("Storing service from "+dir+".");
+        if (debug) log.debug("Storing service from "+dir+".");
 
         serviceWriter.write(dir, serviceConfig);
-    }
-
-    public void addServiceConfig(ServiceConfig serviceConfig) {
-        serviceConfigs.put(serviceConfig.getName(), serviceConfig);
     }
 
     public ServiceConfig getServiceConfig(String name) {

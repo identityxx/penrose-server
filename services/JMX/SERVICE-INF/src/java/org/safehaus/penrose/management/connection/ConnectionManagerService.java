@@ -17,6 +17,8 @@ import org.safehaus.penrose.session.Session;
 
 import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.LinkedHashMap;
 
 /**
  * @author Endi Sukma Dewata
@@ -25,6 +27,8 @@ public class ConnectionManagerService extends BaseService implements ConnectionM
 
     private PartitionManager partitionManager;
     private String partitionName;
+
+    Map<String,ConnectionService> connectionServices = new LinkedHashMap<String,ConnectionService>();
 
     public ConnectionManagerService(PenroseJMXService jmxService, PartitionManager partitionManager, String partitionName) throws Exception {
 
@@ -61,7 +65,7 @@ public class ConnectionManagerService extends BaseService implements ConnectionM
         return partition.getConnectionManager();
     }
 
-    public ConnectionService getConnectionService(String connectionName) throws Exception {
+    public void createConnectionService(String connectionName) throws Exception {
 
         ConnectionConfigManager connectionConfigManager = getConnectionConfigManager();
         ConnectionConfig connectionConfig = connectionConfigManager.getConnectionConfig(connectionName);
@@ -74,31 +78,40 @@ public class ConnectionManagerService extends BaseService implements ConnectionM
         } else {
             connectionService = new ConnectionService(jmxService, partitionManager, partitionName, connectionName);
         }
-        
+
         connectionService.init();
 
-        return connectionService;
+        connectionServices.put(connectionName, connectionService);
     }
 
-    public void register() throws Exception {
+    public ConnectionService getConnectionService(String connectionName) throws Exception {
+        return connectionServices.get(connectionName);
+    }
 
-        super.register();
+    public void removeConnectionService(String connectionName) throws Exception {
+        ConnectionService connectionService = connectionServices.remove(connectionName);
+        if (connectionService == null) return;
+
+        connectionService.destroy();
+    }
+
+    public void init() throws Exception {
+
+        super.init();
 
         ConnectionConfigManager connectionConfigManager = getConnectionConfigManager();
         for (String connectionName : connectionConfigManager.getConnectionNames()) {
-            ConnectionService connectionService = getConnectionService(connectionName);
-            connectionService.register();
+            createConnectionService(connectionName);
         }
     }
 
-    public void unregister() throws Exception {
+    public void destroy() throws Exception {
         ConnectionConfigManager connectionConfigManager = getConnectionConfigManager();
         for (String connectionName : connectionConfigManager.getConnectionNames()) {
-            ConnectionService connectionService = getConnectionService(connectionName);
-            connectionService.unregister();
+            removeConnectionService(connectionName);
         }
 
-        super.unregister();
+        super.destroy();
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -237,8 +250,7 @@ public class ConnectionManagerService extends BaseService implements ConnectionM
             connectionManager.startConnection(connectionName);
         }
 
-        ConnectionService connectionService = getConnectionService(connectionName);
-        connectionService.register();
+        createConnectionService(connectionName);
     }
 
     public void renameConnection(String name, String newName) throws Exception {
@@ -267,8 +279,7 @@ public class ConnectionManagerService extends BaseService implements ConnectionM
             if (running) connectionManager.stopConnection(name);
         }
 
-        ConnectionService connectionService = getConnectionService(name);
-        connectionService.unregister();
+        removeConnectionService(name);
 
         ConnectionConfigManager connectionConfigManager = partitionConfig.getConnectionConfigManager();
         connectionConfigManager.renameConnectionConfig(name, newName);
@@ -278,8 +289,7 @@ public class ConnectionManagerService extends BaseService implements ConnectionM
             if (running) connectionManager.startConnection(newName);
         }
 
-        ConnectionService newConnectionService = getConnectionService(newName);
-        newConnectionService.register();
+        createConnectionService(newName);
     }
 
     public void updateConnection(String connectionName, ConnectionConfig connectionConfig) throws Exception {
@@ -320,8 +330,7 @@ public class ConnectionManagerService extends BaseService implements ConnectionM
             throw new Exception("Connection "+connectionName+" is in use.");
         }
 
-        ConnectionService connectionService = getConnectionService(connectionName);
-        connectionService.unregister();
+        removeConnectionService(connectionName);
 
         Partition partition = getPartition();
         if (partition != null) {

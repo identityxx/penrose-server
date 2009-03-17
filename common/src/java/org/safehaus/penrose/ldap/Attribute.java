@@ -14,6 +14,8 @@ import java.io.Serializable;
  */
 public class Attribute implements Serializable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     protected String name;
     protected Collection<Object> values = new LinkedHashSet<Object>();
 

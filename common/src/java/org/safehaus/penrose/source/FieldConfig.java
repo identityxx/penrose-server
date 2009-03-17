@@ -28,6 +28,8 @@ import java.io.Serializable;
  */
 public class FieldConfig implements Serializable, Comparable, Cloneable {
 
+    public final static long serialVersionUID = 1L;
+
     public final static String TYPE_CHAR      = "CHAR";
     public final static String TYPE_VARCHAR   = "VARCHAR";
     public final static String TYPE_TEXT      = "TEXT";

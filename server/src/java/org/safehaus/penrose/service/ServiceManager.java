@@ -22,8 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -45,7 +43,7 @@ public class ServiceManager {
         this.serviceConfigManager = serviceConfigManager;
     }
 
-    public void addServiceConfig(ServiceConfig serviceConfig) {
+    public void addServiceConfig(ServiceConfig serviceConfig) throws Exception {
         serviceConfigManager.addServiceConfig(serviceConfig);
     }
 
@@ -85,36 +83,48 @@ public class ServiceManager {
         serviceConfigManager.addServiceConfig(serviceConfig);
     }
 
-    public Service startService(String name) throws Exception {
+    public Service startService(String serviceName) throws Exception {
 
-        ServiceConfig serviceConfig = serviceConfigManager.getServiceConfig(name);
+        ServiceConfig serviceConfig = serviceConfigManager.getServiceConfig(serviceName);
         
         if (!serviceConfig.isEnabled()) {
             log.debug(serviceConfig.getName()+" service is disabled.");
             return null;
         }
 
-        log.debug("Starting "+name+" service.");
+        log.debug("Starting "+serviceName+" service.");
 
-        File serviceDir = new File(serviceConfigManager.getServicesDir(), name);
+        ServiceContext serviceContext = createServiceContext(serviceConfig);
 
-        Collection<URL> classPaths = serviceConfig.getClassPaths();
-        URLClassLoader classLoader = new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]), getClass().getClassLoader());
+        Service service = createService(serviceConfig, serviceContext);
+        service.init(serviceConfig, serviceContext);
 
-        Class clazz = classLoader.loadClass(serviceConfig.getServiceClass());
+        addService(service);
 
-        Service service = (Service)clazz.newInstance();
+        return service;
+    }
+
+    public ServiceContext createServiceContext(ServiceConfig serviceConfig) throws Exception {
+
+        File serviceDir = new File(serviceConfigManager.getServicesDir(), serviceConfig.getName());
+        ClassLoader classLoader = new ServiceClassLoader(serviceDir, getClass().getClassLoader());
+
+        //Collection<URL> classPaths = serviceConfig.getClassPaths();
+        //URLClassLoader classLoader = new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]), getClass().getClassLoader());
 
         ServiceContext serviceContext = new ServiceContext();
         serviceContext.setPath(serviceDir);
         serviceContext.setPenroseServer(penroseServer);
         serviceContext.setClassLoader(classLoader);
 
-        service.init(serviceConfig, serviceContext);
+        return serviceContext;
+    }
 
-        addService(service);
+    public Service createService(ServiceConfig serviceConfig, ServiceContext serviceContext) throws Exception {
 
-        return service;
+        ClassLoader classLoader = serviceContext.getClassLoader();
+        Class clazz = classLoader.loadClass(serviceConfig.getServiceClass());
+        return (Service)clazz.newInstance();
     }
 
     public void stopService(String name) throws Exception {
