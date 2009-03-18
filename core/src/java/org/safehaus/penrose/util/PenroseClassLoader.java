@@ -161,7 +161,7 @@ public class PenroseClassLoader extends ClassLoader {
             JarEntry jarEntry = (JarEntry)jarFile.getEntry(name);
             if (jarEntry == null) return null;
 
-            return new URL("jar:file:/"+file+"!/"+name);
+            return new URL("jar:file:"+file+"!/"+name);
 
         } finally {
             if (jarFile != null) try { jarFile.close(); } catch (IOException e) { Penrose.errorLog.error(e.getMessage(), e); }
@@ -187,14 +187,14 @@ public class PenroseClassLoader extends ClassLoader {
         }
 
         //if (debug) log.debug("Resource "+name+" not found.");
-        
+
         return null;
     }
 
     public Enumeration<URL> findResources(String name) throws IOException {
 
         //boolean debug = log.isDebugEnabled();
-        //if (debug) log.debug("Searching resource "+name+":");
+        //if (debug) log.debug("Searching resources "+name+":");
 
         final Collection<URL> urls = new ArrayList<URL>();
 
