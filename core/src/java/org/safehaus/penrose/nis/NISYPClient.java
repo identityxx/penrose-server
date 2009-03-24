@@ -67,14 +67,16 @@ public class NISYPClient extends NISClient {
 
         BufferedReader in = null;
         PrintWriter out = null;
+        BufferedReader err = null;
 
         try {
             Process process = ypmatch(name, base);
 
             in = new BufferedReader(new InputStreamReader(process.getInputStream()));
             out = new PrintWriter(new OutputStreamWriter(process.getOutputStream()), true);
+            err = new BufferedReader(new InputStreamReader(process.getErrorStream()));
 
-            new ReaderThread(process.getErrorStream(), System.err).start();
+            //new ReaderThread(process.getErrorStream(), System.err).start();
 
             String line = in.readLine();
             if (line == null) {
@@ -98,12 +100,15 @@ public class NISYPClient extends NISClient {
             if (debug) log.debug("RC: "+rc);
 
             if (rc != 0) {
+                line = err.readLine();
+                log.error(line);
                 throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
             }
 
         } finally {
             if (in != null) in.close();
             if (out != null) out.close();
+            if (err != null) err.close();
 
             response.close();
         }
@@ -127,14 +132,16 @@ public class NISYPClient extends NISClient {
 
         BufferedReader in = null;
         PrintWriter out = null;
+        BufferedReader err = null;
 
         try {
             Process process = ypcat(base);
 
             in = new BufferedReader(new InputStreamReader(process.getInputStream()));
             out = new PrintWriter(new OutputStreamWriter(process.getOutputStream()), true);
+            err = new BufferedReader(new InputStreamReader(process.getErrorStream()));
 
-            new ReaderThread(process.getErrorStream(), System.err).start();
+            //new ReaderThread(process.getErrorStream(), System.err).start();
 
             String line;
 
@@ -153,12 +160,15 @@ public class NISYPClient extends NISClient {
             if (debug) log.debug("RC: "+rc);
 
             if (rc != 0) {
+                line = err.readLine();
+                log.error(line);
                 throw LDAP.createException(LDAP.OPERATIONS_ERROR);
             }
 
         } finally {
             if (in != null) in.close();
             if (out != null) out.close();
+            if (err != null) err.close();
 
             response.close();
         }

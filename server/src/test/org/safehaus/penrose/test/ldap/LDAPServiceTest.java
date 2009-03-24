@@ -60,7 +60,6 @@ public class LDAPServiceTest extends TestCase {
         logger.setLevel(Level.INFO);
 
         penroseConfig = new DefaultPenroseConfig();
-        penroseConfig.removeServiceConfig("JMX");
 
         penroseServer = new PenroseServer(penroseConfig);
         penroseServer.start();

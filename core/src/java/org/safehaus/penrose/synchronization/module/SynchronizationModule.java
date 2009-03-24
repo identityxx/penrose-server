@@ -1,7 +1,7 @@
 package org.safehaus.penrose.synchronization.module;
 
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.synchronization.SynchronizationMBean;
+import org.safehaus.penrose.synchronization.SynchronizationModuleMBean;
 import org.safehaus.penrose.ldap.source.LDAPSource;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.partition.Partition;
@@ -9,7 +9,6 @@ import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.synchronization.SynchronizationResult;
-import org.ietf.ldap.LDAPException;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -19,7 +18,7 @@ import java.util.*;
 /**
  * @author Endi Sukma Dewata
  */
-public class SynchronizationModule extends Module implements SynchronizationMBean {
+public class SynchronizationModule extends Module implements SynchronizationModuleMBean {
 
     protected String sourcePartitionName;
     protected String sourceName;
@@ -597,11 +596,11 @@ public class SynchronizationModule extends Module implements SynchronizationMBea
             if (rc != LDAP.SUCCESS) throw response.getException();
 
             return response.getTotalCount();
-
+/*
         } catch (LDAPException e) {
             log.debug(e.getMessage());
             return 0L;
-
+*/
         } finally {
             session.close();
         }
@@ -699,9 +698,11 @@ public class SynchronizationModule extends Module implements SynchronizationMBea
 
     public SynchronizationResult synchronize(final Session session, final DN targetDn) throws Exception {
 
+        long startTime = System.currentTimeMillis();
+
         final boolean warn = log.isWarnEnabled();
 
-        long startTime = System.currentTimeMillis();
+        final SynchronizationResult result = new SynchronizationResult();
 
         final DN sourceSuffix = getSourceSuffix();
         final DN targetSuffix = getTargetSuffix();
@@ -743,16 +744,20 @@ public class SynchronizationModule extends Module implements SynchronizationMBea
         try {
             target.search(session, targetRequest, targetResponse);
         } catch (Exception e) {
-            log.info("Message: "+e.getMessage());
+            log.error(e.getMessage(), e);
+            return result;
         }
 
         int rc1 = targetResponse.waitFor();
         if (warn) log.warn("Search completed. RC="+rc1+".");
 
+        if (rc1 != LDAP.SUCCESS) {
+            return result;
+        }
+
         long targetEntries = targetResponse.getTotalCount();
         if (warn) log.warn("Found "+targetEntries+" entries.");
 
-        final SynchronizationResult result = new SynchronizationResult();
         result.setTargetEntries(targetEntries);
 
         SearchRequest sourceRequest = new SearchRequest();
@@ -832,10 +837,20 @@ public class SynchronizationModule extends Module implements SynchronizationMBea
         };
 
         Source source = getSource();
-        source.search(session, sourceRequest, sourceResponse);
+        
+        try {
+            source.search(session, sourceRequest, sourceResponse);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return result;
+        }
 
         int rc2 = sourceResponse.waitFor();
         if (warn) log.warn("Search completed. RC="+rc2+".");
+
+        if (rc2 != LDAP.SUCCESS) {
+            return result;
+        }
 
         if (warn) log.warn("Found "+sourceResponse.getTotalCount()+" source entries.");
         result.setSourceEntries(sourceResponse.getTotalCount());

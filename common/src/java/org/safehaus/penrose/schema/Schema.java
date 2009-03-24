@@ -33,7 +33,7 @@ public class Schema implements Serializable, Cloneable {
     private String name;
 
     protected Set<AttributeType> attributeTypes = new LinkedHashSet<AttributeType>();
-    protected Map<String,AttributeType> attributeTypesByNameOrOid = new HashMap<String,AttributeType>();
+    protected Map<String,AttributeType> attributeTypesByNameOrOid = new TreeMap<String,AttributeType>();
 
     protected Set<ObjectClass> objectClasses = new LinkedHashSet<ObjectClass>();
     protected Map<String,ObjectClass> objectClassesByNameOrOid = new TreeMap<String,ObjectClass>();

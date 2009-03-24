@@ -8,6 +8,7 @@ import java.util.Collection;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.Schema;
+import org.safehaus.penrose.schema.SchemaParser;
 
 /**
  * @author Endi S. Dewata

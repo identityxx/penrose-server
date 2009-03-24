@@ -11,15 +11,14 @@ public class SynchronizationResult implements Serializable {
 
     public final static long serialVersionUID = 1L;
 
-    private long sourceEntries;
+    private Long sourceEntries;
+    private Long targetEntries;
 
     private long addedEntries;
     private long modifiedEntries;
     private long deletedEntries;
     private long unchangedEntries;
     private long failedEntries;
-
-    private long targetEntries;
 
     private long duration;
 
@@ -28,13 +27,19 @@ public class SynchronizationResult implements Serializable {
 
     public void add(SynchronizationResult result) {
 
-        sourceEntries += result.sourceEntries;
+        if (result.sourceEntries != null) {
+            sourceEntries = sourceEntries == null ? result.sourceEntries : sourceEntries + result.sourceEntries;
+        }
+
+        if (result.targetEntries != null) {
+            targetEntries = targetEntries == null ? result.targetEntries : targetEntries + result.targetEntries;
+        }
+
         addedEntries += result.addedEntries;
         modifiedEntries += result.modifiedEntries;
         deletedEntries += result.deletedEntries;
         unchangedEntries += result.unchangedEntries;
         failedEntries += result.failedEntries;
-        targetEntries += result.targetEntries;
         duration += result.duration;
     }
 
@@ -108,12 +113,20 @@ public class SynchronizationResult implements Serializable {
         failedEntries++;
     }
 
-    public long getSourceEntries() {
+    public Long getSourceEntries() {
         return sourceEntries;
     }
 
-    public void setSourceEntries(long sourceEntries) {
+    public void setSourceEntries(Long sourceEntries) {
         this.sourceEntries = sourceEntries;
+    }
+
+    public Long getTargetEntries() {
+        return targetEntries;
+    }
+
+    public void setTargetEntries(Long targetEntries) {
+        this.targetEntries = targetEntries;
     }
 
     public String toString() {
@@ -121,24 +134,16 @@ public class SynchronizationResult implements Serializable {
         PrintWriter out = new PrintWriter(sw, true);
 
         out.println("Synchronization result:");
-        out.println(" - source    : "+sourceEntries);
+        out.println(" - source    : "+(sourceEntries == null ? "N/A" : sourceEntries));
         out.println(" - added     : "+addedEntries);
         out.println(" - modified  : "+modifiedEntries);
         out.println(" - deleted   : "+deletedEntries);
         out.println(" - unchanged : "+unchangedEntries);
         out.println(" - failed    : "+failedEntries);
-        out.println(" - target    : "+targetEntries);
+        out.println(" - target    : "+(targetEntries == null ? "N/A" : targetEntries));
         out.print  (" - duration  : "+(duration/1000.0)+" s");
         out.close();
 
         return sw.toString();
-    }
-
-    public long getTargetEntries() {
-        return targetEntries;
-    }
-
-    public void setTargetEntries(long targetEntries) {
-        this.targetEntries = targetEntries;
     }
 }

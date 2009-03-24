@@ -140,7 +140,7 @@ public class NISAutomountsSource extends Source {
 
             } catch (Exception ex) {
                 if (debug) log.debug("Failed accessing "+automountMapName+": "+ex.getMessage());
-                return null;
+                throw LDAP.createException(LDAP.OPERATIONS_ERROR);
             }
 
         } finally {

@@ -353,7 +353,6 @@ public class NISAutomountsEntry extends DynamicEntry {
         Map<String,NISMap> maps = new LinkedHashMap<String,NISMap>();
 
         NISMap autoMaster = automountsSource.getAutomountMap(session, base);
-        if (autoMaster == null) return maps;
 
         maps.put(autoMaster.getName(), autoMaster);
 
@@ -384,12 +383,15 @@ public class NISAutomountsEntry extends DynamicEntry {
                 mapName = "auto." + mapName.substring(5);
             }
 
-            NISMap map = automountsSource.getAutomountMap(session, mapName);
-            if (map == null) continue;
+            try {
+                NISMap map = automountsSource.getAutomountMap(session, mapName);
 
-            map.setDescription(description);
+                map.setDescription(description);
+                maps.put(mapName, map);
 
-            maps.put(mapName, map);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }
 
         return maps;
@@ -411,9 +413,12 @@ public class NISAutomountsEntry extends DynamicEntry {
 
         if (debug) log.debug("Searching automount map "+automountMapName);
 
-        NISMap map = automountsSource.getAutomountMap(session, automountMapName);
+        NISMap map;
 
-        if (map == null) {
+        try {
+            map = automountsSource.getAutomountMap(session, automountMapName);
+
+        } catch (Exception e) {
             Penrose.errorLog.error("Automount map "+automountMapName+" not found.");
             throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
         }
@@ -458,9 +463,12 @@ public class NISAutomountsEntry extends DynamicEntry {
 
         if (debug) log.debug("Searching automount "+name+" in map "+mapName);
 
-        NISMap map = automountsSource.getAutomountMap(session, mapName);
+        NISMap map;
 
-        if (map == null) {
+        try {
+            map = automountsSource.getAutomountMap(session, mapName);
+
+        } catch (Exception e) {
             Penrose.errorLog.error("Automount map "+mapName+" not found.");
             throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
         }
