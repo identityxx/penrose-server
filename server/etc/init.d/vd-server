@@ -26,7 +26,7 @@ VD_SERVER_SCRIPT=$VD_SERVER_HOME/bin/vd-server.sh
 
 [ -x $VD_SERVER_SCRIPT ] || exit 0
 
-if [ -z "VD_USER" ] ; then
+if [ -z "$VD_USER" ] ; then
     VD_USER=root
 fi
 

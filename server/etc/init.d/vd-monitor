@@ -26,7 +26,7 @@ VD_MONITOR_SCRIPT=$VD_SERVER_HOME/bin/vd-monitor.sh
 
 [ -x $VD_MONITOR_SCRIPT ] || exit 0
 
-if [ -z "VD_USER" ] ; then
+if [ -z "$VD_USER" ] ; then
     VD_USER=root
 fi
 
