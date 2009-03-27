@@ -434,6 +434,7 @@ public class SynchronizationModule extends Module implements SynchronizationModu
 
             SearchRequest request = new SearchRequest();
             request.setDn(sourceDn);
+            request.setScope(SearchRequest.SCOPE_BASE);
 
             SearchResponse response = new SearchResponse();
 
