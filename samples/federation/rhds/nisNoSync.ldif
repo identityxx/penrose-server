@@ -1,6 +1,6 @@
 dn: cn=schema
 changetype: modify
 add: objectClasses
-objectClasses: ( nisNoSync-oid NAME 'nisNoSync' DESC 'nisNoSync' SUP
+objectClasses: ( 1.3.6.1.4.1.13313.5001.1.1.2 NAME 'nisNoSync' DESC 'nisNoSync' SUP
   top AUXILIARY X-ORIGIN 'user defined' )
 -

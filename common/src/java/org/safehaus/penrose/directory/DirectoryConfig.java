@@ -186,7 +186,9 @@ public class DirectoryConfig implements Serializable, Cloneable {
         Logger log = LoggerFactory.getLogger(getClass());
         boolean debug = log.isDebugEnabled();
 
-        for (String childName : getChildNames(name)) {
+        Collection<String> childNames = new ArrayList<String>();
+        childNames.addAll(getChildNames(name));
+        for (String childName : childNames) {
             removeEntryConfig(childName);
         }
 
