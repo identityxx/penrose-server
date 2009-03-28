@@ -9,6 +9,7 @@ import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.synchronization.SynchronizationResult;
+import org.ietf.ldap.LDAPException;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -744,16 +745,25 @@ public class SynchronizationModule extends Module implements SynchronizationModu
 
         try {
             target.search(session, targetRequest, targetResponse);
+
+        } catch (LDAPException e) {
+            int rc = e.getResultCode();
+            if (rc == LDAP.CONNECT_ERROR) {
+                throw LDAP.createException(rc, "Unable to access target server.");
+            } else {
+                throw e;
+            }
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            return result;
+            throw e;
         }
 
         int rc1 = targetResponse.waitFor();
         if (warn) log.warn("Search completed. RC="+rc1+".");
 
         if (rc1 != LDAP.SUCCESS) {
-            return result;
+            throw LDAP.createException(rc1, "Unable to access target server.");
         }
 
         long targetEntries = targetResponse.getTotalCount();

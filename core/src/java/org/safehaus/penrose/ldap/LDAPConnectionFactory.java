@@ -114,6 +114,7 @@ public class LDAPConnectionFactory {
     }
 
     public void connect(org.ietf.ldap.LDAPConnection connection) throws Exception {
+        LDAPException exception = null;
         for (LDAPUrl url : urls) {
             try {
                 connection.connect(url.getHost(), url.getPort());
@@ -122,9 +123,16 @@ public class LDAPConnectionFactory {
 
             } catch (LDAPException e) {
                 log.debug("Failed connecting to "+url+".");
+                if (exception == null) exception = e;
             }
         }
 
-        if (!connection.isConnected()) throw LDAP.createException(LDAP.OPERATIONS_ERROR);
+        if (!connection.isConnected()) {
+            if (exception == null) {
+                throw LDAP.createException(LDAP.CONNECT_ERROR);
+            } else {
+                throw exception;
+            }
+        }
     }
 }
