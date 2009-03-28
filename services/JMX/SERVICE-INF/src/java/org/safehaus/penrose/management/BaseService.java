@@ -266,7 +266,7 @@ public abstract class BaseService implements DynamicMBean {
 
         } catch (InvocationTargetException e) {
             Exception cause = (Exception)e.getCause();
-            log.error(cause.getMessage(), cause);
+            //log.error(cause.getMessage(), cause);
             throw new MBeanException(cause);
 
         } finally {

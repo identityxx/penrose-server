@@ -2,7 +2,6 @@ package org.safehaus.penrose.nis;
 
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.util.TextUtil;
-import org.safehaus.penrose.thread.ReaderThread;
 
 import javax.naming.Context;
 import java.util.Hashtable;
@@ -76,8 +75,6 @@ public class NISYPClient extends NISClient {
             out = new PrintWriter(new OutputStreamWriter(process.getOutputStream()), true);
             err = new BufferedReader(new InputStreamReader(process.getErrorStream()));
 
-            //new ReaderThread(process.getErrorStream(), System.err).start();
-
             String line = in.readLine();
             if (line == null) {
                 throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
@@ -140,8 +137,6 @@ public class NISYPClient extends NISClient {
             in = new BufferedReader(new InputStreamReader(process.getInputStream()));
             out = new PrintWriter(new OutputStreamWriter(process.getOutputStream()), true);
             err = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-
-            //new ReaderThread(process.getErrorStream(), System.err).start();
 
             String line;
 
