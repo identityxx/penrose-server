@@ -282,15 +282,13 @@ public abstract class NISClient {
 
         RDNBuilder rb = new RDNBuilder();
 
-        StringTokenizer st = new StringTokenizer(line, "\t ");
-
-        attributes.setValue("ipHostNumber", st.nextToken());
-
-        name = st.nextToken();
-
         rb.set("cn", name);
         attributes.setValue("primaryKey.cn", name);
         attributes.setValue("cn", name);
+
+        StringTokenizer st = new StringTokenizer(line, "\t ");
+
+        attributes.setValue("ipHostNumber", st.nextToken());
 
         while (st.hasMoreTokens()) {
             name = st.nextToken();
