@@ -20,19 +20,10 @@
   <source name="groups">
     <connection-name>PostgreSQL</connection-name>
     <field name="groupname" primaryKey="true"/>
+    <field name="description"/>
     <parameter>
       <param-name>table</param-name>
       <param-value>groups</param-value>
-    </parameter>
-  </source>
-
-  <source name="usergroups">
-    <connection-name>PostgreSQL</connection-name>
-    <field name="groupname" primaryKey="true"/>
-    <field name="username" primaryKey="true"/>
-    <parameter>
-      <param-name>table</param-name>
-      <param-value>usergroups</param-value>
     </parameter>
   </source>
 
