@@ -1082,6 +1082,9 @@ public class Partition implements Cloneable {
                     try {
                         searchEntry(op, entry);
 
+                    } catch (LDAPException e) {
+                        op.setException(e);
+                        
                     } catch (Throwable e) {
                         Penrose.errorLog.error(e.getMessage(), e);
                         op.setException(LDAP.createException(e));
