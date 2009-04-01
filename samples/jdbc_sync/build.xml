@@ -1,5 +1,5 @@
 <!--
- Copyright (c) 2000-2006, Identyx Corporation.
+ Copyright 2009 Red Hat, Inc.
  All rights reserved.
 -->
 <project name="jdbc_sync" default="build">

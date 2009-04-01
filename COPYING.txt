@@ -1,6 +1,37 @@
-Penrose is licensed to you by Identyx Corporation.  under the
-GNU General Public License version 2, a copy of which is enclosed in the
-file LICENSE.txt.
+Penrose Virtual Directory
+Copyright 2009 Red Hat, Inc.
 
-(If you cannot or do not wish to meet the requirements of the GNU GPL 2,
-contact info@identyx.com for alternative terms.)
+All code contained in Penrose Virtual Directory for which copyright
+is held by Red Hat (and/or its affiliates) is licensed under the GNU
+General Public License as published by the Free Software Foundation,
+either version 2 of the license or (at your option) any later
+version.  See the file LICENSE.txt.
+
+TO THE MAXIMUM EXTENT PERMITTED UNDER APPLICABLE LAW, THIS SOFTWARE
+IS PROVIDED AND LICENSED "AS IS" WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING THE IMPLIED WARRANTIES OF TITLE,
+MERCHANTABILITY, NON-INFRINGEMENT OR FITNESS FOR A PARTICULAR
+PURPOSE. Red Hat does not warrant that the software functionality
+will meet your requirements or that the operation of the software
+will be entirely error free, appear precisely as described in the
+accompanying documentation, or comply with regulatory requirements.
+
+Penrose Virtual Directory contains code copyrighted by other parties
+and governed by other licenses.  Some such code is governed by
+licenses incompatible with the GNU GPL (such code, and any
+derivative work of such code to the extent that it is licensed under
+the same license as the original version, are referred to herein
+collectively as "GPL-Incompatible Code").  As a special exception to
+the GNU GPL, Red Hat gives you permission to combine and distribute
+its GPL-licensed code in Penrose Virtual Directory (or derivative
+works thereof) with GPL-Incompatible Code, provided that you make
+available the sources of GPL-Incompatible Code, under the license
+applicable to that GPL-Incompatible Code, when and as the GNU GPL
+requires distribution of source code.
+
+If you make a modified version of Penrose Virtual Directory, you are
+not obligated to grant this special exception for your modified
+version; it is your choice whether to do so. The GNU GPL gives
+permission to release a modified version without this exception;
+this exception also makes it possible to release a modified version
+which carries forward this exception.

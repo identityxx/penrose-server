@@ -2,7 +2,7 @@ Installing Penrose on Windows
 -----------------------------
 
 On Windows platforms, double-click the installer program (${project.name}-${product.version}.exe).
-Select an installation directory (e.g. C:\Program Files\Identyx\${project.title} Server ${product.version}).
+Select an installation directory (e.g. C:\Program Files\Red Hat\${project.title} Server ${product.version}).
 We will refer the installation directory as PENROSE_SERVER_HOME.
 
 Installing Penrose on Unix
@@ -18,7 +18,7 @@ We will refer the installation directory as PENROSE_SERVER_HOME.
 Running Penrose
 ---------------
 
-On Windows platforms, go to Start -> Programs -> Identyx -> ${project.title} Server ${product.version} -> ${project.title} Server.
+On Windows platforms, go to Start -> Programs -> Red Hat -> ${project.title} Server ${product.version} -> ${project.title} Server.
 
 On other platforms, go to PENROSE_SERVER_HOME, execute:
 
