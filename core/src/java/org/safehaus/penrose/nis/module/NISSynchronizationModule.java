@@ -42,19 +42,6 @@ public class NISSynchronizationModule extends SynchronizationModule implements N
     public String getNisMapRDN(String nisMap) {
         return nisMapRDNs.get(nisMap);
     }
-    
-    public Collection<Modification> createModifications(
-            Attributes attributes1,
-            Attributes attributes2
-    ) throws Exception {
-
-        convertAutomount(attributes2);
-
-        return super.createModifications(
-                attributes1,
-                attributes2
-        );
-    }
 
     public void convertAutomount(Attributes attributes) throws Exception {
 
@@ -229,14 +216,15 @@ public class NISSynchronizationModule extends SynchronizationModule implements N
                 DN dn1 = dn2.getPrefix(sourceSuffix).append(targetSuffix);
                 String normalizedDn = dn1.getNormalizedDn();
 
+                Attributes attributes2 = result2.getAttributes();
+                convertAutomount(attributes2);
+
                 if (dns.contains(normalizedDn)) {
 
                     SearchResult result1 = target.find(session, dn1);
 
                     Attributes attributes1 = result1.getAttributes();
                     if (!checkSearchResult(result1)) return;
-
-                    Attributes attributes2 = result2.getAttributes();
 
                     Collection<Modification> modifications = createModifications(
                             attributes1,
@@ -272,7 +260,7 @@ public class NISSynchronizationModule extends SynchronizationModule implements N
 
                     AddRequest request = new AddRequest();
                     request.setDn(dn1);
-                    request.setAttributes(result2.getAttributes());
+                    request.setAttributes(attributes2);
 
                     try {
                         execute(session, request);
