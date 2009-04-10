@@ -1,0 +1,44 @@
+Index: src/server/org/opends/server/core/AddOperation.java
+===================================================================
+--- src/server/org/opends/server/core/AddOperation.java	(revision 1910)
++++ src/server/org/opends/server/core/AddOperation.java	(working copy)
+@@ -519,6 +519,9 @@
+     return entry;
+   }
+ 
++  public void setEntryToAdd(Entry entry) {
++      this.entry = entry;
++  }
+ 
+ 
+   /**
+Index: src/server/org/opends/server/protocols/ldap/LDAPClientConnection.java
+===================================================================
+--- src/server/org/opends/server/protocols/ldap/LDAPClientConnection.java	(revision 1910)
++++ src/server/org/opends/server/protocols/ldap/LDAPClientConnection.java	(working copy)
+@@ -843,7 +843,7 @@
+    *                           handle any necessary security translation.
+    * @param  message           The LDAP message to send to the client.
+    */
+-  private void sendLDAPMessage(ConnectionSecurityProvider secProvider,
++  public void sendLDAPMessage(ConnectionSecurityProvider secProvider,
+                                LDAPMessage message)
+   {
+     ASN1Element messageElement = message.encode();
+Index: src/server/org/opends/server/types/DN.java
+===================================================================
+--- src/server/org/opends/server/types/DN.java	(revision 1910)
++++ src/server/org/opends/server/types/DN.java	(working copy)
+@@ -128,7 +128,12 @@
+   }
+ 
+ 
++  public DN(String dnString) {
++    this.dnString = dnString;
++    this.normalizedDN = dnString;
++  }
+ 
++
+   /**
+    * Creates a new DN with the provided set of RDNs, arranged with the
+    * suffix as the last element.

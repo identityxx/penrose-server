@@ -8,6 +8,11 @@
       <sourceFolder url="file://$MODULE_DIR$/common/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/core/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/core/src/test" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/ldap-backend/apacheds/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/ldap-backend/mina/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/ldap-backend/opends/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/ldap-backend/openldap/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/ldap-backend/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/monitors/JMX/MONITOR-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/monitors/LDAP/MONITOR-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/abandon/DIR-INF/src" isTestSource="false" />

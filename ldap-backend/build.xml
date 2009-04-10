@@ -1,0 +1,91 @@
+<!--
+ Copyright 2009 Red Hat, Inc.
+ All rights reserved.
+-->
+<project name="ldap-backend" default="build">
+
+    <description>LDAP backend</description>
+
+    <property file="build.properties"/>
+    <property name="prefix" value=""/>
+
+    <tstamp/>
+
+    <path id="lib.path">
+        <fileset dir="lib">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>
+
+    <target name="init">
+        <echo message="Operating System: ${os.name} ${os.version}" />
+        <condition property="isWindows">
+            <os family="windows"/>
+        </condition>
+        <condition property="isUnix">
+            <and>
+                <os family="unix"/>
+                <not>
+                    <os family="mac"/>
+                </not>
+            </and>
+        </condition>
+        <condition property="isMac">
+            <os family="mac"/>
+        </condition>
+    </target>
+
+    <target name="build" depends="init">
+        <mkdir dir="target/classes"/>
+        <javac
+            srcdir="src/java"
+            destdir="target/classes"
+            classpathref="lib.path"
+            debug="on"
+            debuglevel="lines,vars,source"
+            source="1.5"
+            target="1.5"
+        />
+        <copy todir="target/classes">
+            <fileset dir="src/java" includes="**/*.properties,**/*.xml,**/*.dtd"/>
+        </copy>
+        <jar jarfile="target/${product.name}-${product.version}.jar">
+            <fileset dir="target/classes"/>
+            <manifest>
+                <attribute name="Specification-Version"  value="${product.specification}"/>
+                <attribute name="Implementation-Title"   value="${product.title}"/>
+                <attribute name="Implementation-Version" value="${product.version}"/>
+                <attribute name="Implementation-Vendor"  value="${product.vendor}"/>
+                <attribute name="Build-Date" value="${DSTAMP}"/>
+            </manifest>
+        </jar>
+        <ant dir="apacheds" target="build"/>
+        <ant dir="mina" target="build"/>
+        <ant dir="opends" target="build"/>
+    </target>
+
+    <target name="dist" depends="build">
+        <ant dir="apacheds" target="dist"/>
+        <ant dir="mina" target="dist"/>
+        <ant dir="opends" target="dist"/>
+    </target>
+
+    <target name="docs" depends="init">
+        <mkdir dir="target/dist/javadoc"/>
+        <javadoc packagenames="*"
+            sourcepath="src/java"
+            destdir="target/dist/javadoc">
+        </javadoc>
+        <tar destfile="target/${product.name}-docs.tar.gz" compression="gzip">
+            <tarfileset dir="target/dist/javadoc"/>
+       </tar>
+    </target>
+
+    <target name="clean" depends="init">
+        <delete dir="target" failonerror="false"/>
+        <ant dir="apacheds" target="clean"/>
+        <ant dir="mina" target="clean"/>
+        <ant dir="opends" target="clean"/>
+    </target>
+
+</project>

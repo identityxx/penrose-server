@@ -1,0 +1,23 @@
+dn: cn=LDAP backend,cn=Plugins,cn=config
+objectClass: top
+objectClass: ds-cfg-plugin
+objectClass: extensibleObject
+cn: LDAP backend
+ds-cfg-plugin-class: org.safehaus.penrose.ldapbackend.opends.LDAPBackendPlugin
+ds-cfg-plugin-enabled: true
+ds-cfg-plugin-type: postConnect
+ds-cfg-plugin-type: postDisconnect
+ds-cfg-plugin-type: preParseAbandon
+ds-cfg-plugin-type: preParseAdd
+ds-cfg-plugin-type: preParseBind
+ds-cfg-plugin-type: preParseUnbind
+ds-cfg-plugin-type: preParseCompare
+ds-cfg-plugin-type: preParseDelete
+ds-cfg-plugin-type: preParseModify
+ds-cfg-plugin-type: preParseModifyDN
+ds-cfg-plugin-type: preParseSearch
+ldap-backend-class: <class name>
+ldap-backend-classpath: <class path>
+ldap-backend-libpath: <library path>
+ldap-backend-property: <name>=<value>
+ldap-backend-suffix: <name space>

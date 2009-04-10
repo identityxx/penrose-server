@@ -1,0 +1,108 @@
+<!--
+ Copyright 2009 Red Hat, Inc.
+ All rights reserved.
+-->
+<project name="ldap-backend-apacheds" default="build">
+
+    <description>LDAP backend for ApacheDS</description>
+
+    <property file="../build.properties"/>
+    <property name="prefix" value=""/>
+    <property name="product.fullName" value="${product.name}-apacheds-${product.version}"/>
+    <property name="project.home" value="${prefix}/usr/local/${product.fullName}"/>
+
+    <property name="apacheds.home" value="/usr/local/apacheds"/>
+
+    <tstamp/>
+
+    <path id="lib.path">
+        <fileset dir="../lib">
+            <include name="**/*.jar"/>
+        </fileset>
+        <fileset dir="../target">
+            <include name="**/*.jar"/>
+        </fileset>
+        <fileset dir="lib">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>
+
+	<target name="init">
+        <echo message="Operating System: ${os.name} ${os.version}" />
+        <condition property="isWindows">
+            <os family="windows"/>
+        </condition>
+        <condition property="isUnix">
+            <and>
+                <os family="unix"/>
+                <not>
+                    <os family="mac"/>
+                </not>
+            </and>
+        </condition>
+        <condition property="isMac">
+            <os family="mac"/>
+        </condition>
+    </target>
+
+    <target name="build" depends="init">
+        <mkdir dir="target/classes"/>
+        <javac
+            srcdir="src"
+            destdir="target/classes"
+            classpathref="lib.path"
+            debug="on"
+            debuglevel="lines,vars,source"
+            source="1.5"
+            target="1.5"
+        />
+        <copy todir="target/classes">
+            <fileset dir="src" includes="**/*.properties,**/*.xml,**/*.dtd"/>
+        </copy>
+        <jar jarfile="target/${product.fullName}.jar">
+            <fileset dir="target/classes"/>
+            <manifest>
+              <attribute name="Specification-Version"  value="${product.specification}"/>
+              <attribute name="Implementation-Title"   value="${product.title}"/>
+              <attribute name="Implementation-Version" value="${product.version}"/>
+              <attribute name="Implementation-Vendor"  value="${product.vendor}"/>
+              <attribute name="Build-Date" value="${DSTAMP}"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="dist" depends="build">
+        <mkdir dir="target/dist"/>
+        <copy todir="target/dist" file="../build.properties"/>
+        <copy todir="target/dist" file="../README.txt">
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+        <copy todir="target/dist" file="../LICENSE.txt"/>
+        <copy todir="target/dist/lib" includeEmptyDirs="false">
+            <fileset dir="../lib" includes="*"/>
+            <fileset dir="target" includes="${product.fullName}.jar"/>
+        </copy>
+        <zip destfile="target/${product.fullName}.zip"
+            basedir="target/dist"/>
+    </target>
+
+    <target name="publish" depends="init">
+        <ftp server="upload.sourceforge.net"
+            remotedir="incoming"
+            userid="anonymous"
+            password="penrose@safehaus.org">
+            <fileset dir="target" includes="${product.fullName}.zip"/>
+        </ftp>
+    </target>
+
+    <target name="install" depends="build">
+        <copy todir="${apacheds.home}/lib" file="target/${product.fullName}.jar" />
+    </target>
+
+    <target name="clean" depends="init">
+    	<delete dir="target" failonerror="false"/>
+    </target>
+		
+</project>

@@ -17,14 +17,19 @@ The Penrose (TM) application includes items that have been sourced from third pa
  - DOM4J                          BSD-style License          http://www.dom4j.org/license.html
  - Hibernate                      LGPL                       http://hibernate.org/356.html
  - HSQLDB                         BSD-style License          http://hsqldb.org/web/hsqlLicense.html
- - Java Activation                Sun License                http://java.sun.com/javase/technologies/desktop/javabeans/jaf/
+ - JavaCC                         BSD-style License          https://javacc.dev.java.net/
+ - Java Activation                Sun Binary Code License    http://java.sun.com/javase/technologies/desktop/javabeans/jaf/
+ - JNDI LDAP Service Provider     Sun Binary Code License    http://java.sun.com/products/jndi/downloads/index.html
+ - JNDI NIS Service Provider      Sun Binary Code License    http://java.sun.com/products/jndi/downloads/index.html
+ - Java Servlet                   Sun Binary Code License    http://java.sun.com/products/servlet/download.html
  - Java GetOpt Library            LGPL                       http://www.urbanophile.com/arenn/hacking/download.html
  - Java Mail                      CDDL & GPL                 https://glassfish.dev.java.net/javaee5/mail/
  - Java Service Wrapper           MIT License                http://wrapper.tanukisoftware.org/doc/english/license.html
+ - JPAM                           Apache Software License    http://jpam.sourceforge.net/license.html
  - JDBM                           BSD-style License          http://jdbm.sourceforge.net/
  - JBoss                          LGPL                       http://labs.jboss.com/jbossas/downloads/
  - JUnit                          CPL                        http://svn.mindswap.org/swoop/branches/profiling/lib/junit-3.8.1/cpl-v10.html
- - JLDAP                          OpenLDAP Public License    http://www.openldap.org/software/release/license.html
+ - OpenLDAP JLDAP                 OpenLDAP Public License    http://www.openldap.org/software/release/license.html
  - Log4j                          Apache Software License    http://logging.apache.org/log4j/1.2/license.html
  - OpenDS                         CDDL                       https://opends.dev.java.net/
  - PostgreSQL JDBC Driver         BSD-style License          http://jdbc.postgresql.org/license.html
@@ -33,3 +38,4 @@ The Penrose (TM) application includes items that have been sourced from third pa
  - Spring Framework               Apache Software License    http://www.springframework.org/
  - Xerces                         Apache Software License    http://xerces.apache.org/xerces-j/
  - MD5, SHA-256, SHA-512 Crypts   BSD-style License          ftp://ftp.arlut.utexas.edu/pub/java_hashes
+           
